@@ -146,19 +146,19 @@ const ProfileDetail = ({ navigation, route }) => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        // Navigate to the desired screen when the hardware back button is pressed
-        navigation.navigate('HomeScreen') // replace 'AnotherScreen' with your target screen name
-        return true; // returning true means you have handled the back press
+        navigation.navigate('HomeScreen'); // your target screen
+        return true; // prevent default back action
       };
-
-      // Add event listener
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      // Remove the listener when the screen is unfocused or unmounted
-      return () => {
-        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-      };
-    }, [navigation]) // dependencies: add anything else you’re using inside useCallback
+  
+      // ✅ Store subscription
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
+  
+      // ✅ Clean up properly
+      return () => backHandler.remove();
+    }, [navigation]),
   );
 
   return (
