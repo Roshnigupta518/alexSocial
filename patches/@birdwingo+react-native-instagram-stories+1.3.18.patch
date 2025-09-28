@@ -1,0 +1,637 @@
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Avatar/Avatar.styles.ts b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Avatar/Avatar.styles.ts
+index b0c51d6..ba28f7f 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Avatar/Avatar.styles.ts
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Avatar/Avatar.styles.ts
+@@ -5,6 +5,8 @@ export default StyleSheet.create( {
+   container: {
+     flexDirection: 'row',
+     alignItems: 'center',
++    marginRight:5,
++    marginStart:10
+   },
+   avatar: {
+     left: AVATAR_OFFSET,
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Avatar/index.tsx b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Avatar/index.tsx
+index 66de125..9638153 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Avatar/index.tsx
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Avatar/index.tsx
+@@ -28,6 +28,12 @@ const StoryAvatar: FC<StoryAvatarProps> = ( {
+   nameTextProps,
+   renderAvatar,
+   avatarBorderRadius,
++   // 👇 new
++  //  isAddButton,
++  //  onAddStory,
++
++  onAddPress,           // <-- new
++  isAddButton,          // <-- new
+ } ) => {
+ 
+   const loaded = useSharedValue( false );
+@@ -59,10 +65,28 @@ const StoryAvatar: FC<StoryAvatarProps> = ( {
+ 
+   }
+ 
++
++   // If no avatarSource, still render container so + badge can show for "Add story" slot.
++   const finalAvatarSource = avatarSource ?? { uri: '' };
++
++   // avatar press handler: when it's add-slot with no stories -> open add screen
++   const handleAvatarPress = () => {
++     if ( isAddButton && (!stories || stories.length === 0) ) {
++       onAddPress?.();
++     } else {
++       onPress?.();
++     }
++   };
++
+   return (
+     <View style={AvatarStyles.name}>
+       <View style={AvatarStyles.container}>
+-        <TouchableOpacity activeOpacity={0.6} onPress={onPress} testID={`${id}StoryAvatar${stories.length}Story`}>
++        <TouchableOpacity activeOpacity={0.6} 
++        // onPress={onPress} 
++
++        onPress={handleAvatarPress}
++        
++        testID={`${id}StoryAvatar${stories.length}Story`}>
+           <Loader loading={isLoading} color={loaderColor} size={size + AVATAR_OFFSET * 2} />
+           <AnimatedImage
+             source={avatarSource}
+@@ -74,11 +98,60 @@ const StoryAvatar: FC<StoryAvatarProps> = ( {
+             testID="storyAvatarImage"
+             onLoad={onLoad}
+           />
++
++{/* If it's your slot and you have no stories -> big plus centered (like Instagram) */}
++{isAddButton && (!stories || stories.length === 0) && (
++            <View style={{
++              position: 'absolute',
++              right: size/2 - 26,
++              bottom: -2,
++            }}>
++              <View style={{
++                backgroundColor: '#FCE058',
++                borderRadius: 10,
++                width: 20,
++                height: 20,
++                alignItems: 'center',
++                justifyContent: 'center',
++              }}>
++              <Text style={{ color: '#000',  }}>+</Text>
++              </View>
++            </View>
++          )}
++
++          {/* If it's your slot and you HAVE stories -> small corner + badge tappable */}
++          {isAddButton && (stories && stories.length > 0) && (
++            <TouchableOpacity
++              activeOpacity={0.8}
++              onPress={onAddPress}
++              style={{
++                position: 'absolute',
++                right: -2,
++                bottom: 2,
++                alignItems: 'center',
++                justifyContent: 'center',
++              }}
++            >
++                <View style={{
++                backgroundColor: '#FCE058',
++                borderRadius: 10,
++                width: 20,
++                height: 20,
++                alignItems: 'center',
++                justifyContent: 'center',
++              }}>
++              <Text style={{ color: '#000',  }}>+</Text>
++              </View>
++            </TouchableOpacity>
++          )}
++
++
+         </TouchableOpacity>
++
+       </View>
+       {Boolean( showName ) && (
+         <Text
+-          {...nameTextProps}
++          {...nameTextProps} numberOfLines={2}
+           style={[ { width: size + AVATAR_OFFSET * 2 }, nameTextStyle ]}
+         >
+           {name}
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/components/AvatarList/index.tsx b/node_modules/@birdwingo/react-native-instagram-stories/src/components/AvatarList/index.tsx
+index b1154e0..bdd4697 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/components/AvatarList/index.tsx
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/components/AvatarList/index.tsx
+@@ -21,6 +21,9 @@ const StoryAvatarList: FC<StoryAvatarListProps> = ( {
+   stories, loadingStory, seenStories, colors, seenColors, size,
+   showName, nameTextStyle, nameTextProps,
+   avatarListContainerProps, avatarListContainerStyle, avatarBorderRadius, onPress,
++  // 👇 new
++  // onAddStory,
++  onAddPress
+ } ) => {
+ 
+   const renderItem = ( story: InstagramStoryProps ) => (
+@@ -37,6 +40,12 @@ const StoryAvatarList: FC<StoryAvatarListProps> = ( {
+       nameTextProps={nameTextProps}
+       avatarBorderRadius={avatarBorderRadius}
+       key={`avatar${story.id}`}
++      // 👇 new
++      // isAddButton={story.isAddButton}
++      // onAddStory={onAddStory}
++
++      isAddButton={story.isAddButton} 
++      onAddPress={onAddPress}   
+     />
+   );
+ 
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/components/InstagramStories/index.tsx b/node_modules/@birdwingo/react-native-instagram-stories/src/components/InstagramStories/index.tsx
+index bb29e4c..93f85d3 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/components/InstagramStories/index.tsx
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/components/InstagramStories/index.tsx
+@@ -4,7 +4,7 @@ import React, {
+ import { useSharedValue } from 'react-native-reanimated';
+ import { Image } from 'react-native';
+ import { clearProgressStorage, getProgressStorage, setProgressStorage } from '../../core/helpers/storage';
+-import { InstagramStoriesProps, InstagramStoriesPublicMethods } from '../../core/dto/instagramStoriesDTO';
++import { InstagramStoriesProps, InstagramStoriesPublicMethods, InstagramStoryProps } from '../../core/dto/instagramStoriesDTO';
+ import { ProgressStorageProps } from '../../core/dto/helpersDTO';
+ import {
+   ANIMATION_DURATION, DEFAULT_COLORS, SEEN_LOADER_COLORS,
+@@ -36,6 +36,9 @@ const InstagramStories = forwardRef<InstagramStoriesPublicMethods, InstagramStor
+   avatarBorderRadius,
+   loaderColor,
+   loaderBackgroundColor,
++   // 👇 new
++  //  onAddStory,
++  onAddPress, // <-- new
+   ...props
+ }, ref ) => {
+ 
+@@ -46,9 +49,10 @@ const InstagramStories = forwardRef<InstagramStoriesPublicMethods, InstagramStor
+   const loadingStory = useSharedValue<string | undefined>( undefined );
+ 
+   const modalRef = useRef<StoryModalPublicMethods>( null );
++  type SeenMap = Record<string, string>;
+ 
+-  const onPress = ( id: string ) => {
+ 
++  const onPress = ( id: string ) => {
+     loadingStory.value = id;
+ 
+     if ( loadedStories.value ) {
+@@ -98,6 +102,7 @@ const InstagramStories = forwardRef<InstagramStoriesPublicMethods, InstagramStor
+ 
+   };
+ 
++  
+   const onSeenStoriesChange = async ( user: string, value: string ) => {
+ 
+     if ( !saveProgress ) {
+@@ -244,6 +249,9 @@ const InstagramStories = forwardRef<InstagramStoriesPublicMethods, InstagramStor
+           avatarListContainerStyle={avatarListContainerStyle}
+           avatarBorderRadius={avatarBorderRadius}
+           onPress={onPress}
++           // 👇 new
++          //  onAddStory={onAddStory}
++          onAddPress={onAddPress}  
+         />
+       )}
+       {/* @ts-expect-error: imageProps type mismatch is intentionally ignored */}
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/components/List/List.styles.ts b/node_modules/@birdwingo/react-native-instagram-stories/src/components/List/List.styles.ts
+index 3eebb14..205d090 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/components/List/List.styles.ts
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/components/List/List.styles.ts
+@@ -6,6 +6,8 @@ export default StyleSheet.create( {
+     borderRadius: 8,
+     overflow: 'hidden',
+     width: WIDTH,
++    padding:0,
++    margin:0
+   },
+   content: {
+     position: 'absolute',
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/components/List/index.tsx b/node_modules/@birdwingo/react-native-instagram-stories/src/components/List/index.tsx
+index 9fa47d8..116e5e2 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/components/List/index.tsx
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/components/List/index.tsx
+@@ -11,7 +11,7 @@ import { StoryListProps } from '../../core/dto/componentsDTO';
+ import { HEIGHT } from '../../core/constants';
+ import StoryContent from '../Content';
+ import StoryFooter from '../Footer';
+-
++import { Text, TouchableOpacity } from 'react-native';
+ const StoryList: FC<StoryListProps> = ( {
+   id, stories, index, x, activeUser, activeStory, progress, seenStories, paused,
+   onLoad, videoProps, progressColor, progressActiveColor, mediaContainerStyle, imageStyles,
+@@ -80,11 +80,59 @@ const StoryList: FC<StoryListProps> = ( {
+               progressContainerStyle={progressContainerStyle}
+             />
+             <StoryHeader {...props} />
++
++             {/* 🔥 TagBusiness Overlay */}
++            {stories[activeStoryIndex.value]?.tagBusiness?.length > 0 && (
++  <Animated.View
++    style={{
++      position: 'absolute',
++      bottom: '15%',
++      right: 0,
++      justifyContent: 'center',
++      zIndex: 999,
++      elevation: 5,
++    }}
++  >
++    <TouchableOpacity
++      activeOpacity={0.8}
++      onPress={() => {
++        if (props.onTagPress) {
++          props.onTagPress(stories[activeStoryIndex.value].tagBusiness[0]); 
++        }
++      }}
++    >
++      <Text numberOfLines={1}
++        style={{
++          color: 'white',
++          backgroundColor: 'rgba(0,0,0,0.5)',
++          paddingHorizontal: 12,
++          paddingVertical: 6,
++          borderRadius: 12,
++          fontWeight: 'bold',
++          textDecorationLine: 'underline',
++        }}
++      >
++        @{stories[activeStoryIndex.value].tagBusiness[0].name}
++      </Text>
++    </TouchableOpacity>
++  </Animated.View>
++)}
++
++            {/* 🔥 End Overlay */}
++
++
+             <StoryContent stories={stories} active={isActive} activeStory={activeStory} />
+           </Animated.View>
+         </Animated.View>
+       </Animated.View>
+-      <StoryFooter stories={stories} active={isActive} activeStory={activeStory} />
++      {/* <StoryFooter stories={stories} active={isActive} activeStory={activeStory} /> */}
++      {props.footerComponent ? (
++  <Animated.View style={{ position: 'absolute', bottom: 0, width: '100%' }}>
++    {props.footerComponent()}
++  </Animated.View>
++) : (
++  <StoryFooter stories={stories} active={isActive} activeStory={activeStory} />
++)}
+     </StoryAnimation>
+   );
+ 
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/Modal.styles.ts b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/Modal.styles.ts
+index 34038e4..3522ff5 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/Modal.styles.ts
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/Modal.styles.ts
+@@ -4,6 +4,8 @@ import { HEIGHT, WIDTH } from '../../core/constants';
+ export default StyleSheet.create( {
+   container: {
+     flex: 1,
++    margin:0,
++    padding:0
+   },
+   absolute: {
+     position: 'absolute',
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/index.tsx b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/index.tsx
+index dd93855..23d761f 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/index.tsx
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/index.tsx
+@@ -3,10 +3,11 @@ import React, {
+ } from 'react';
+ import { GestureResponderEvent, Modal, Pressable } from 'react-native';
+ import Animated, {
+-  cancelAnimation, interpolate, runOnJS, useAnimatedGestureHandler, useAnimatedReaction,
++  cancelAnimation, interpolate, runOnJS, useAnimatedReaction,
+   useAnimatedStyle,
+   useDerivedValue, useSharedValue, withTiming,
+ } from 'react-native-reanimated';
++import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+ import {
+   HEIGHT, LONG_PRESS_DURATION, STORY_ANIMATION_DURATION, WIDTH,
+ } from '../../core/constants';
+@@ -261,91 +262,170 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
+ 
+   };
+ 
+-  const onGestureEvent = useAnimatedGestureHandler( {
+-    onStart: ( e, ctx: GestureContext ) => {
++  // Replace useAnimatedGestureHandler with Gesture.Pan
++const panGesture = Gesture.Pan()
++.onBegin((e) => {
++  'worklet';
++  // store initial state in shared values instead of ctx
++  panGesture.ctx = {
++    x: x.value,
++    userId: userId.value,
++    moving: false,
++    vertical: false,
++  };
++  paused.value = true;
++})
++.onUpdate((e) => {
++  'worklet';
++  const ctx = panGesture.ctx;
++
++  if (
++    ctx.x === x.value &&
++    (ctx.vertical || Math.abs(e.velocityX) < Math.abs(e.velocityY))
++  ) {
++    ctx.vertical = true;
++    y.value = e.translationY / 2;
++  } else {
++    ctx.moving = true;
++    x.value = Math.max(
++      0,
++      Math.min(ctx.x + -e.translationX, WIDTH * (stories.length - 1)),
++    );
++  }
++})
++.onEnd((e) => {
++  'worklet';
++  const ctx = panGesture.ctx;
++
++  if (ctx.vertical) {
++    if (e.translationY > 100) {
++      runOnJS(onClose)();
++    } else {
++      if (e.translationY < -100 && onSwipeUp) {
++        runOnJS(onSwipeUp)(
++          stories[userIndex.value]?.id,
++          stories[userIndex.value]?.stories[storyIndex.value ?? 0]?.id,
++        );
++      }
++      y.value = withTiming(0);
++      runOnJS(startAnimation)(true);
++    }
++  } else if (ctx.moving) {
++    const diff = x.value - ctx.x;
++    let newX;
+ 
+-      ctx.x = x.value;
+-      ctx.userId = userId.value;
+-      paused.value = true;
++    if (Math.abs(diff) < WIDTH / 4) {
++      newX = ctx.x;
++    } else {
++      newX =
++        diff > 0
++          ? Math.ceil(x.value / WIDTH) * WIDTH
++          : Math.floor(x.value / WIDTH) * WIDTH;
++    }
+ 
+-    },
+-    onActive: ( e, ctx ) => {
++    const newUserId = stories[Math.round(newX / WIDTH)]?.id;
++    if (newUserId !== undefined) {
++      runOnJS(scrollTo)(
++        newUserId,
++        true,
++        newUserId === ctx.userId,
++        ctx.userId,
++      );
++    }
++  }
+ 
+-      if ( ctx.x === x.value
+-        && ( ctx.vertical || ( Math.abs( e.velocityX ) < Math.abs( e.velocityY ) ) ) ) {
++  ctx.moving = false;
++  ctx.vertical = false;
++  ctx.userId = undefined;
++  hideElements.value = false;
++  paused.value = false;
++});
+ 
+-        ctx.vertical = true;
+-        y.value = e.translationY / 2;
++  // const onGestureEvent = useAnimatedGestureHandler( {
++  //   onStart: ( e, ctx: GestureContext ) => {
+ 
+-      } else {
++  //     ctx.x = x.value;
++  //     ctx.userId = userId.value;
++  //     paused.value = true;
+ 
+-        ctx.moving = true;
+-        x.value = Math.max(
+-          0,
+-          Math.min( ctx.x + -e.translationX, WIDTH * ( stories.length - 1 ) ),
+-        );
++  //   },
++  //   onActive: ( e, ctx ) => {
+ 
+-      }
++  //     if ( ctx.x === x.value
++  //       && ( ctx.vertical || ( Math.abs( e.velocityX ) < Math.abs( e.velocityY ) ) ) ) {
+ 
+-    },
+-    onFinish: ( e, ctx ) => {
++  //       ctx.vertical = true;
++  //       y.value = e.translationY / 2;
+ 
+-      if ( ctx.vertical ) {
++  //     } else {
+ 
+-        if ( e.translationY > 100 ) {
++  //       ctx.moving = true;
++  //       x.value = Math.max(
++  //         0,
++  //         Math.min( ctx.x + -e.translationX, WIDTH * ( stories.length - 1 ) ),
++  //       );
+ 
+-          onClose();
++  //     }
+ 
+-        } else {
++  //   },
++  //   onFinish: ( e, ctx ) => {
+ 
+-          if ( e.translationY < -100 && onSwipeUp ) {
++  //     if ( ctx.vertical ) {
+ 
+-            runOnJS( onSwipeUp )(
+-              stories[userIndex.value]?.id,
+-              stories[userIndex.value]?.stories[storyIndex.value ?? 0]?.id,
+-            );
++  //       if ( e.translationY > 100 ) {
+ 
+-          }
++  //         onClose();
+ 
+-          y.value = withTiming( 0 );
+-          startAnimation( true );
++  //       } else {
+ 
+-        }
++  //         if ( e.translationY < -100 && onSwipeUp ) {
+ 
+-      } else if ( ctx.moving ) {
++  //           runOnJS( onSwipeUp )(
++  //             stories[userIndex.value]?.id,
++  //             stories[userIndex.value]?.stories[storyIndex.value ?? 0]?.id,
++  //           );
+ 
+-        const diff = x.value - ctx.x;
+-        let newX;
++  //         }
+ 
+-        if ( Math.abs( diff ) < WIDTH / 4 ) {
++  //         y.value = withTiming( 0 );
++  //         startAnimation( true );
+ 
+-          newX = ctx.x;
++  //       }
+ 
+-        } else {
++  //     } else if ( ctx.moving ) {
+ 
+-          newX = diff > 0
+-            ? Math.ceil( x.value / WIDTH ) * WIDTH
+-            : Math.floor( x.value / WIDTH ) * WIDTH;
++  //       const diff = x.value - ctx.x;
++  //       let newX;
+ 
+-        }
++  //       if ( Math.abs( diff ) < WIDTH / 4 ) {
+ 
+-        const newUserId = stories[Math.round( newX / WIDTH )]?.id;
+-        if ( newUserId !== undefined ) {
++  //         newX = ctx.x;
+ 
+-          scrollTo( newUserId, true, newUserId === ctx.userId, ctx.userId );
++  //       } else {
+ 
+-        }
++  //         newX = diff > 0
++  //           ? Math.ceil( x.value / WIDTH ) * WIDTH
++  //           : Math.floor( x.value / WIDTH ) * WIDTH;
+ 
+-      }
++  //       }
+ 
+-      ctx.moving = false;
+-      ctx.vertical = false;
+-      ctx.userId = undefined;
+-      hideElements.value = false;
+-      paused.value = false;
++  //       const newUserId = stories[Math.round( newX / WIDTH )]?.id;
++  //       if ( newUserId !== undefined ) {
+ 
+-    },
+-  } );
++  //         scrollTo( newUserId, true, newUserId === ctx.userId, ctx.userId );
++
++  //       }
++
++  //     }
++
++  //     ctx.moving = false;
++  //     ctx.vertical = false;
++  //     ctx.userId = undefined;
++  //     hideElements.value = false;
++  //     paused.value = false;
++
++  //   },
++  // } );
+ 
+   const onPressIn = () => {
+ 
+@@ -461,7 +541,8 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
+ 
+   return (
+     <Modal statusBarTranslucent={statusBarTranslucent} visible={visible} transparent animationType="none" testID="storyRNModal" onRequestClose={onClose}>
+-      <GestureHandler onGestureEvent={onGestureEvent}>
++      {/* <GestureHandler onGestureEvent={onGestureEvent}> */}
++      <GestureDetector gesture={panGesture}>
+         <Animated.View style={ModalStyles.container} testID="storyModal">
+           <Pressable
+             onPressIn={onPressIn}
+@@ -502,6 +583,7 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
+                   loaderColor={loaderColor}
+                   loaderBackgroundColor={loaderBackgroundColor}
+                   key={story.id}
++                  footerComponent={footerComponent}
+                   {...props}
+                 />
+               ) )}
+@@ -509,7 +591,8 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
+           </Pressable>
+           {footerComponent && footerComponent}
+         </Animated.View>
+-      </GestureHandler>
++        </GestureDetector>
++      {/* </GestureHandler> */}
+     </Modal>
+   );
+ 
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/core/dto/componentsDTO.ts b/node_modules/@birdwingo/react-native-instagram-stories/src/core/dto/componentsDTO.ts
+index c1a2ad0..c04c66a 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/core/dto/componentsDTO.ts
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/core/dto/componentsDTO.ts
+@@ -20,6 +20,9 @@ export interface StoryAvatarListProps {
+   avatarListContainerProps: InstagramStoriesProps['avatarListContainerProps'];
+   avatarBorderRadius?: number;
+   onPress: ( id: string ) => void;
++  // 👇 new
++  // onAddStory?: () => void;
++  onAddPress?:()=>void
+ }
+ 
+ export interface StoryAvatarProps extends InstagramStoryProps {
+@@ -33,6 +36,9 @@ export interface StoryAvatarProps extends InstagramStoryProps {
+   nameTextStyle?: TextStyle;
+   nameTextProps?: TextProps;
+   avatarBorderRadius?: number;
++   // 👇 new
++   isAddButton?: boolean;
++   onAddPress?: () => void;
+ }
+ 
+ export interface StoryLoaderProps {
+@@ -180,6 +186,7 @@ export interface StoryListProps extends InstagramStoryProps, StoryHeaderProps {
+   loaderColor?: string;
+   loaderBackgroundColor?: string;
+   onLoad: ( duration?: number ) => void;
++  onTagPress?: (story: any) => void;   // ✅ ye line add karo
+ }
+ 
+ export interface StoryVideoProps {
+diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/core/dto/instagramStoriesDTO.ts b/node_modules/@birdwingo/react-native-instagram-stories/src/core/dto/instagramStoriesDTO.ts
+index 263c8ea..d8febd0 100644
+--- a/node_modules/@birdwingo/react-native-instagram-stories/src/core/dto/instagramStoriesDTO.ts
++++ b/node_modules/@birdwingo/react-native-instagram-stories/src/core/dto/instagramStoriesDTO.ts
+@@ -17,15 +17,18 @@ export interface StoryItemProps {
+ 
+ export interface InstagramStoryProps {
+   id: string;
++  is_seen?: boolean;  
+   avatarSource: ImageProps['source'];
+   renderAvatar?: ( seen: boolean ) => ReactNode;
+   renderStoryHeader?: () => ReactNode;
+   onStoryHeaderPress?: () => void;
+   name?: string;
+   stories: StoryItemProps[];
++  isAddButton?: boolean; // 👈 NEW
+ }
+ 
+ export interface InstagramStoriesProps {
++  id: any;
+   stories: InstagramStoryProps[];
+   saveProgress?: boolean;
+   avatarBorderColors?: string[];
+@@ -70,6 +73,8 @@ export interface InstagramStoriesProps {
+   onSwipeUp?: ( userId?: string, storyId?: string ) => void;
+   onStoryStart?: ( userId?: string, storyId?: string ) => void;
+   onStoryEnd?: ( userId?: string, storyId?: string ) => void;
++  // onAddStory?: () => void; // 👈 new
++  onAddPress?: () => void; 
+ }
+ 
+ export type InstagramStoriesPublicMethods = {
