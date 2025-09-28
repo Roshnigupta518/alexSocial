@@ -3,13 +3,16 @@ import {Text, View, StyleSheet, Image} from 'react-native';
 import ActionSheet from 'react-native-actions-sheet';
 import {colors, fonts, WIDTH, wp} from '../../../constants';
 import moment from 'moment';
-import DatePicker from 'react-native-date-picker';
+// import DatePicker from 'react-native-date-picker';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import ImageConstants from '../../../constants/ImageConstants';
 import CustomButton from '../../../components/CustomButton';
 
 const TimeSheet = forwardRef(({onSuccess = () => {}}, ref) => {
   const [date, setDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState(null);
+  const [isPickerVisible, setPickerVisible] = useState(false);
+
   var tempDate = new Date();
   tempDate.setFullYear(tempDate.getFullYear() - 18);
 
@@ -23,6 +26,11 @@ const TimeSheet = forwardRef(({onSuccess = () => {}}, ref) => {
       actionSheetRef.current?.hide(false);
     },
   }));
+
+  const handleConfirm = (time) => {
+    setSelectedTime(time);
+    setPickerVisible(false);
+  };
 
   return (
     <ActionSheet ref={actionSheetRef} containerStyle={styles.container}>
@@ -70,7 +78,7 @@ const TimeSheet = forwardRef(({onSuccess = () => {}}, ref) => {
               backgroundColor: colors.white,
             }}
           />
-          <View
+          {/* <View
             style={{
               alignItems: 'center',
               backgroundColor: colors.white,
@@ -83,7 +91,23 @@ const TimeSheet = forwardRef(({onSuccess = () => {}}, ref) => {
                 setSelectedTime(res);
               }}
             />
+          </View> */}
+
+<View style={{ alignItems: 'center', backgroundColor: colors.white }}>
+            <CustomButton
+              label={selectedTime ? moment(selectedTime).format('hh:mm a') : 'Select Time'}
+              onPress={() => setPickerVisible(true)}
+            />
+
+            <DateTimePickerModal
+              isVisible={isPickerVisible}
+              mode="time"
+              date={selectedTime || new Date()}
+              onConfirm={handleConfirm}
+              onCancel={() => setPickerVisible(false)}
+            />
           </View>
+          
           <View
             style={{
               height: 1,

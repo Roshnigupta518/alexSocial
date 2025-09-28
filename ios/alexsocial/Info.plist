@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>alexsocial</string>
+	<string>Alex Social</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -20,8 +20,54 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb742487000924268</string>
+				<string>com.googleusercontent.apps.859541725168-49gfec5mcb0v33g80is4n4f7orlbt08t</string>
+				<string>com.alexapp</string>
+			</array>
+			<key>FirebaseDynamicLinksCustomDomains</key>
+			<array>
+				<string>https://alexsocial.page.link</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.859541725168-49gfec5mcb0v33g80is4n4f7orlbt08t</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>FacebookAppID</key>
+	<string>742487000924268</string>
+	<key>FacebookClientToken</key>
+	<string>c030ebaf1ddfd3de9769c226576b16dd</string>
+	<key>FacebookDisplayName</key>
+	<string>Alex Application</string>
+	<key>FirebaseCrashlyticsCollectionEnabled</key>
+	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
+		<string>fbauth2</string>
+		<string>fbshareextension</string>
+		<string>instagram</string>
+		<string>instagram-stories</string>
+		<string>twitter</string>
+		<string>twitterauth</string>
+		<string>tel</string>
+		<string>https</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -31,10 +77,38 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>ALEX SOCIAL requires access to your camera so you can capture and upload photos or videos for your profile and posts.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>ALEX SOCIAL uses your contacts to help you find and connect with friends who are already using the app, making it easier to grow your network.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>ALEX SOCIAL uses your location even when the app is not open to keep your feed updated with nearby posts, friends, and events.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>ALEX SOCIAL needs access to your location in the background to continue updating your feed with nearby posts, friends, and events.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>ALEX SOCIAL uses your location while you are using the app to provide a personalized feed of nearby posts, friends, and events.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ALEX SOCIAL requires access to your microphone so you can record audio when creating and sharing videos with your friends.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ALEX SOCIAL requires access to your photo and video library so you can upload media for posts and update your profile.</string>
+	<key>NSUserNotificationAlertUsageDescription</key>
+	<string>ALEX SOCIAL sends you notifications to keep you updated when friends interact with your posts or when new features are available.</string>
 	<key>RCTNewArchEnabled</key>
-	<false/>
+	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Poppins-Bold.ttf</string>
+		<string>Poppins-Light.ttf</string>
+		<string>Poppins-Medium.ttf</string>
+		<string>Poppins-Regular.ttf</string>
+		<string>Poppins-SemiBold.ttf</string>
+		<string>Poppins-Thin.ttf</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import {colors, fonts, WIDTH, wp} from '../../constants';
 import ImageConstants from '../../constants/ImageConstants';
-import DatePicker from 'react-native-date-picker';
+// import DatePicker from 'react-native-date-picker';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import CustomButton from '../../components/CustomButton';
 import BackHeader from '../../components/BackHeader';
 import moment from 'moment';
@@ -21,6 +22,15 @@ const BirthScreen = ({navigation}) => {
   const minDate = new Date(1900, 1, 1);
   tempDate.setFullYear(tempDate.getFullYear() - 18);
   const [date, setDate] = useState(tempDate);
+  const [isPickerVisible, setPickerVisible] = useState(false);
+
+  const showPicker = () => setPickerVisible(true);
+const hidePicker = () => setPickerVisible(false);
+
+const handleConfirm = (selectedDate) => {
+setDate(selectedDate);
+hidePicker();
+};
 
   return (
     <CustomContainer>
@@ -38,14 +48,19 @@ const BirthScreen = ({navigation}) => {
 
         <Image source={ImageConstants.celebrate} />
 
-        <DatePicker
+        {/* <DatePicker
           date={date}
           mode="date"
           maximumDate={tempDate}
           minimumDate={minDate}
           theme={'light'}
           onDateChange={setDate}
-        />
+        /> */}
+
+        <DateTimePickerModal isVisible={isPickerVisible} 
+        mode="date" date={date} maximumDate={tempDate} 
+        minimumDate={minDate} onConfirm={handleConfirm} 
+        onCancel={hidePicker} />
 
         <View style={{width: WIDTH - 30}}>
           <CustomButton

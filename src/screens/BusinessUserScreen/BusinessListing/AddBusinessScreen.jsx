@@ -26,7 +26,8 @@ import {
 import Toast from '../../../constants/Toast';
 import NetInfo from '@react-native-community/netinfo';
 import NoInternetModal from '../../../components/NoInternetModal';
-import DatePicker from 'react-native-date-picker';
+// import DatePicker from 'react-native-date-picker';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import st from '../../../global/styles';
 import ImageConstants from '../../../constants/ImageConstants';
 import CustomContainer from '../../../components/container';
@@ -516,7 +517,7 @@ const AddBusinessScreen = ({ navigation, route }) => {
               {/* <Button title={formatTime(toTime)} onPress={() => setOpenTo(true)} /> */}
             </View>
             {/* From Time Picker */}
-            <DatePicker
+            {/* <DatePicker
               modal
               open={openFrom}
               date={tempFromTime}
@@ -526,10 +527,10 @@ const AddBusinessScreen = ({ navigation, route }) => {
                 setFromTime(date);
               }}
               onCancel={() => setOpenFrom(false)}
-            />
+            /> */}
 
             {/* To Time Picker */}
-            <DatePicker
+            {/* <DatePicker
               modal
               open={openTo}
               date={tempToTime}
@@ -539,7 +540,34 @@ const AddBusinessScreen = ({ navigation, route }) => {
                 setToTime(date);
               }}
               onCancel={() => setOpenTo(false)}
-            />
+            /> */}
+
+            {/* _______________________________ */}
+
+            {/* From Time Picker */}
+  <DateTimePickerModal
+    isVisible={openFrom}
+    mode="time"
+    date={fromTime || new Date()}
+    onConfirm={(date) => {
+      setFromTime(date);
+      setOpenFrom(false);
+    }}
+    onCancel={() => setOpenFrom(false)}
+  />
+
+  {/* To Time Picker */}
+  <DateTimePickerModal
+    isVisible={openTo}
+    mode="time"
+    date={toTime || new Date()}
+    onConfirm={(date) => {
+      setToTime(date);
+      setOpenTo(false);
+    }}
+    onCancel={() => setOpenTo(false)}
+  />
+
           </View>
 
 
