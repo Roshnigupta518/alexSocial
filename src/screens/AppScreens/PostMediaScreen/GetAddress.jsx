@@ -57,6 +57,7 @@ const GetAddress = ({navigation}) => {
             keyboardAppearance={'light'} // Can be left out for default keyboardAppearance https://facebook.github.io/react-native/docs/textinput.html#keyboardappearance
             listViewDisplayed={true} // true/false/undefined
             fetchDetails={true}
+            predefinedPlaces={[]} 
             onPress={(data, details = null) => {
               dispatch(
                 AddAddressAction({

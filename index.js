@@ -3,6 +3,7 @@
  */
 import 'react-native-reanimated'; // ✅ MANDATORY - MUST be at top
 import 'react-native-permissions';
+import 'react-native-get-random-values';
 
 import {AppRegistry, LogBox} from 'react-native';
 import App from './src/App';

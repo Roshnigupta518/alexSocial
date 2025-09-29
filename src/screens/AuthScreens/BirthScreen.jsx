@@ -5,7 +5,7 @@ import {
   SafeAreaView,
   ScrollView,
   Image,
-  StyleSheet,
+  StyleSheet, TouchableOpacity
 } from 'react-native';
 import {colors, fonts, WIDTH, wp} from '../../constants';
 import ImageConstants from '../../constants/ImageConstants';
@@ -15,13 +15,14 @@ import CustomButton from '../../components/CustomButton';
 import BackHeader from '../../components/BackHeader';
 import moment from 'moment';
 import CustomContainer from '../../components/container';
+import st from '../../global/styles';
 
 const BirthScreen = ({navigation}) => {
   const temp_year = new Date().getFullYear();
   var tempDate = new Date(temp_year, 11, 30);
   const minDate = new Date(1900, 1, 1);
   tempDate.setFullYear(tempDate.getFullYear() - 18);
-  const [date, setDate] = useState(tempDate);
+  const [date, setDate] = useState();
   const [isPickerVisible, setPickerVisible] = useState(false);
 
   const showPicker = () => setPickerVisible(true);
@@ -57,8 +58,24 @@ hidePicker();
           onDateChange={setDate}
         /> */}
 
+<View style={{marginVertical: 20, width: WIDTH - 60}}>
+  {/* <CustomButton label="Select Birthday" onPress={showPicker} /> */}
+  <View >
+              <Text style={st.labelStyle}>Select Birthday:</Text>
+              <TouchableOpacity style={st.inputStyle} onPress={() => {
+                showPicker()
+              }}>
+                <View style={st.businessTimeCon}>
+                  <Text>{date ? date?.toDateString() : 'Select Birthday'}</Text>
+                  <Image source={ImageConstants.calendar} style={[st.minimgsty, { marginTop: 5 }]} />
+                </View>
+              </TouchableOpacity>
+             </View>
+</View>
+
         <DateTimePickerModal isVisible={isPickerVisible} 
-        mode="date" date={date} maximumDate={tempDate} 
+        mode="date" date={date || tempDate} 
+         maximumDate={tempDate} 
         minimumDate={minDate} onConfirm={handleConfirm} 
         onCancel={hidePicker} />
 
