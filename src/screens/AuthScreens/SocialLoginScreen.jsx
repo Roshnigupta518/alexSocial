@@ -124,35 +124,78 @@ const SocialLoginScreen = ({navigation}) => {
     },
   ];
 
-  async function onAppleButtonPress() {
-    setIsLoading(true);
-    setLoadingFor('apple');
-    // Start the sign-in request
-    const appleAuthRequestResponse = await appleAuth.performRequest({
-      requestedOperation: appleAuth.Operation.LOGIN,
-      // As per the FAQ of react-native-apple-authentication, the name should come first in the following array.
-      // See: https://github.com/invertase/react-native-apple-authentication#faqs
-      requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
-    });
+  // async function onAppleButtonPress() {
+  //   setIsLoading(true);
+  //   setLoadingFor('apple');
+  //   // Start the sign-in request
+  //   const appleAuthRequestResponse = await appleAuth.performRequest({
+  //     requestedOperation: appleAuth.Operation.LOGIN,
+  //     // As per the FAQ of react-native-apple-authentication, the name should come first in the following array.
+  //     // See: https://github.com/invertase/react-native-apple-authentication#faqs
+  //     requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+  //   });
 
-    // Ensure Apple returned a user identityToken
-    if (!appleAuthRequestResponse.identityToken) {
+  //   // Ensure Apple returned a user identityToken
+  //   if (!appleAuthRequestResponse.identityToken) {
+  //     setIsLoading(false);
+  //     setLoadingFor('');
+  //     // Log the error with Crashlytics
+
+  //     throw new Error('Apple Sign-In failed - no identify token returned');
+  //   }
+
+  //   // Create a Firebase credential from the response
+  //   const {identityToken, nonce} = appleAuthRequestResponse;
+  //   const appleCredential = auth.AppleAuthProvider.credential(
+  //     identityToken,
+  //     nonce,
+  //   );
+
+  //   // Sign the user in with the credential
+  //   return auth().signInWithCredential(appleCredential);
+  // }
+
+  async function onAppleButtonPress() {
+    try {
+      setIsLoading(true);
+      setLoadingFor('apple');
+  
+      // 1️⃣ Start the Apple sign-in request
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+      });
+  
+      // 2️⃣ Ensure identityToken is returned
+      if (!appleAuthRequestResponse.identityToken) {
+        setIsLoading(false);
+        setLoadingFor('');
+        throw new Error('Apple Sign-In failed - no identity token returned');
+      }
+  
+      const { identityToken, nonce } = appleAuthRequestResponse;
+  
+      // 3️⃣ Create a Firebase credential using OAuthProvider
+      const appleCredential = OAuthProvider.credential({
+        idToken: identityToken,
+        rawNonce: nonce,
+      });
+  
+      // 4️⃣ Sign in the user with Firebase
+      const userCredential = await signInWithCredential(auth, appleCredential);
+      console.log('Apple user logged in:', userCredential.user);
+  
       setIsLoading(false);
       setLoadingFor('');
-      // Log the error with Crashlytics
-
-      throw new Error('Apple Sign-In failed - no identify token returned');
+  
+      // 5️⃣ Call your function to handle backend / Redux login
+      MakeAppleLoginUser(userCredential.user);
+  
+    } catch (err) {
+      setIsLoading(false);
+      setLoadingFor('');
+      console.error('Apple Login Error:', err);
     }
-
-    // Create a Firebase credential from the response
-    const {identityToken, nonce} = appleAuthRequestResponse;
-    const appleCredential = auth.AppleAuthProvider.credential(
-      identityToken,
-      nonce,
-    );
-
-    // Sign the user in with the credential
-    return auth().signInWithCredential(appleCredential);
   }
 
   async function onGoogleButtonPress() {
@@ -182,38 +225,44 @@ const SocialLoginScreen = ({navigation}) => {
     }
   }
   
-  
   async function onFacebookButtonPress() {
-    setIsLoading(true);
-    setLoadingFor('fb');
-    // Attempt login with permissions
-    const result = await LoginManager.logInWithPermissions([
-      'public_profile',
-      'email',
-    ]);
-
-    if (result.isCancelled) {
-      setIsLoading(false);
+    try {
+      setIsLoading(true);
+      setLoadingFor('fb');
+  
+      // Step 1: Attempt login with permissions
+      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
+  
+      if (result.isCancelled) {
+        setIsLoading(false);
+        setLoadingFor('');
+        throw new Error('User cancelled the login process');
+      }
+  
+      // Step 2: Get the user's access token
+      const data = await AccessToken.getCurrentAccessToken();
+      if (!data) {
+        setIsLoading(false);
+        setLoadingFor('');
+        throw new Error('Something went wrong obtaining access token');
+      }
+  
+      // Step 3: Create a Firebase credential with the token
+      const facebookCredential = FacebookAuthProvider.credential(data.accessToken);
+  
+      // Step 4: Sign-in the user with the credential
+      const userCredential = await signInWithCredential(auth, facebookCredential);
+  
       setIsLoading(false);
       setLoadingFor('');
-
-      throw 'User cancelled the login process';
+  
+      return userCredential; // returns user info like uid, displayName, email
+    } catch (error) {
+      setIsLoading(false);
+      setLoadingFor('');
+      console.log('Facebook login error:', error);
+      throw error;
     }
-
-    // Once signed in, get the users AccessToken
-    const data = await AccessToken.getCurrentAccessToken();
-
-    if (!data) {
-      throw 'Something went wrong obtaining access token';
-    }
-
-    // Create a Firebase credential with the AccessToken
-    const facebookCredential = auth.FacebookAuthProvider.credential(
-      data.accessToken,
-    );
-
-    // Sign-in the user with the credential
-    return auth().signInWithCredential(facebookCredential);
   }
 
   const MakeAppleLoginUser = async res => {

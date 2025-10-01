@@ -20,6 +20,7 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = alexsocial/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = alexsocial/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = alexsocial/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1F71C7E12E8DAF6700564977 /* alexsocial.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = alexsocial.entitlements; path = alexsocial/alexsocial.entitlements; sourceTree = "<group>"; };
 		1FC565192E8938AD003627EC /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		4070EE2B3E77468B8A9CA4FC /* Pods-alexsocial.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-alexsocial.debug.xcconfig"; path = "Target Support Files/Pods-alexsocial/Pods-alexsocial.debug.xcconfig"; sourceTree = "<group>"; };
 		58AC9006A8343E7178779DEA /* Pods-alexsocial.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-alexsocial.release.xcconfig"; path = "Target Support Files/Pods-alexsocial/Pods-alexsocial.release.xcconfig"; sourceTree = "<group>"; };
@@ -44,6 +45,7 @@
 		13B07FAE1A68108700A75B9A /* alexsocial */ = {
 			isa = PBXGroup;
 			children = (
+				1F71C7E12E8DAF6700564977 /* alexsocial.entitlements */,
 				1FC565192E8938AD003627EC /* GoogleService-Info.plist */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
@@ -292,7 +294,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CODE_SIGN_ENTITLEMENTS = alexsocial/alexsocial.entitlements;
+				CURRENT_PROJECT_VERSION = 32;
+				DEVELOPMENT_TEAM = A972UL7Y6H;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = alexsocial/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -300,13 +304,13 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 3.18;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexapp;
 				PRODUCT_NAME = alexsocial;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -320,20 +324,22 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CODE_SIGN_ENTITLEMENTS = alexsocial/alexsocial.entitlements;
+				CURRENT_PROJECT_VERSION = 32;
+				DEVELOPMENT_TEAM = A972UL7Y6H;
 				INFOPLIST_FILE = alexsocial/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 3.18;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexapp;
 				PRODUCT_NAME = alexsocial;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
