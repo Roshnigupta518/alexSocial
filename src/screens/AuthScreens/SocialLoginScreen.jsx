@@ -13,8 +13,10 @@ import {
 } from 'react-native';
 import ImageConstants from '../../constants/ImageConstants';
 import {colors, fonts, HEIGHT, wp} from '../../constants';
-import auth from '@react-native-firebase/auth';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import { getAuth, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { firebaseApp } from '../../../firebaseConfig';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
 import {SocialLoginRequest} from '../../services/Utills';
 import {
   AppleButton,
@@ -32,6 +34,8 @@ import NoInternetModal from '../../components/NoInternetModal';
 import CustomContainer from '../../components/container';
 import crashlytics from '@react-native-firebase/crashlytics';
 const SocialLoginScreen = ({navigation}) => {
+  const auth = getAuth(firebaseApp);
+
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingFor, setLoadingFor] = useState('');
@@ -92,12 +96,18 @@ const SocialLoginScreen = ({navigation}) => {
       title: 'Continue with Google',
       action: () =>
         onGoogleButtonPress()
-          .then(() => MakeUserLogin(true))
-          .catch(() => {
+          .then(userCredential => {
+            console.log('Google user logged in:', userCredential.user);
+            MakeUserLogin(true);
+          })
+          .catch(err => {
+            console.log('Google login failed:', err);
             setIsLoading(false);
             setLoadingFor('');
           }),
     },
+
+    
     {
       type: 'apple',
       icon: ImageConstants.apple,
@@ -148,18 +158,31 @@ const SocialLoginScreen = ({navigation}) => {
   async function onGoogleButtonPress() {
     setIsLoading(true);
     setLoadingFor('google');
-    // Check if your device supports Google Play
-    await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
-    // Get the users ID token
-    const {idToken} = await GoogleSignin.signIn();
-
-    // Create a Google credential with the token
-    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-
-    // Sign-in the user with the credential
-    return auth().signInWithCredential(googleCredential);
+  
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  
+      const { idToken } = (await GoogleSignin.signIn()).data;
+  
+      if (!idToken) {
+        throw new Error('Google ID Token not found');
+      }
+  
+      const googleCredential = GoogleAuthProvider.credential(idToken);
+  
+      // return userCredential so .then() gets it
+      return await signInWithCredential(auth, googleCredential);
+  
+    } catch (error) {
+      console.error('Google Login Error:', error);
+      throw error; // goes to .catch()
+    } finally {
+      setIsLoading(false);
+      setLoadingFor('');
+    }
   }
-
+  
+  
   async function onFacebookButtonPress() {
     setIsLoading(true);
     setLoadingFor('fb');
@@ -266,46 +289,54 @@ const SocialLoginScreen = ({navigation}) => {
       });
   };
 
-  const MakeUserLogin = async (isGoogle = true) => {
-    let data = {};
+const MakeUserLogin = async (isGoogle = true) => {
+  try {
+    console.log({ isGoogle });
 
-    await GoogleSignin.getCurrentUser().then(({user}) => {
-      Object.assign(data, {
-        name: user?.givenName + ' ' + user?.familyName,
-        email: user?.email,
-        type: isGoogle ? 'google' : 'facebook',
-        device_token: fcmToken || 'token_denied',
-        access_token: user?.id,
-        device_type: Platform.OS == 'android' ? '1' : '2',
-      });
+    const currentUser = await GoogleSignin.getCurrentUser();
 
-      console.log(data, '-----', user);
-    });
+    if (!currentUser || !currentUser.user) {
+      throw new Error('Google user not found');
+    }
 
-    SocialLoginRequest(data)
-      .then(res => {
-        let user = res?.result || {};
+    const user = currentUser.user;
 
-        const updatedUser = Object.assign({}, user, {
-          type: isGoogle ? 'google' : 'facebook',
-        });
-        Toast.success('Login', res?.message);
-        Storage.store('userdata', updatedUser).then(() => {
-          dispatch(userDataAction(updatedUser));
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{name: 'HomeScreen'}],
-            }),
-          );
-        });
-      })
-      .catch(err => {
-        Toast.error('Login', err?.message);
-      });
-  };
+    console.log({ user });
 
-  useEffect(() => {
+    const data = {
+      name: user?.givenName + ' ' + user?.familyName,
+      email: user?.email,
+      type: isGoogle ? 'google' : 'facebook',
+      device_token: fcmToken || 'token_denied',
+      access_token: user?.id,
+      device_type: Platform.OS === 'android' ? '1' : '2',
+    };
+
+    console.log(data, '-----', user);
+
+    const res = await SocialLoginRequest(data);
+    const userResult = res?.result || {};
+
+    const updatedUser = { ...userResult, type: isGoogle ? 'google' : 'facebook' };
+    Toast.success('Login', res?.message);
+
+    await Storage.store('userdata', updatedUser);
+    dispatch(userDataAction(updatedUser));
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'HomeScreen' }],
+      }),
+    );
+
+  } catch (err) {
+    console.error('MakeUserLogin Error:', err);
+    Toast.error('Login', err?.message || 'Something went wrong');
+  }
+};
+
+
+useEffect(() => {
     crashlytics().setCrashlyticsCollectionEnabled(true);
     getFCMToken()
       .then(res => {

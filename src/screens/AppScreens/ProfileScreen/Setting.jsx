@@ -22,11 +22,13 @@ import NoInternetModal from '../../../components/NoInternetModal';
 import NetInfo from '@react-native-community/netinfo';
 import {LoginManager, AccessToken, Settings} from 'react-native-fbsdk-next';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import auth from '@react-native-firebase/auth';
+import { getAuth, signOut } from '@react-native-firebase/auth';
+import { firebaseApp } from '../../../../firebaseConfig';
 import BackHeader from '../../../components/BackHeader';
 import CustomContainer from '../../../components/container';
 
 const ProfileScreen = ({navigation}) => {
+  const auth = getAuth(firebaseApp);
   const [isInternetConnected, setIsInternetConnected] = useState(true);
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -139,10 +141,19 @@ const ProfileScreen = ({navigation}) => {
         LoginManager.logOut();
         await auth().signOut();
       }
-      if (userInfo?.type == 'google') {
-        await GoogleSignin.signOut();
-        await auth().signOut();
+      if (userInfo?.type === 'google') {
+        try {
+          await GoogleSignin.signOut(); 
+          if (auth.currentUser) {
+            await signOut(auth); 
+          }
+          console.log('Google logout successful');
+        } catch (err) {
+          console.error('Google logout error', err);
+        }
       }
+      
+      
     }
     userAgeRef.child(userInfo?.id).remove();
 

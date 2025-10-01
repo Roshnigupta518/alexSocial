@@ -59,6 +59,7 @@ target 'alexsocial' do
   pod 'GTMAppAuth'
   pod 'GTMSessionFetcher'
   pod 'AppAuth'
+  pod 'GoogleSignIn'
 
   # ⬇️ uncomment the permissions you need
 setup_permissions([

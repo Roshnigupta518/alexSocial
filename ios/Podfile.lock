@@ -3626,6 +3626,7 @@ DEPENDENCIES:
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - GoogleDataTransport
+  - GoogleSignIn
   - GoogleUtilities
   - GTMAppAuth
   - GTMSessionFetcher
@@ -4153,6 +4154,6 @@ SPEC CHECKSUMS:
   VisionCamera: 30b358b807324c692064f78385e9a732ce1bebfe
   Yoga: 9b30b783a17681321b52ac507a37219d7d795ace
 
-PODFILE CHECKSUM: 53ad93fcd71820f7f09ffddddfa3083e067658f5
+PODFILE CHECKSUM: 5343b918b2c16af8dbd044efa297bbee19fddd70
 
 COCOAPODS: 1.15.2
