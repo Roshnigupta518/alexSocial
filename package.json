@@ -49,6 +49,7 @@
     "react-native-asset": "^2.1.1",
     "react-native-calendars": "^1.1313.0",
     "react-native-country-codes-picker": "^2.3.5",
+    "react-native-create-thumbnail": "^2.1.1",
     "react-native-device-info": "^14.1.1",
     "react-native-fbsdk-next": "^13.4.1",
     "react-native-flash-message": "^0.4.2",

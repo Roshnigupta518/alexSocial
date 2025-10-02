@@ -18,7 +18,7 @@ import CustomButton from '../../../components/CustomButton';
 import Video from 'react-native-video';
 import Toast from '../../../constants/Toast';
 import {useDispatch, useSelector} from 'react-redux';
-// import * as VideoThumbnails from 'expo-video-thumbnails';
+import { createThumbnail } from "react-native-create-thumbnail";
 import {AddAddressAction} from '../../../redux/Slices/AddAddressSlice';
 import Storage from '../../../constants/Storage';
 import {api, BASE_URL} from '../../../services/WebConstants';
@@ -70,24 +70,52 @@ const MediaReviewScreen = ({navigation, route}) => {
     // Unsubscribe
     return () => unsubscribe();
   }, []);
-  const generateThumbnail = async () => {
-    // try {
-    //   const {uri} = await VideoThumbnails.getThumbnailAsync(
-    //     route?.params?.media?.uri,
-    //     {
-    //       time: 2000,
-    //     },
-    //   );
+  // const generateThumbnail = async () => {
+  //   // try {
+  //   //   const {uri} = await VideoThumbnails.getThumbnailAsync(
+  //   //     route?.params?.media?.uri,
+  //   //     {
+  //   //       time: 2000,
+  //   //     },
+  //   //   );
 
-    //   let fileName = uri?.split('/');
-    //   setVideoThumbnail({
-    //     name: fileName[fileName?.length - 1],
-    //     type: 'image/jpeg',
-    //     uri: uri,
-    //   });
-    // } catch (e) {
-    //   console.warn(e);
-    // }
+  //   //   let fileName = uri?.split('/');
+  //   //   setVideoThumbnail({
+  //   //     name: fileName[fileName?.length - 1],
+  //   //     type: 'image/jpeg',
+  //   //     uri: uri,
+  //   //   });
+  //   // } catch (e) {
+  //   //   console.warn(e);
+  //   // }
+  // };
+
+  const generateThumbnail = async () => {
+    try {
+      const res = await createThumbnail({
+        url: route?.params?.media?.uri,        // "file:///..." path होना चाहिए
+        timeStamp: 1000, // 1 sec frame
+      });
+      console.log("Thumbnail result:", res);
+        
+       // thumbnail file path
+    const thumbUri = res.path;
+
+    // generate filename
+    let fileName = thumbUri?.split('/');
+    fileName = fileName[fileName.length - 1];
+
+    // set in state
+    setVideoThumbnail({
+      name: fileName,
+      type: res.mime,   // "image/jpeg"
+      uri: thumbUri,    // local file path
+    });
+
+    } catch (err) {
+      console.log("Thumbnail error:", err);
+    }
+    
   };
 
   const validateFields = () => {

@@ -74,5 +74,6 @@ export const api = {
   getStory : '/api/v1/user/get-stories?',
   addStory : '/api/v1/user/create-story',
   viewStory : '/api/v1/user/view-story/',
-  likeStory : '/api/v1/user/like-story/'
+  likeStory : '/api/v1/user/like-story/',
+  deleteStory : '/api/v1/user/delete-story/'
 };

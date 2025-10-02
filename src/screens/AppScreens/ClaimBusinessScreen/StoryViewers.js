@@ -15,7 +15,6 @@ import st from "../../../global/styles";
 import ImageConstants from "../../../constants/ImageConstants";
 import { useSelector } from "react-redux";
 import Toast from "../../../constants/Toast";
-// import { DeleteStoryRequest } from "../../../../ios/src/services/Utills";
 import {DeleteStoryRequest} from "../../../../src/services/Utills";
 import InstaThumbnailSlider from "../../../components/InstaThumbnailSlider";
 import NotFoundAnime from "../../../components/NotFoundAnime";

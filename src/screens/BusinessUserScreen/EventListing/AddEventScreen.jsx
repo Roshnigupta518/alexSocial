@@ -192,7 +192,7 @@ const AddEventScreen = ({navigation}) => {
                 }}
                 renderDescription={row => row.description}
                 GooglePlacesDetailsQuery={{
-                  fields: 'geometry',
+                  fields: ['geometry'],
                 }}
                 query={{
                   key: 'AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0',
@@ -218,6 +218,8 @@ const AddEventScreen = ({navigation}) => {
                   'administrative_area_level_3',
                 ]}
                 debounce={200}
+                timeout={20000}
+                keyboardShouldPersistTaps={'handled'}
               />
             </View>
 

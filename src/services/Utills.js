@@ -673,6 +673,23 @@ export const DeleteEventRequest = async (id, data) => {
   });
 };
 
+export const DeleteStoryRequest = async (id, data) => {
+  return await new Promise((resolve, reject) => {
+    try {
+      HttpRequests.deleteAPI(api.deleteStory + id)
+        .then(res => {
+          if (res?.data) resolve(res?.data);
+          else reject(res?.data);
+        })
+        .catch(err => {
+          reject(err?.response?.data);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 export const CreatePasswordRequest = async data => {
   return await new Promise((resolve, reject) => {
     try {

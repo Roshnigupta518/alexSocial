@@ -316,35 +316,35 @@ const AddBusinessScreen = ({ navigation, route }) => {
               listViewDisplayed={true} // true/false/undefined
               fetchDetails={true}
               predefinedPlaces={[]} 
+              
               onPress={(data, details = null) => {
-                setState(prevState => ({
-                  ...prevState,
-                  address: data?.description,
-                  lat: Number(details?.geometry?.location?.lat),
-                  lng: Number(details?.geometry?.location?.lng),
-                  city:
-                    data?.terms?.length > 0
-                      ? data?.terms[data?.terms?.length - 3]?.value
-                      : '',
-                  state:
-                    data?.terms?.length > 0
-                      ? data?.terms[data?.terms?.length - 2]?.value
-                      : '',
-                  country:
-                    data?.terms?.length > 0
-                      ? data?.terms[data?.terms?.length - 1]?.value
-                      : '',
+             
+                const terms = data?.terms || [];
+                const len = terms.length;
+               
+                setState(prev => ({
+                  ...prev,
+                  // input me select ki hui value update ho
+                  address: data?.description || prev.address,
+                  lat: details?.geometry?.location?.lat || prev.lat,
+                  lng: details?.geometry?.location?.lng || prev.lng,
+                  city: len >= 3 ? terms[len - 3].value : '',
+                  state: len >= 2 ? terms[len - 2].value : '',
+                  country: len >= 1 ? terms[len - 1].value : '',
                 }));
               }}
+
+              
               renderDescription={row => row.description}
               GooglePlacesDetailsQuery={{
-                fields: 'geometry',
+                fields: ['geometry'],
               }}
               query={{
                 key: 'AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0',
                 language: 'en',
               }}
               textInputProps={{ placeholderTextColor: colors.gray }}
+             
               styles={{
                 textInput: {
                   backgroundColor: colors.lightPrimaryColor,
@@ -354,6 +354,7 @@ const AddBusinessScreen = ({ navigation, route }) => {
                 },
               }}
               nearbyPlacesAPI="GooglePlacesSearch"
+              keyboardShouldPersistTaps={'handled'}
               GoogleReverseGeocodingQuery={{}}
               GooglePlacesSearchQuery={{
                 rankby: 'distance',
@@ -364,6 +365,7 @@ const AddBusinessScreen = ({ navigation, route }) => {
                 'administrative_area_level_3',
               ]}
               debounce={200}
+              timeout={20000}
             />
           </View>
 

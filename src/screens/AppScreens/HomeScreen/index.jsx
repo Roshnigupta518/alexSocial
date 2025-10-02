@@ -750,7 +750,7 @@ const HomeScreen = ({ navigation, route }) => {
                 avatarSize={60}
                 storyContainerStyle={{ margin: 0, padding: 0 }}
                 progressContainerStyle={{ margin: 0, padding: 0 }}
-                containerStyle={{ marginTop: Platform.OS === 'android' && '-20%', zIndex: 3, }}
+                containerStyle={{ marginTop: Platform.OS === 'android' && '-10%', zIndex: 3, }}
                 closeIconColor='#fff'
                 progressColor={colors.gray}
                 progressActiveColor={colors.primaryColor}

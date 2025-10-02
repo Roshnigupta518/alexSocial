@@ -5,7 +5,7 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator, SafeAreaView, Platform, TextInput, ScrollView, DeviceEventEmitter
+  ActivityIndicator, Platform, TextInput, ScrollView, DeviceEventEmitter
 } from 'react-native';
 import Video from 'react-native-video';
 import BackHeader from '../../../components/BackHeader';
@@ -16,11 +16,12 @@ import Toast from '../../../constants/Toast';
 import useCheckLocation from '../../../hooks/useLocation';
 import CustomButton from '../../../components/CustomButton';
 import { wp, fonts } from '../../../constants';
-// import * as VideoThumbnails from 'expo-video-thumbnails';
+import { createThumbnail } from "react-native-create-thumbnail";
 import { useSelector, useDispatch } from 'react-redux';
 import ImageConstants from '../../../constants/ImageConstants';
 import { clearBusinessAction } from '../../../redux/Slices/TagBusinessSlice';
 import CustomContainer from '../../../components/container';
+import { SafeAreaView } from 'react-native-safe-area-context';
 const StoryPreview = ({ route, navigation }) => {
   const { media } = route.params;
   // console.log({media})
@@ -62,18 +63,31 @@ const StoryPreview = ({ route, navigation }) => {
   };
 
   const generateThumbnail = async () => {
-    // try {
-    //   const { uri } = await VideoThumbnails.getThumbnailAsync(media?.uri, { time: 2000 });
+    try {
+      const res = await createThumbnail({
+        url: media?.uri,        // "file:///..." path होना चाहिए
+        timeStamp: 1000, // 1 sec frame
+      });
+      console.log("Thumbnail result:", res);
+        
+       // thumbnail file path
+    const thumbUri = res.path;
 
-    //   let fileName = uri?.split('/');
-    //   setVideoThumbnail({
-    //     name: fileName[fileName?.length - 1],
-    //     type: 'image/jpeg',
-    //     uri: uri,
-    //   });
-    // } catch (e) {
-    //   console.warn(e);
-    // }
+    // generate filename
+    let fileName = thumbUri?.split('/');
+    fileName = fileName[fileName.length - 1];
+
+    // set in state
+    setVideoThumbnail({
+      name: fileName,
+      type: res.mime,   // "image/jpeg"
+      uri: thumbUri,    // local file path
+    });
+
+    } catch (err) {
+      console.log("Thumbnail error:", err);
+    }
+    
   };
 
   useEffect(() => {
@@ -181,77 +195,6 @@ const StoryPreview = ({ route, navigation }) => {
       setUploading(false);
     }
   };
-
-  // return (
-  //   <View style={styles.flex}>
-  //     <SafeAreaView style={{ zIndex: 3, position: 'absolute' }}>
-  //       <BackHeader />
-  //     </SafeAreaView>
-  //     <ScrollView style={{flex:1}}>
-  //     <View style={styles.container}>
-
-  //       {media.type === 'image' ? (
-  //         <Image source={{ uri: media.uri }} style={styles.preview} />
-  //       ) : (
-  //         <Video
-  //           source={{ uri: media.uri }}
-  //           style={styles.preview}
-  //           controls
-  //           resizeMode="contain"
-  //         />
-  //       )}
-
-  //     </View>
-          
-  //           <View>
-  //             <Text style={styles.inputTitleStyle}>Add Caption</Text>
-
-  //             <TextInput
-  //               style={styles.captionInputStyle}
-  //               multiline={true}
-  //               placeholder="Write your caption..."
-  //               value={caption}
-  //               onChangeText={txt => setCaption(txt)}
-  //             />
-  //           </View>
-
-  //           {/* Tag Business */}
-  //           <TouchableOpacity 
-  //             disabled={businessItem? true : false}
-  //             onPress={() => navigation.navigate('TagBusinessScreen')}
-  //             style={{marginTop: wp(20)}}>
-  //             <Text style={styles.inputTitleStyle}>Add Business</Text>
-
-  //             <View style={styles.inputParentView}>
-  //               <View style={{flex: 1}}>
-  //                 <Text
-  //                   style={{
-  //                     fontFamily: fonts.regular,
-  //                     fontSize: wp(13),
-  //                     color: colors.black,
-  //                   }}>
-  //                   {/* {tagBusinessList?.name} */}
-  //                   {locationState?.name}
-  //                 </Text>
-  //               </View>
-  //               <Image
-  //                 source={ImageConstants.addAccount}
-  //                 style={styles.inputIconStyle}
-  //               />
-  //             </View>
-  //           </TouchableOpacity>
-
-  //     <View style={{ margin: 20 }}>
-  //       <CustomButton
-  //         label="Upload"
-  //         onPress={handleUpload}
-  //         isLoading={uploading}
-  //         disabled={uploading}
-  //       />
-  //     </View>
-  //     </ScrollView>
-  //   </View>
-  // );
 
   return (
     <View style={styles.flex}>

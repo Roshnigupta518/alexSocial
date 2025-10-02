@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {View, Text, SafeAreaView, Image} from 'react-native';
+import {View,  Image, Keyboard} from 'react-native';
 import {colors, wp} from '../../../constants';
 import BackHeader from '../../../components/BackHeader';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
@@ -49,7 +49,7 @@ const GetAddress = ({navigation}) => {
             marginHorizontal: 10,
             marginTop: 30,
           }}>
-          <GooglePlacesAutocomplete
+           <GooglePlacesAutocomplete
             minLength={3} // minimum length of text to search
             placeholder={'Search Address'}
             autoFocus={false}
@@ -68,12 +68,17 @@ const GetAddress = ({navigation}) => {
                   placeId: null,
                 }),
               );
-              navigation.goBack();
+              setTimeout(() => {
+                Keyboard.dismiss();
+                navigation.goBack();
+              }, 300); 
+              
             }}
             renderDescription={row => row.description}
             GooglePlacesDetailsQuery={{
-              fields: 'geometry',
+              fields: ['geometry'], // ✅ fix
             }}
+            keyboardShouldPersistTaps={'handled'}
             query={{
               key: 'AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0',
               language: 'en',
@@ -97,7 +102,10 @@ const GetAddress = ({navigation}) => {
               'administrative_area_level_3',
             ]}
             debounce={200}
-          />
+            timeout={20000}
+          /> 
+
+
           <View style={{ backgroundColor: colors.lightPrimaryColor,height:44,
             }}>
           <Image
