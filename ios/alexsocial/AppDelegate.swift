@@ -3,6 +3,7 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import Firebase
+import GoogleMaps
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,6 +18,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     // Firebase initialization must be inside function body, not in signature
        FirebaseApp.configure()
+    
+    // Google Maps
+       GMSServices.provideAPIKey("AIzaSyCABJJWcr1RWOLV5ur_0bpZuWpayOS1ETY")
     
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)

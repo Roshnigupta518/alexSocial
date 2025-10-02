@@ -40,7 +40,7 @@ target 'alexsocial' do
   )
 
   # Firebase modules will work fine with modular headers now
-  pod 'Firebase'
+  # pod 'Firebase'
   pod 'Firebase/Core'
   pod 'Firebase/Auth'
   pod 'Firebase/Database'
@@ -60,6 +60,8 @@ target 'alexsocial' do
   pod 'GTMSessionFetcher'
   pod 'AppAuth'
   pod 'GoogleSignIn'
+  pod 'GoogleMaps'
+  # pod 'Google-Maps-iOS-Utils'
 
   # ⬇️ uncomment the permissions you need
 setup_permissions([
