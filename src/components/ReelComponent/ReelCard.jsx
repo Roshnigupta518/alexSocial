@@ -42,22 +42,6 @@
       );
     }, [isItemOnFocus]);
 
-    // useEffect(() => {
-    //   console.log("🔥 isStoryOpen in ReelCard:", isStoryOpen);
-    
-    //   if (isStoryOpen) {
-    //     console.log("pause reel if story is open");
-    //     setShouldPlay(false);
-    //   } else {
-    //     console.log("resume reel if story is close");
-    //     setShouldPlay(
-    //       isItemOnFocus && data?.postData?.post?.mimetype === "video/mp4"
-    //     );
-    //   }
-    // }, [isItemOnFocus, isStoryOpen]);
-    
-    
-
     const likePost = async isLike => {
       let likeData = {
         post_id: data?.postData?._id,
@@ -141,12 +125,11 @@
     }
     
     return (
-      <View style={[styles.container,{height:screenHeight}]} key={idx}>
+      <View 
+      style={[styles.container,{height:screenHeight}]} 
+      key={idx} >
         {data?.postData?.post?.mimetype == 'video/mp4' ? (
-        <TouchableOpacity
-        activeOpacity={1}
-        style={{ flex: 1 }}
-      >
+      
         <VideoPlayer
           url={data?.postData?.post?.data}
           shouldPlay={shouldPlay}
@@ -155,7 +138,6 @@
           screenHeight={screenHeight}
           thumbnail={data?.postData?.post_thumbnail}
         />
-      </TouchableOpacity>
         ) : (
           <Image
             source={{

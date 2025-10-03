@@ -18,6 +18,7 @@ const styles = StyleSheet.create({
       position: 'absolute',
       bottom: condition ? '0%' : '4.6%',
       width: WIDTH,
+      zIndex:3
       // height: HEIGHT / 3.2,
     };
   },

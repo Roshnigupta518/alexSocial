@@ -160,7 +160,7 @@ const FollowUserSheet = forwardRef(
           style={styles.imageStyle}
         />
 
-          <View style={styles.buttonWrap}>
+          <View style={[styles.buttonWrap,{marginBottom:20}]}>
             <CustomButton
               label={isFollowed ? 'Unfollow' : 'Follow'}
               isLoading={isLoading}

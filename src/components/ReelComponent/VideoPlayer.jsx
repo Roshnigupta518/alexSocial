@@ -65,10 +65,10 @@ export default function VideoPlayer({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         activeOpacity={1}
         style={{ width: WIDTH, height: screenHeight, alignItems: "center" }}
-        onPress={onMuteClick}>
+        onPress={onMuteClick}> */}
 
         {/* RN Video player component */}
         {!error && url !== "" ? (
@@ -80,13 +80,12 @@ export default function VideoPlayer({
             resizeMode='contain'
             repeat
             muted={shouldMute}
-            // shouldPlay={!shouldPlay}
+            // muted={muted}
             paused={!shouldPlay}
             ignoreSilentSwitch="ignore"
             playInBackground={false}
             playWhenInactive={false}
             poster={thumbnail}
-            posterResizeMode="contain"
             onLoadStart={() => {
               setIsBuffering(true);
               setError(false);
@@ -101,6 +100,7 @@ export default function VideoPlayer({
               setError(true);
               setIsBuffering(false);
             }}
+      pointerEvents="none"
           />
         ):
           <View style={st.center}>
@@ -116,13 +116,27 @@ export default function VideoPlayer({
          </View>
         }
 
+          {/* Overlay for tap */}
+  <TouchableOpacity
+    activeOpacity={1}
+    onPress={onMuteClick}
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: WIDTH,
+      height: screenHeight,
+      zIndex: 2,
+    }}
+  />
+
         {isBuffering && (
           <View style={[styles.loaderOverlay, { width: WIDTH, height: screenHeight }]}>
             <ActivityIndicator size="large" color="#fff" />
           </View>
         )}
 
-      </TouchableOpacity>
+      {/* </TouchableOpacity> */}
     </View>
   );
 }
