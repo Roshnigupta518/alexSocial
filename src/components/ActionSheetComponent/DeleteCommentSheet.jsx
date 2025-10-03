@@ -5,7 +5,6 @@ import {colors, fonts, HEIGHT, WIDTH, wp} from '../../constants';
 import ImageConstants from '../../constants/ImageConstants';
 import CustomButton from '../CustomButton';
 import Toast from '../../constants/Toast';
-import database from '@react-native-firebase/database';
 import {DeleteCommentRequest} from '../../services/Utills';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const DeleteCommentSheet = forwardRef(
