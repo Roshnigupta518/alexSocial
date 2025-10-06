@@ -73,9 +73,9 @@ const DeleteNotificationSheet = forwardRef(
 
           <View
             style={{
-              marginVertical: wp(20),
+              marginTop: wp(20), marginBottom:40
             }}>
-            <CustomButton
+            <CustomButton 
               label="Yes"
               isLoading={isLoading}
               onPress={() => {

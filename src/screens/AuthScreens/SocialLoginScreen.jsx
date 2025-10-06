@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import ImageConstants from '../../constants/ImageConstants';
 import {colors, fonts, HEIGHT, wp} from '../../constants';
-import { getAuth, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithCredential, FacebookAuthProvider } from 'firebase/auth';
 import { firebaseApp } from '../../../firebaseConfig';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 

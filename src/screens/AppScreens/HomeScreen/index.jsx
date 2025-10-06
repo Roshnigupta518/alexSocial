@@ -8,8 +8,9 @@ import {
   Alert,
   BackHandler,
   Image, TouchableOpacity, DeviceEventEmitter,
-  Text, Platform, PermissionsAndroid, AppState, ScrollView, Linking, SafeAreaView
+  Text, Platform, PermissionsAndroid, AppState, ScrollView, Linking
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, HEIGHT, wp } from '../../../constants';
 import ReelHeader from '../../../components/ReelComponent/ReelHeader';
 import ReelCard from '../../../components/ReelComponent/ReelCard';
@@ -750,7 +751,7 @@ const HomeScreen = ({ navigation, route }) => {
                 avatarSize={60}
                 storyContainerStyle={{ margin: 0, padding: 0 }}
                 progressContainerStyle={{ margin: 0, padding: 0 }}
-                containerStyle={{ marginTop: Platform.OS === 'android' && '-10%', zIndex: 3, }}
+                containerStyle={{ marginTop: Platform.OS === 'android' && '-8%', zIndex: 3, }}
                 closeIconColor='#fff'
                 progressColor={colors.gray}
                 progressActiveColor={colors.primaryColor}
@@ -1146,7 +1147,7 @@ const styles = StyleSheet.create({
     // marginLeft: 10, 
     // paddingStart:10,
     position: 'absolute',
-    top: Platform.OS === 'android' ? '13%' : '13%',
+    top: Platform.OS === 'android' ? '7%' : '7%',
     // left:0,
     // right:0
     //  flexDirection: 'row'

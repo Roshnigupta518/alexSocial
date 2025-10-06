@@ -1,5 +1,5 @@
 import React, {forwardRef, useRef, useState} from 'react';
-import {Text, View, StyleSheet, Image} from 'react-native';
+import {Text, View, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import ActionSheet from 'react-native-actions-sheet';
 import {colors, fonts, WIDTH, wp} from '../../../constants';
 import moment from 'moment';
@@ -94,10 +94,36 @@ const TimeSheet = forwardRef(({onSuccess = () => {}}, ref) => {
           </View> */}
 
 <View style={{ alignItems: 'center', backgroundColor: colors.white }}>
-            <CustomButton
+            {/* <CustomButton
               label={selectedTime ? moment(selectedTime).format('hh:mm a') : 'Select Time'}
               onPress={() => setPickerVisible(true)}
-            />
+            /> */}
+
+<TouchableOpacity
+                onPress={() => setPickerVisible(true)}
+                style={{
+                  padding: wp(10),
+                  backgroundColor: colors.lightPrimaryColor,
+                  // flex: 0.47,
+                  borderRadius: 5,
+                  width:'90%',
+                  // flexDirection: 'row',
+                  // alignItems: 'center',
+                  // justifyContent: 'space-between',
+                  // paddingVertical: 12,
+                  marginBottom:5,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: fonts.regular,
+                    fontSize: wp(13),
+                    color: colors.black,
+                  }}>
+                  {selectedTime ? moment(selectedTime).format('hh:mm a') : 'Select Time'}
+                </Text>
+
+                
+              </TouchableOpacity>
 
             <DateTimePickerModal
               isVisible={isPickerVisible}
