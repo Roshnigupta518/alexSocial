@@ -1147,7 +1147,7 @@ const styles = StyleSheet.create({
     // marginLeft: 10, 
     // paddingStart:10,
     position: 'absolute',
-    top: Platform.OS === 'android' ? '7%' : '7%',
+    top: Platform.OS === 'android' ? 50 : 40,
     // left:0,
     // right:0
     //  flexDirection: 'row'

@@ -9,6 +9,7 @@ import CustomBottomTab from './CustomBottomTab';
 import BusinessUserListingScreen from '../screens/BusinessUserScreen/BusinessListing';
 import EventUserListingScreen from '../screens/BusinessUserScreen/EventListing';
 import { SafeAreaView } from "react-native-safe-area-context";
+import MapEvent from '../screens/BusinessUserScreen/MapEvent';
 
 const Tab = createBottomTabNavigator();
 
@@ -27,7 +28,8 @@ function BottomTabStack() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="ChatScreen" component={ChatScreen} />
       <Tab.Screen name="PostMediaScreen" component={PostMediaScreen} />
-      <Tab.Screen name="ExploreScreen" component={ExploreScreen} />
+      {/* <Tab.Screen name="ExploreScreen" component={ExploreScreen} />  */}
+      <Tab.Screen name="ExploreScreen" component={MapEvent} />
       <Tab.Screen name="BusinessScreen" component={BusinessScreen} />
       <Tab.Screen
         name="BusinessUserListingScreen"

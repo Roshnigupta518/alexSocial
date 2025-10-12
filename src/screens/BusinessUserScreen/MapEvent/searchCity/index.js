@@ -1,28 +1,20 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {
-  View,
-  Text,
-  SafeAreaView,
-  TouchableOpacity,
+import { StyleSheet, Text, View,  TouchableOpacity,
   FlatList,
   Image,
-  StyleSheet,
-  Platform,
-} from 'react-native';
-import {colors, fonts, HEIGHT, wp} from '../../../constants';
-import SearchInput from '../../../components/SearchInput';
-import ImageConstants from '../../../constants/ImageConstants';
-import {GetTrendingCitiesRequest} from '../../../services/Utills';
-import Toast from '../../../constants/Toast';
+  Platform, } from 'react-native'
+import React, {useRef, useState, useEffect} from 'react'
+import CustomContainer from '../../../../components/container'
+import { colors,wp, fonts } from '../../../../constants'
+import ImageConstants from '../../../../constants/ImageConstants'
+import { GetTrendingCitiesRequest } from '../../../../services/Utills'
+import Toast from '../../../../constants/Toast'
 import {useDispatch} from 'react-redux';
-import {nearByAction} from '../../../redux/Slices/NearBySlice';
-import Geolocation from '@react-native-community/geolocation';
-import MilesListSheet from '../../../components/ActionSheetComponent/MilesListSheet';
-import NotFoundAnime from '../../../components/NotFoundAnime';
-import { setCityAction } from '../../../redux/Slices/SelectedCitySlice';
-import CustomContainer from '../../../components/container';
+import Geolocation from '@react-native-community/geolocation'
+import MilesListSheet from '../../../../components/ActionSheetComponent/MilesListSheet'
+import NotFoundAnime from '../../../../components/NotFoundAnime'
+import SearchInput from '../../../../components/SearchInput'
 
-const NearByScreen = ({navigation}) => {
+const SearchCity = ({navigation}) => {
   const mileListRef = useRef();
   const dispatch = useDispatch();
   const [searchTxt, setSearchTxt] = useState('');
@@ -34,25 +26,7 @@ const NearByScreen = ({navigation}) => {
       label: 'Near By',
       action: () => mileListRef?.current?.show(),
     },
-    {
-      icon: ImageConstants.globe,
-      label: 'Global',
-      action: () => {
-        cityDataUpdated()
-        dispatch(
-          nearByAction({
-            location_title: 'Global',
-            location_type: 'global',
-            location_coordinates: null,
-            location_distance: null,
-            city: null,
-          }),
-        );
-        navigation.navigate('HomeScreen', {shouldScrollTopReel: true});
-      },
-    },
   ];
-
   const [allCities, setAllCities] = useState([]);
   const [searchedCities, setSearchedCities] = useState([]);
   const [coordinates, setCoordinates] = useState({
@@ -89,10 +63,11 @@ const NearByScreen = ({navigation}) => {
   const _renderFirstList = ({item, index}) => {
     return (
       <View style={styles.firstListView}>
-        <View style={styles.firstRowBorderLine} />
+        {/* <View style={styles.firstRowBorderLine} /> */}
         <TouchableOpacity
           onPress={item?.action}
-          style={styles.firstRowItemStyle}>
+          style={styles.firstRowItemStyle}
+          >
           <Image source={item?.icon} style={styles.imageIconStyle} />
           <Text style={styles.itemLabelStyle}>{item?.label}</Text>
         </TouchableOpacity>
@@ -100,30 +75,25 @@ const NearByScreen = ({navigation}) => {
     );
   };
 
-  const cityDataUpdated = () => {
-    dispatch(setCityAction({
-      locationType:'other'
-    }))
-  }
 
   const _renderCityList = ({item, index}) => {
     return (
       <View style={styles.cityViewStyle}>
-        <View style={styles.firstRowBorderLine} />
+        {/* <View style={styles.firstRowBorderLine} /> */}
         <TouchableOpacity
-          onPress={() => {
-            dispatch(
-              nearByAction({
-                location_title: item?._id,
-                location_type: 'city',
-                location_coordinates: null,
-                location_distance: null,
-                city: item?._id,
-              }),
-            );
-            cityDataUpdated()
-            navigation.navigate('HomeScreen', {shouldScrollTopReel: true});
-          }}
+          // onPress={() => {
+          //   dispatch(
+          //     nearByAction({
+          //       location_title: item?._id,
+          //       location_type: 'city',
+          //       location_coordinates: null,
+          //       location_distance: null,
+          //       city: item?._id,
+          //     }),
+          //   );
+          //   cityDataUpdated()
+          //   navigation.navigate('HomeScreen', {shouldScrollTopReel: true});
+          // }}
           style={styles.firstRowItemStyle}>
           <Image
             source={ImageConstants.location}
@@ -154,7 +124,7 @@ const NearByScreen = ({navigation}) => {
         style={{
           backgroundColor: colors.lightBlack,
           padding: wp(10),
-          marginVertical: 30,
+          // marginVertical: 30,
         }}>
         <Text
           style={{
@@ -172,19 +142,11 @@ const NearByScreen = ({navigation}) => {
     return (
       <FlatList
         data={staticOptions}
-        contentContainerStyle={{
-          marginTop: wp(30),
-        }}
         renderItem={_renderFirstList}
         ListFooterComponent={<CityRenderView />}
       />
     );
   };
-
-  // const searchCityKeyword = txt => {
-  //   let searchedArr = allCities?.filter(item => item?._id?.includes(txt));
-  //   setSearchedCities(txt?.length >= 1 ? [...searchedArr] : [...allCities]);
-  // };
 
   const searchCityKeyword = (txt) => {
     if (!txt || txt.trim().length === 0) {
@@ -200,6 +162,7 @@ const NearByScreen = ({navigation}) => {
   
     setSearchedCities(searchedArr);
   };
+  
 
   useEffect(() => {
     getLocation();
@@ -228,35 +191,35 @@ const NearByScreen = ({navigation}) => {
         <View style={styles.parentListView}>
           <FlatList
             data={searchedCities}
-            contentContainerStyle={{
-              marginTop: wp(30),
-            }}
             renderItem={_renderCityList}
+            ItemSeparatorComponent={()=><View style={styles.firstRowBorderLine}/> }
             ListEmptyComponent={<NotFoundAnime isLoading={isLoading} />}
             ListHeaderComponent={<StaticListRenderingWithTitle />}
-            ListFooterComponent={<View style={{height: 100}} />}
           />
         </View>
       </View>
       <MilesListSheet
         ref={mileListRef}
-        onMileSelect={miles => {
-          dispatch(
-            nearByAction({
-              location_title: `Near me ${miles} miles`,
-              location_type: 'nearme',
-              location_coordinates: coordinates,
-              location_distance: Number(miles),
-              city: null,
-            }),
-          );
-          cityDataUpdated()
-          navigation.navigate('HomeScreen', {shouldScrollTopReel: true});
-        }}
+        // onMileSelect={miles => {
+        //   dispatch(
+        //     nearByAction({
+        //       location_title: `Near me ${miles} miles`,
+        //       location_type: 'nearme',
+        //       location_coordinates: coordinates,
+        //       location_distance: Number(miles),
+        //       city: null,
+        //     }),
+        //   );
+        //   cityDataUpdated()
+        //   navigation.navigate('HomeScreen', {shouldScrollTopReel: true});
+        // }}
       />
     </CustomContainer>
-  );
-};
+  )
+}
+
+export default SearchCity
+
 
 const styles = StyleSheet.create({
   container: {
@@ -327,5 +290,3 @@ const styles = StyleSheet.create({
     marginHorizontal: wp(20),
   },
 });
-
-export default NearByScreen;

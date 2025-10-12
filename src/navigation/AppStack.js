@@ -51,6 +51,9 @@ import StoryPreview from '../screens/AppScreens/ClaimBusinessScreen/StoryPreview
 import TrimScreen from '../screens/AppScreens/ClaimBusinessScreen/TrimScreen';
 import StoryViewers from '../screens/AppScreens/ClaimBusinessScreen/StoryViewers';
 import PostMediaScreen from '../screens/AppScreens/PostMediaScreen';
+import CategoriesFilter from '../screens/BusinessUserScreen/MapEvent/CategoriesFilter' 
+import SearchCity from '../screens/BusinessUserScreen/MapEvent/searchCity'
+
 const Stack = createStackNavigator();
 
 function AppStack({isLoggedIn = false}) {
@@ -146,6 +149,8 @@ function AppStack({isLoggedIn = false}) {
       <Stack.Screen name="StoryPreview" component={StoryPreview} />
       <Stack.Screen name="TrimScreen" component={TrimScreen} />
       <Stack.Screen name="StoryViewers" component={StoryViewers} />
+      <Stack.Screen name="CategoriesFilter" component={CategoriesFilter} />
+      <Stack.Screen name="SearchCity" component={SearchCity} />
       {/*  */}
     </Stack.Navigator>
   );
