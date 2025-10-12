@@ -16,7 +16,7 @@ import crashlytics from '@react-native-firebase/crashlytics';
 import { useSelector } from 'react-redux';
 import NotFoundAnime from '../../../components/NotFoundAnime';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
+import { useFocusEffect } from '@react-navigation/native';
 const ReelViewer = ({route}) => {
 
   const insets = useSafeAreaInsets();
@@ -42,7 +42,7 @@ const ReelViewer = ({route}) => {
   const onDeletePost = params?.onDeletePost;
   const currentIndex = params?.currentIndex;
 
-  console.log({currentIndex})
+  // console.log({currentIndex})
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -78,6 +78,18 @@ const ReelViewer = ({route}) => {
   const _viewabilityConfig = {
     itemVisiblePercentThreshold: 90,
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      // Screen gained focus
+      setIsOnFocusItem(true);
+  
+      return () => {
+        // Screen lost focus (navigated away)
+        setIsOnFocusItem(false);
+      };
+    }, [])
+  );
 
   useEffect(() => {
     if (isFocused && flashListRef.current && postArray.length > 0) {
