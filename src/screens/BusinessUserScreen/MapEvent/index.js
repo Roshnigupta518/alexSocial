@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { colors, HEIGHT, wp } from '../../../constants';
 import st from '../../../global/styles';
 import {
@@ -10,45 +9,102 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  Platform,
-  PermissionsAndroid,
+  ActivityIndicator,
+  Pressable
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ActionSheet, { useScrollHandlers } from 'react-native-actions-sheet';
 import ImageConstants from '../../../constants/ImageConstants';
-
-const ExploreMapScreen = ({navigation}) => {
-  const [location, setLocation] = useState(null);
+import { useLocation } from '../../../hooks/MyLocation';
+import { getAllBusinessCategoryRequest, getPlacesByMapRequest } from '../../../services/Utills';
+import Toast from '../../../constants/Toast';
+import { useSelector } from 'react-redux';
+import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import NotFoundAnime from '../../../components/NotFoundAnime'
+const ExploreMapScreen = ({ navigation, route }) => {
+  // const [location, setLocation] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const actionSheetRef = useRef(null);
+  const [categories, setCategories] = useState([])
+  const [data, setData] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [search, setSearch] = useState()
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isVisited, setIsVisited] = useState(false);
+  const [filteredPlaces, setFilteredPlaces] = useState([]);
+
   const mapRef = useRef(null);
 
+  const panelRef = useRef(null);
+  const bottomSheetRef = useRef(null);
+  const { location, error, loading, locationArea, openLocationSettings, getLocation, permissionHandle } = useLocation();
+  // console.log({ location })
 
-  const categories = ['Food & Drink', 'Hotels', 'Parks', 'Shops', 'Events'];
+  const filterCategoryId = useSelector(state => state.FilterCategorySlice.selectedCategory);
+  const CityMapSlice = useSelector(state => state.CityMapSlice.data)
+
+  console.log({ CityMapSlice, filterCategoryId })
 
   useEffect(() => {
-    const requestPermission = async () => {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) getLocation();
-      } else getLocation();
-    };
-    const getLocation = () => {
-      Geolocation.getCurrentPosition(
-        pos => {
-          const { latitude, longitude } = pos.coords;
-          setLocation({ latitude, longitude });
-        },
-        err => console.log(err),
-      );
-    };
+    const categoryId = filterCategoryId || '';
+    const city = CityMapSlice?.city || '';
 
-    requestPermission();
-  }, []);
+    // only call if one of them is present
+    // if (categoryId || city) {
+      getDataHandle(categoryId, city);
+    // }
+  }, [filterCategoryId, CityMapSlice]);
+
+  const getDataHandle = async (categoryId = '', city = '') => {
+    if (!location || !location.latitude || !location.longitude) {
+      console.log('Skipping API call, location not ready yet');
+      return;
+    }
+
+    setIsLoading(true);
+    let params = `latitude=${location.latitude}&longitude=${location.longitude}`;
+    // let params = `latitude=27.9199132&longitude=-82.8150127`;
+    if (categoryId) params += `&categoryId=${categoryId}`;
+    if (city) params += `&city=${city}`;
+
+    try {
+      const data = await getPlacesByMapRequest(params);
+      if (data?.status) {
+        setData(data.result || []);
+      } else {
+        setData([]);
+        console.log('Map API returned false status:', data);
+      }
+    } catch (err) {
+      console.log('Error fetching map data:', err);
+      setData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  const getCategories = () => {
+    setIsLoading(true);
+    getAllBusinessCategoryRequest()
+      .then(res => {
+        console.log({ res })
+        setCategories(res?.result);
+      })
+      .catch(err => {
+        Toast.error('Business Categories', err?.message);
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    getCategories();
+
+    if (location && location.latitude && location.longitude) {
+      getDataHandle();
+    }
+  }, [location]);
 
 
   useEffect(() => {
@@ -88,11 +144,11 @@ const ExploreMapScreen = ({navigation}) => {
   useEffect(() => {
     if (filteredPlaces.length > 0 && mapRef.current) {
       const coordinates = filteredPlaces.map(place => ({
-        latitude: place.latitude ,
-        longitude: place.longitude ,
+        latitude: place.latitude,
+        longitude: place.longitude,
       }));
       mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: {top: 80, right: 80, bottom: 80, left: 80},
+        edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
         animated: true,
       });
     } else if (location && mapRef.current) {
@@ -106,42 +162,104 @@ const ExploreMapScreen = ({navigation}) => {
     }
   }, [filteredPlaces]);
 
-  
-  const filteredPlaces =
-    selectedCategories.length > 0
-      ? dummyPlaces.filter(p => selectedCategories.includes(p.category))
-      : [];
+  useEffect(() => {
+    if (!mapRef.current || data.length === 0) return;
 
-  // Toggle category selection
-  const toggleCategory = category => {
+    // Convert and filter valid coordinates
+    const coordinates = data
+      .map(p => {
+        const lat = Number(p.latitude);
+        const lng = Number(p.longitude);
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+          return { latitude: lat, longitude: lng };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (coordinates.length === 0) return;
+
+    // Delay fitToCoordinates slightly to ensure map renders first
+    setTimeout(() => {
+      mapRef.current?.fitToCoordinates(coordinates, {
+        edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
+        animated: true,
+      });
+    }, 500);
+  }, [data]);
+
+  useEffect(() => {
+    if (!mapRef.current || filteredPlaces.length === 0) return;
+
+    const coordinates = filteredPlaces.map(p => ({
+      latitude: Number(p.latitude),
+      longitude: Number(p.longitude),
+    }));
+
+    if (coordinates.length > 0) {
+      mapRef.current.fitToCoordinates(coordinates, {
+        edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
+        animated: true,
+      });
+    }
+  }, [filteredPlaces]);
+
+  useEffect(() => {
+    let places = [...data];
+
+    if (selectedCategories.length > 0) {
+      places = places.filter(p =>
+        selectedCategories.includes(
+          typeof p.category === 'object' ? p.category?._id : p.category
+        )
+      );
+    }
+
+    if (search && search.trim().length > 0) {
+      const query = search.trim().toLowerCase();
+      places = places.filter(p =>
+        p.name?.toLowerCase().includes(query)
+      );
+    }
+
+    if (isFollowing) {
+      places = places.filter(p => p.isFollowing === true);
+    }
+
+    if (isVisited) {
+      places = places.filter(p => p.isVisited === true);
+    }
+
+    setFilteredPlaces(places);
+  }, [data, selectedCategories, search, isFollowing, isVisited]);
+
+  const toggleCategory = categoryId => {
     setSelectedCategories(prev => {
-      const exists = prev.includes(category);
-      const updated = exists
-        ? prev.filter(item => item !== category)
-        : [...prev, category];
-      if (updated.length > 0) {
-        actionSheetRef.current?.show();
-      } else {
-        actionSheetRef.current?.hide();
-      }
+      // if same category clicked again, clear selection
+      const isSame = prev[0] === categoryId;
+      const updated = isSame ? [] : [categoryId];
+
+      // fetch data again with new category filter
+      getDataHandle(isSame ? '' : categoryId);
+
       return updated;
     });
   };
-
-  const scrollHandlers = useScrollHandlers('scroll', actionSheetRef);
+  const snapPoints = useMemo(() => [200, '50%'], []);
 
   return (
     <View style={st.container}>
-      {/* Map */}
       {location && (
         <MapView
           ref={mapRef}
           style={st.container}
-          // provider={PROVIDER_GOOGLE}
+          customMapStyle={customMapStyle}
           showsUserLocation
           region={{
             latitude: location.latitude,
             longitude: location.longitude,
+            // latitude: 27.9199132,
+            // longitude: -82.8150127, // ✅ fixed negative longitude
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}>
@@ -149,66 +267,66 @@ const ExploreMapScreen = ({navigation}) => {
             <Marker
               key={place.id}
               coordinate={{
-                latitude: place.latitude,
-                longitude: place.longitude,
+                latitude: Number(place.latitude),
+                longitude: Number(place.longitude),
               }}
               title={place.name}>
               <View style={styles.markerContainer}>
                 <Image
-                  source={{ uri: place.image }}
-                  // source={require('../../../assets/images/appIcon.png')}
+                  source={{ uri: place.image?.[0] || place.banner || place.certificate }}
                   style={styles.markerImage}
                 />
-                <Text style={styles.markerText}>{place.name}</Text>
+                <Text style={styles.markerText} numberOfLines={1} >{place.name}</Text>
               </View>
             </Marker>
+
           ))}
 
         </MapView>
       )}
 
-      {/* Search Bar */}
       <View style={st.searchContainer}>
         <View style={st.searchBox}>
           <Icon name="search" size={20} color="#666" style={{ marginRight: 8 }} />
           <TextInput
             placeholder="Ask Tibbs about places and people"
             placeholderTextColor="#999"
-            style={{ flex: 1, fontSize: 15 }}
+            style={st.errorText}
+            value={search}
+            onChangeText={setSearch}
           />
         </View>
 
-        {/* Filter Chips */}
         <View style={st.filterRow}>
           <FlatList
-            data={['__location__', ...categories]} // 👈 prepend location chip
+            data={['__location__', ...categories]}
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={item => item}
-            contentContainerStyle={{paddingStart:10}}
+            keyExtractor={item => (item === '__location__' ? '__location__' : item._id)}
+            contentContainerStyle={{ paddingStart: 10 }}
             renderItem={({ item }) => {
               if (item === '__location__') {
                 // 👇 location chip
                 return (
                   <View style={st.row}>
-                    <TouchableOpacity style={[st.filterChipSt, {marginLeft:0}]} 
-                    onPress={()=>navigation.navigate('CategoriesFilter')}>
+                    <TouchableOpacity style={[st.filterChipSt, { marginLeft: 0 }]}
+                      onPress={() => navigation.navigate('CategoriesFilter')}>
                       <Icon name='options-outline' size={20} color={colors.white} />
                     </TouchableOpacity>
-                  <TouchableOpacity style={st.locationFilter} onPress={()=>navigation.navigate('SearchCity')} >
-                    <Icon name="location-outline" size={18} color="#000" />
-                    <Text style={st.filterText}>Huzur Tehsil</Text>
-                    <Icon name="chevron-down" size={16} color="#000" />
-                  </TouchableOpacity>
-                
+                    <TouchableOpacity style={st.locationFilter} onPress={() => navigation.navigate('SearchCity')} >
+                      <Icon name="location-outline" size={18} color="#000" />
+                      <Text style={st.filterText}>{CityMapSlice?.location_title}</Text>
+                      <Icon name="chevron-down" size={16} color="#000" />
+                    </TouchableOpacity>
+
                   </View>
                 );
               }
 
-              const isSelected = selectedCategories.includes(item);
+              const isSelected = selectedCategories.includes(item._id);
               return (
                 <TouchableOpacity
-                  onPress={() => toggleCategory(item)}
+                  onPress={() => toggleCategory(item._id)}
                   style={[
                     st.filterChip,
                     isSelected && st.activeChip,
@@ -218,7 +336,7 @@ const ExploreMapScreen = ({navigation}) => {
                       st.errorText,
                       isSelected && st.activeChipText,
                     ]}>
-                    {item}
+                    {item.title}
                   </Text>
                   {isSelected && (
                     <Icon
@@ -235,62 +353,84 @@ const ExploreMapScreen = ({navigation}) => {
         </View>
       </View>
 
-      {/* Bottom Sheet */}
-      <ActionSheet
-        ref={actionSheetRef}
-        gestureEnabled
-        containerStyle={{
-          backgroundColor: '#111',
-          borderTopLeftRadius: 18,
-          borderTopRightRadius: 18,
-        }}
-        indicatorStyle={{ backgroundColor: '#444' }}>
-        <View>
-          <View style={st.row}>
-            <View style={st.filterChipSt}>
-              <Text style={[st.errorText]}>
-                Following
-              </Text>
-            </View>
-            <View style={st.filterChipSt}>
-              <Text style={[st.errorText]}>
-                My Visits
-              </Text>
-            </View>
-          </View>
-          <Text style={[st.errorText, { marginLeft: 15 }]}>
-            {filteredPlaces.length} places
-          </Text>
 
-          <FlatList
-            data={filteredPlaces}
-            {...scrollHandlers}
-            keyExtractor={item => item.id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              padding: 15,
-            }}
-            renderItem={({ item }) => (
-              <View style={st.placeItem}>
-                <Image source={{ uri: item.image }} style={st.placeImage} />
-                <View style={st.placeInfo}>
-                  <Text style={st.errorText}>{item.name}</Text>
-                  <View style={st.ratingRow}>
-                    <Icon name="star" size={12} color="#FFD700" />
-                    <Text style={[st.ratingText,]}>{item.rating}</Text>
-                  </View>
-                  <Text style={st.errorText}>
-                    📷 {item.views}+ location views
-                  </Text>
+      {/* ✅ NEW BottomSheet */}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        backgroundStyle={{ backgroundColor: '#000' }}
+        handleIndicatorStyle={{ backgroundColor: '#888' }}
+      >
+        <BottomSheetFlatList
+          data={filteredPlaces}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: 10 }}
+          ListHeaderComponent={() => (
+            <View style={st.row}>
+              <TouchableOpacity
+                style={[st.filterChipSt, isFollowing && st.activeChip]}
+                onPress={() => setIsFollowing(prev => !prev)}>
+                <Text style={[st.errorText, isFollowing && st.activeChipText]}>
+                  Following
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[st.filterChipSt, isVisited && st.activeChip]}
+                onPress={() => setIsVisited(prev => !prev)}>
+                <Text style={[st.errorText, isVisited && st.activeChipText]}>
+                  My Visits
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+
+          )}
+          renderItem={({ item }) => (
+
+            <Pressable style={st.placeItem} onPress={() => {
+              navigation.navigate('ClaimBusinessScreen', { ...item })
+            }} >
+              <Image
+                source={{ uri: item.image?.[0] || item.banner || item.certificate }}
+                style={st.placeImage}
+              />
+              <View style={st.placeInfo}>
+                <Text style={st.errorText}>{item.name}</Text>
+                <View style={st.ratingRow}>
+                  <Text style={st.ratingText}>Followers: {item.total_followers}</Text>
+                  <Text style={st.ratingText}>Likes: {item.total_likes}</Text>
+
                 </View>
-                <TouchableOpacity>
-                  <Icon name="bookmark-outline" size={20} color="#fff" />
-                </TouchableOpacity>
               </View>
-            )}
-          />
-        </View>
-      </ActionSheet>
+              {/* <TouchableOpacity>
+                     <Icon name="bookmark-outline" size={20} color="#fff" />
+                   </TouchableOpacity> */}
+            </Pressable>
+          )}
+          ListEmptyComponent={() => {
+            if (isLoading) {
+              return (
+                <View style={[st.center, { flex: 1, paddingVertical: 40 }]}>
+                  <ActivityIndicator color={colors.primaryColor} size="large" />
+                </View>
+              );
+            }
+            return (
+              <View style={[st.center, { flex: 1, paddingVertical: 40 }]}>
+                <Text style={[st.errorText, { color: colors.white, fontSize: 16 }]}>
+                  No data found
+                </Text>
+              </View>
+            );
+          }}
+        />
+
+      </BottomSheet>
+
+
     </View>
   );
 };
@@ -299,16 +439,13 @@ export default ExploreMapScreen;
 
 const styles = StyleSheet.create({
   markerContainer: {
-    // alignItems: 'center',
-    // justifyContent: 'center',
   },
   markerImage: {
-    width: 50,
-    height: 50,
+    width: 30,
+    height: 30,
     borderRadius: 50,
-    borderWidth: 5,
+    borderWidth: 2,
     borderColor: colors.primaryColor,
-    // backgroundColor: colors.primaryColor
   },
   markerLabel: {
     backgroundColor: 'rgba(0,0,0,0.7)',
@@ -321,54 +458,15 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 12,
     fontWeight: '600',
+    width: 100
   },
 });
 
-
-const dummyPlaces = [
+const customMapStyle = [
   {
-    id: '1',
-    name: 'Mehfil-e-Punjab Restaurant',
-    category: 'Food & Drink',
-    rating: 4.5,
-    views: 200,
-    image:
-      'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=400&q=60',
-    latitude: 28.6139,
-    longitude: 77.2090,
-  },
-  {
-    id: '2',
-    name: 'Ras Raj Restaurant',
-    category: 'Food & Drink',
-    rating: 3.8,
-    views: 120,
-    image:
-      'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=400&q=60',
-    latitude: 19.0760,
-    longitude: 72.8777,
-  },
-  {
-    id: '3',
-    name: 'Indian Coffee House',
-    category: 'Food & Drink',
-    rating: 3.5,
-    views: 350,
-    image:
-      'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=400&q=60',
-    latitude: 12.9716,
-    longitude: 77.5946,
-  },
-  {
-    id: '4',
-    name: 'Green Park',
-    category: 'Parks',
-    rating: 4.2,
-    views: 80,
-    image:
-      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=400&q=60',
-    latitude: 28.5494,
-    longitude: 77.2001,
-
+    elementType: "labels",
+    stylers: [{ visibility: "off" }],
   },
 ];
+
+

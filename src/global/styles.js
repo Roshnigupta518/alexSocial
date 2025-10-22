@@ -155,7 +155,7 @@ export default StyleSheet.create({
       top: 40,
       width: '100%',
       // paddingHorizontal: 10,
-      zIndex: 10,
+      // zIndex: 10,
     },
     subView: {
       backgroundColor: colors.black,

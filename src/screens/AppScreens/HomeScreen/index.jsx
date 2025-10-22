@@ -57,13 +57,10 @@ const HomeScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   const statusBarHeight = insets.top;
 
-  // const screenHeight = (HEIGHT-tabBarHeight) 
-  // const screenHeight = Platform.OS == 'ios' ? HEIGHT : HEIGHT - tabBarHeight
   const screenHeight = Platform.OS === 'ios'
     ? HEIGHT - tabBarHeight - statusBarHeight
     : HEIGHT - tabBarHeight - statusBarHeight;
 
-  // console.log({tabBarHeight, screenHeight})
   const storyref = useRef(null)
   const prevNearBy = useRef(nearByType);
   const prevLocationTypeRef = useRef(selectedCityData?.locationType);
@@ -152,63 +149,7 @@ const HomeScreen = ({ navigation, route }) => {
   useEffect(() => {
     const listener = DeviceEventEmitter.addListener('STORY_UPLOADED', (newStory) => {
      console.log({newStory})
-
-    //  if (newStory.added_from == '1') {
       getStoryHandle()
-    //  }
-
-      // setStories(prev => {
-      //   const newStories = [...prev];
-        
-      //   if (newStory.added_from === '1') {
-      //     // getStoryHandle()
-      //     // Personal story: keep it at front
-      //     // const yourIndex = newStories.findIndex(s => s.user_id === userInfo.id && s.added_from === '1');
-      //     // if (yourIndex !== -1) {
-      //     //   newStories[yourIndex].stories = [newStory, ...newStories[yourIndex].stories];
-      //     // } else {
-      //     //   const yourStoryObj = {
-      //     //     id: userInfo.id,
-      //     //     user_id: userInfo.id,
-      //     //     name: 'You',
-      //     //     avatarSource: userInfo.profile_picture ? { uri: userInfo.profile_picture } : ImageConstants.business_logo,
-      //     //     stories: [newStory],
-      //     //     isAddButton: true,
-      //     //     added_from: '1',
-      //     //   };
-      //     //   newStories.unshift(yourStoryObj);
-      //     // }
-      //   } else if (newStory.added_from === '2') {
-      //     // Business story: insert immediately after "You" card
-      //     const yourIndex = newStories.findIndex(s => s.user_id === userInfo.id && s.added_from === '1');
-      //     const businessIndex = newStories.findIndex(s => s.user_id === userInfo.id && s.added_from === '2');
-      
-      //     if (businessIndex !== -1) {
-      //       newStories[businessIndex].stories = [newStory, ...newStories[businessIndex].stories];
-      //     } else {
-      //       const businessStoryObj = {
-      //         id: userInfo.id + '_business',
-      //         user_id: userInfo.id,
-      //         name: userInfo.business_name || 'Business',
-      //         avatarSource: userInfo.business_image ? { uri: userInfo.business_image } : ImageConstants.business_logo,
-      //         stories: [newStory],
-      //         isAddButton: false,
-      //         added_from: '2',
-      //       };
-      
-      //       // Insert after "You" card if exists, else at front
-      //       if (yourIndex !== -1) {
-      //         newStories.splice(yourIndex + 1, 0, businessStoryObj);
-      //       } else {
-      //         newStories.unshift(businessStoryObj);
-      //       }
-      //     }
-      //   }
-      
-      //   return newStories;
-      // });
-      
-   
     });
   
     return () => listener.remove();
@@ -332,55 +273,6 @@ const HomeScreen = ({ navigation, route }) => {
       }))
     }));
   };
-
-  // const getStoryHandle = () => {
-  //   if (loading || !hasMore) return;
-
-  //   let url = { skip, limit };
-  //   GetAllStoryRequest()
-  //     .then(res => {
-  //       const dummyFormat = transformApiToDummy(res.result);
-  //       console.log({ res: dummyFormat.length });
-
-  //       // Check if my story exists in API response
-  //       const myStoryFromApi = dummyFormat.find(s => s.id === userInfo.id);
-
-  //       let yourStoryObj = {
-  //         id: userInfo.id,
-  //         user_id: userInfo.id,
-  //         name: 'You',
-  //         avatarSource: userInfo.profile_picture ? { uri: userInfo.profile_picture } : ImageConstants.business_logo,
-  //         stories: myStoryFromApi ? myStoryFromApi.stories : [],
-  //         // isAddButton: !myStoryFromApi || (myStoryFromApi.stories?.length === 0),
-  //         isAddButton: true,
-  //         added_from: '1',
-  //       };
-
-  //       let finalStories;
-  //       if (skip === 0) {
-  //         // Remove my story from API list (to avoid duplicate)
-  //         const others = dummyFormat.filter(s => s.id !== userInfo.id);
-  //         finalStories = [yourStoryObj, ...others];
-  //       } else {
-  //         finalStories = [...stories, ...dummyFormat];
-  //       }
-
-  //       setStories(finalStories);
-
-  //       setSkip(prev => prev + limit);
-  //       if (dummyFormat.length < limit) {
-  //         setHasMore(false);
-  //       }
-  //     })
-  //     .catch(err => {
-  //       if (err?.message) {
-  //         Toast.error('stories', err.message);
-  //       }
-  //     })
-  //     .finally(() => {
-  //       setLoading(false);
-  //     });
-  // };
 
   const getStoryHandle = () => {
     if (loading) return;
@@ -980,14 +872,6 @@ const HomeScreen = ({ navigation, route }) => {
                     }}>
                       Retry
                     </Text>
-                    {/* <Text style={{
-                      fontFamily: fonts.bold,
-                      fontSize: wp(16),
-                      color: colors.primaryColor,
-                      textAlign: 'center',
-                      textDecorationLine:'underline'
-                    }}
-                    onPress={handleLocationServices} >Click here</Text> */}
                   </View>
                 );
               }
@@ -1139,18 +1023,12 @@ const HomeScreen = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    // height: HEIGHT,
     backgroundColor: colors.gray,
   },
   storyContainer: {
     zIndex: 3, 
-    // marginLeft: 10, 
-    // paddingStart:10,
     position: 'absolute',
     top: Platform.OS === 'android' ? 50 : 40,
-    // left:0,
-    // right:0
-    //  flexDirection: 'row'
   },
   profilesty: {
     width: 69,

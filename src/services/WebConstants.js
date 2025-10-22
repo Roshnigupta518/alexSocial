@@ -75,5 +75,6 @@ export const api = {
   addStory : '/api/v1/user/create-story',
   viewStory : '/api/v1/user/view-story/',
   likeStory : '/api/v1/user/like-story/',
-  deleteStory : '/api/v1/user/delete-story/'
+  deleteStory : '/api/v1/user/delete-story/',
+  getPlacesByMap : '/api/v1/user/get_places_by_map?'
 };

@@ -1,62 +1,92 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import BackHeader from '../../../../components/BackHeader';
 import { colors } from '../../../../constants';
 import CustomContainer from '../../../../components/container';
 import st from '../../../../global/styles';
+import { getAllBusinessCategoryRequest } from '../../../../services/Utills';
+import Toast from '../../../../constants/Toast';
+import NotFoundAnime from '../../../../components/NotFoundAnime';
+import { clearSelectedCategoryId, setSelectedCategoryId } from '../../../../redux/Slices/FilterCategory';
+import { useDispatch, useSelector } from 'react-redux';
 
-const categories = [
-  'Restaurant',
-  'Travel',
-  'Shopping',
-  'Cafe, Coffee, Tea House',
-  'Bars',
-  'Parks',
-  'Arts and Entertainment',
-];
+const FilterScreen = ({ navigation }) => {
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categories, setCategories] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
-const FilterScreen = () => {
-  const [selectedCategory, setSelectedCategory] = useState('Travel');
+  const dispatch = useDispatch();
+  const filterCategoryId = useSelector(state => state.FilterCategorySlice.selectedCategory);
+
+console.log({filterCategoryId})
+  const getCategories = () => {
+    setIsLoading(true);
+    getAllBusinessCategoryRequest()
+      .then(res => {
+        // console.log({res})
+        setCategories(res?.result);
+      })
+      .catch(err => {
+        Toast.error('Business Categories', err?.message);
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  const handleClearFilters = () => {
+    // setSelectedCategory(null);
+    dispatch(clearSelectedCategoryId(null))
+  };
+
+  useEffect(() => {
+    getCategories();
+  }, [])
 
   return (
-   <CustomContainer>
+    <CustomContainer>
       <BackHeader label='Select a filter for Noida' />
-       <View style={st.pd20}>
-      {/* Categories */}
-      <View>
-        <View style={styles.sectionHeader}>
-          <Icon name="storefront-outline" size={18} color={colors.black} />
-          <Text style={st.labelStyle}>  Categories</Text>
-        </View>
-
         <FlatList
           data={categories}
-          keyExtractor={(item) => item}
+          contentContainerStyle={[st.pd20, st.flex]}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.optionRow}
-              onPress={() => setSelectedCategory(item)}>
-              <Text style={styles.filterText}>{item}</Text>
+              onPress={() =>
+              dispatch(setSelectedCategoryId(item._id))
+                }>
+              <Text style={styles.filterText}>{item.title}</Text>
               <View style={styles.radioOuter}>
-                {selectedCategory === item && <View style={styles.radioInner} />}
+                {filterCategoryId === item._id && <View style={styles.radioInner} />}
               </View>
             </TouchableOpacity>
           )}
+          ListHeaderComponent={() => (
+            <View style={styles.sectionHeader}>
+              <Icon name="storefront-outline" size={18} color={colors.black} />
+              <Text style={st.labelStyle}>  Categories</Text>
+            </View>
+          )}
+          ListEmptyComponent={()=><NotFoundAnime isLoading={isLoading} />}
+         
         />
-      </View>
-      </View>
 
       <View style={styles.bottomButtons}>
-        <TouchableOpacity style={styles.clearBtn}>
-          <Text style={st.errorText}>Clear Filters (1)</Text>
+        <TouchableOpacity style={styles.clearBtn} onPress={() => handleClearFilters()} >
+          <Text style={st.errorText}> {filterCategoryId ? 'Clear Filters (1)' : 'Clear Filters'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.showBtn}>
+        <TouchableOpacity style={[styles.showBtn, { opacity: filterCategoryId === null ? 0.6 : 1 }]}
+          disabled={filterCategoryId === null}
+          // onPress={() => navigation.goBack()}
+          onPress={() => {
+            // dispatch(setSelectedCategoryId(selectedCategory))
+            navigation.navigate('ExploreScreen')
+          }}>
           <Text style={st.filterText}>Show Results</Text>
         </TouchableOpacity>
       </View>
-     
-      </CustomContainer>
+
+    </CustomContainer>
   );
 };
 
@@ -94,13 +124,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderTopWidth: 0.5,
     borderTopColor: '#333',
-    position:'absolute',
-    bottom:0
+    // position: 'absolute',
+    // bottom: 0
   },
   clearBtn: {
     flex: 1,
     alignItems: 'center',
-    justifyContent:'center'
+    justifyContent: 'center'
   },
   showBtn: {
     flex: 1,
@@ -109,8 +139,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     margin: 8,
-    paddingVertical:5,
-    maxWidth:150
+    paddingVertical: 5,
+    maxWidth: 150
   },
 });
 

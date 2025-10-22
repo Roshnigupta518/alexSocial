@@ -13,6 +13,7 @@ import Geolocation from '@react-native-community/geolocation'
 import MilesListSheet from '../../../../components/ActionSheetComponent/MilesListSheet'
 import NotFoundAnime from '../../../../components/NotFoundAnime'
 import SearchInput from '../../../../components/SearchInput'
+import { CityMapAction } from '../../../../redux/Slices/CityMapSlice'
 
 const SearchCity = ({navigation}) => {
   const mileListRef = useRef();
@@ -25,6 +26,22 @@ const SearchCity = ({navigation}) => {
       icon: ImageConstants.location,
       label: 'Near By',
       action: () => mileListRef?.current?.show(),
+    },
+    {
+      icon: ImageConstants.globe,
+      label: 'All',
+      action: () => {
+        dispatch(
+          CityMapAction({
+            location_title: 'All',
+            location_type: 'all',
+            location_coordinates: null,
+            location_distance: null,
+            city: null,
+          }),
+        );
+        navigation.goBack();
+      },
     },
   ];
   const [allCities, setAllCities] = useState([]);
@@ -81,19 +98,19 @@ const SearchCity = ({navigation}) => {
       <View style={styles.cityViewStyle}>
         {/* <View style={styles.firstRowBorderLine} /> */}
         <TouchableOpacity
-          // onPress={() => {
-          //   dispatch(
-          //     nearByAction({
-          //       location_title: item?._id,
-          //       location_type: 'city',
-          //       location_coordinates: null,
-          //       location_distance: null,
-          //       city: item?._id,
-          //     }),
-          //   );
-          //   cityDataUpdated()
-          //   navigation.navigate('HomeScreen', {shouldScrollTopReel: true});
-          // }}
+          onPress={() => {
+            dispatch(
+              CityMapAction({
+                location_title: item?._id,
+                location_type: 'city',
+                location_coordinates: null,
+                location_distance: null,
+                city: item?._id,
+              }),
+            );
+            // cityDataUpdated()
+            navigation.navigate('ExploreScreen');
+          }}
           style={styles.firstRowItemStyle}>
           <Image
             source={ImageConstants.location}
@@ -144,6 +161,7 @@ const SearchCity = ({navigation}) => {
         data={staticOptions}
         renderItem={_renderFirstList}
         ListFooterComponent={<CityRenderView />}
+        ItemSeparatorComponent={()=><View style={styles.firstRowBorderLine} />}
       />
     );
   };
@@ -200,19 +218,19 @@ const SearchCity = ({navigation}) => {
       </View>
       <MilesListSheet
         ref={mileListRef}
-        // onMileSelect={miles => {
-        //   dispatch(
-        //     nearByAction({
-        //       location_title: `Near me ${miles} miles`,
-        //       location_type: 'nearme',
-        //       location_coordinates: coordinates,
-        //       location_distance: Number(miles),
-        //       city: null,
-        //     }),
-        //   );
+        onMileSelect={miles => {
+          dispatch(
+            CityMapAction({
+              location_title: `Near me ${miles} miles`,
+              location_type: 'nearme',
+              location_coordinates: coordinates,
+              location_distance: Number(miles),
+              city: null,
+            }),
+          );
         //   cityDataUpdated()
-        //   navigation.navigate('HomeScreen', {shouldScrollTopReel: true});
-        // }}
+          navigation.navigate('ExploreScreen');
+        }}
       />
     </CustomContainer>
   )
@@ -235,7 +253,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Platform.OS == 'android' ? wp(20) : 0,
+    marginTop: Platform.OS == 'android' ? wp(20) : wp(20),
     marginHorizontal: 10,
   },
 

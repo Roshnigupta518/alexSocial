@@ -47,7 +47,6 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
   const follow = route?.params || {};
   const place_id = follow.place_id || follow._id;
   const name = follow.name || '';
-
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState(null);
   const [isClaimed, setIsClaimed] = useState(false);
@@ -92,10 +91,23 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
     GetBusinessDetailById(place_id || '')
       .then(res => {
         setData(res?.result || []);
-        console.log('businessv result', res?.result)
+        console.log('businessv result', res)
         const objId = res?.result?._id;
+        const userId = res?.result?.user_id;
         const isValidObjectId = id => /^[a-f\d]{24}$/i.test(id);
-        setIsClaimed(isValidObjectId(objId));
+        // setIsClaimed(isValidObjectId(objId));
+
+       let claimStatus = false;
+
+       if (isValidObjectId(objId)) {
+        if (userId) {
+          claimStatus = true;
+        } else {
+          claimStatus = false;
+        }
+      }
+
+       setIsClaimed(claimStatus);
 
         const temp = [];
         res?.result?.postData?.forEach(item => {
@@ -336,9 +348,9 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
             source={data?.banner ? { uri: data?.banner } : ImageConstants.business_banner}
             style={{ height: HEIGHT / 4, width: WIDTH }}
           >
-            <SafeAreaView>
+            
               <BackHeader />
-            </SafeAreaView>
+            
 
             <View style={[st.cir_pos, { zIndex: 2 }]}>
               <TouchableOpacity style={st.circle} onPress={handleShare}>

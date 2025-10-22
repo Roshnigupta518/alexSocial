@@ -1168,6 +1168,23 @@ export const getMyBusinessListRequest = async () => {
   });
 };
 
+export const getPlacesByMapRequest = async (data) => {
+  return await new Promise((resolve, reject) => {
+    try {
+      HttpRequests.getAPI(api.getPlacesByMap+data)
+        .then(res => {
+          if (res?.data) resolve(res?.data);
+          else reject(res?.data);
+        })
+        .catch(err => {
+          reject(err?.response?.data);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 export const updateProfileRequest = async data => {
   return await new Promise((resolve, reject) => {
     try {

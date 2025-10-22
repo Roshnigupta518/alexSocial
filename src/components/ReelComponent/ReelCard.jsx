@@ -123,7 +123,6 @@
       });
     }
     }
-    
     return (
       <View 
       style={[styles.container,{height:screenHeight}]} 
