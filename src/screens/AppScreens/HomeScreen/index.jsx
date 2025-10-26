@@ -1028,7 +1028,7 @@ const styles = StyleSheet.create({
   storyContainer: {
     zIndex: 3, 
     position: 'absolute',
-    top: Platform.OS === 'android' ? 50 : 40,
+    top: Platform.OS === 'android' ? "8%" : 40,
   },
   profilesty: {
     width: 69,

@@ -2,7 +2,7 @@ import {createSlice} from '@reduxjs/toolkit';
 
 const initialState = {
   data: {
-    location_title: 'All',
+    location_title: 'Current city',
     location_type: 'all',
     location_coordinates: null,
     location_distance: null,

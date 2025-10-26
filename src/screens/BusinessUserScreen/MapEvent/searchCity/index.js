@@ -29,11 +29,11 @@ const SearchCity = ({navigation}) => {
     },
     {
       icon: ImageConstants.globe,
-      label: 'All',
+      label: 'Current city',
       action: () => {
         dispatch(
           CityMapAction({
-            location_title: 'All',
+            location_title: 'Current city',
             location_type: 'all',
             location_coordinates: null,
             location_distance: null,
