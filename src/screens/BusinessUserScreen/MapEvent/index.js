@@ -35,6 +35,8 @@ const ExploreMapScreen = ({ navigation, route }) => {
   const [isVisited, setIsVisited] = useState(false);
   const [filteredPlaces, setFilteredPlaces] = useState([]);
   const [isCatLoading, setIsCatLoading] = useState(false)
+  const [showMapContent, setShowMapContent] = useState(true);
+
 
   const mapRef = useRef(null);
   const prevCityRef = useRef(CityMapSlice?.city);
@@ -55,9 +57,10 @@ const ExploreMapScreen = ({ navigation, route }) => {
         prevCityRef.current = city;
 
         // ✅ clear old data instantly to avoid flicker
-        setData([]);
-        setFilteredPlaces([]);
+        // setData([]);
+        // setFilteredPlaces([]);
         setIsLoading(true);
+        setShowMapContent(false)
 
         getDataHandle(categoryId, city);
 
@@ -107,7 +110,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
     try {
       const data = await getPlacesByMapRequest(params);
       if (data?.status) {
-        console.log({data:data.result})
+        console.log({ data: data.result })
         // setData(data.result || []);
         const normalizedData = data.result.map(p => ({
           ...p,
@@ -118,8 +121,12 @@ const ExploreMapScreen = ({ navigation, route }) => {
             ? Number(p.loc.coordinates[0])
             : Number(p.longitude),
         }));
-        console.log({normalizedData})
+        console.log({ normalizedData })
         setData(normalizedData || []);
+        setTimeout(() => {
+          setShowMapContent(true); // 👈 reveal after data updated
+          setIsLoading(false);
+        }, 300);
       } else {
         setData([]);
         console.log('Map API returned false status:', data);
@@ -251,7 +258,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
     if (search && search.trim().length > 0) {
       const query = search.trim().toLowerCase();
       places = places.filter(p => {
-        const name = p.name || p.title || ''; 
+        const name = p.name || p.title || '';
         return name.toLowerCase().includes(query);
       });
     }
@@ -271,7 +278,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     if (!mapRef.current) return;
-  
+
     mapRef.current.animateToRegion({
       latitude: filteredPlaces[0]?.latitude || location.latitude,
       longitude: filteredPlaces[0]?.longitude || location.longitude,
@@ -279,7 +286,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
       longitudeDelta: 0.08,
     }, 500);
   }, [filteredPlaces]);
-  
+
 
   const toggleCategory = categoryId => {
     setSelectedCategories(prev => {
@@ -299,56 +306,56 @@ const ExploreMapScreen = ({ navigation, route }) => {
   return (
     <View style={st.container}>
       {location && (
-      <MapView
-        ref={mapRef}
-        style={st.container}
-        customMapStyle={customMapStyle}
-        showsUserLocation
-        region={{
-          latitude: location?.latitude || 0,
-          longitude: location?.longitude || 0,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}>
+        <MapView
+          ref={mapRef}
+          style={st.container}
+          customMapStyle={customMapStyle}
+          showsUserLocation
+          region={{
+            latitude: location?.latitude || 0,
+            longitude: location?.longitude || 0,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}>
 
-        {filteredPlaces.map(place => {
-          const lat = place.latitude;
-          const lng = place.longitude;
-          if (!lat || !lng) return null; // skip marker if no coordinates
+          {showMapContent && filteredPlaces.map(place => {
+            const lat = place.latitude;
+            const lng = place.longitude;
+            if (!lat || !lng) return null; // skip marker if no coordinates
 
-          const imageUri =
-            place.source === 'google' && place.photos?.[0]
-              ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
-              : place.image?.[0] || place.banner || place.certificate || null;
+            const imageUri =
+              place.source === 'google' && place.photos?.[0]
+                ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
+                : place.image?.[0] || place.banner || place.certificate || null;
 
-          return (
-            <Marker
-              // key={place.id}
-              key={`${place.id}-${search || ''}-${selectedCategories || ''}-${isFollowing}-${isVisited}`}
-              coordinate={{ latitude: lat, longitude: lng }}
-              title={place.name}
-              anchor={{ x: 0.5, y: 0.5 }}
+            return (
+              <Marker
+                // key={place.id}
+                key={`${place.id}-${search || ''}-${selectedCategories || ''}-${isFollowing}-${isVisited}`}
+                coordinate={{ latitude: lat, longitude: lng }}
+                title={place.name}
+                anchor={{ x: 0.5, y: 0.5 }}
               // tracksViewChanges={false} 
-            >
-              {imageUri && (
-                <View style={styles.markerContainer}>
-                  <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo} 
-                  style={styles.markerImage}
-                  resizeMode='cover'
-                  onError={() => console.log('❌ image failed for:', imageUri)}
-                   />
-                  <Text style={styles.markerText} numberOfLines={1}>
-                    {place.name}
-                  </Text>
-                </View>
-              )}
-            </Marker>
-          );
-        })}
+              >
+                {imageUri && (
+                  <View style={styles.markerContainer}>
+                    <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo}
+                      style={styles.markerImage}
+                      resizeMode='cover'
+                      onError={() => console.log('❌ image failed for:', imageUri)}
+                    />
+                    <Text style={styles.markerText} numberOfLines={1}>
+                      {place.name}
+                    </Text>
+                  </View>
+                )}
+              </Marker>
+            );
+          })}
 
 
-      </MapView>
-      )} 
+        </MapView>
+      )}
 
       <View style={st.searchContainer}>
         <View style={st.searchBox}>
@@ -431,7 +438,8 @@ const ExploreMapScreen = ({ navigation, route }) => {
         handleIndicatorStyle={{ backgroundColor: '#888' }}
       >
         <BottomSheetFlatList
-          data={filteredPlaces}
+          // data={filteredPlaces}
+          data={showMapContent ? filteredPlaces : []}
           keyExtractor={item => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 10 }}
@@ -519,6 +527,17 @@ const ExploreMapScreen = ({ navigation, route }) => {
           <ActivityIndicator color={colors.primaryColor} size="large" />
         </View>}
 
+      {!showMapContent && (
+        <View style={[StyleSheet.absoluteFill, {
+          backgroundColor: colors.black,
+          justifyContent: 'center',
+          alignItems: 'center',
+          opacity: 0.5
+        }]}>
+          <ActivityIndicator size="large" color={colors.primaryColor} />
+        </View>
+      )}
+
     </View>
   );
 };
@@ -558,5 +577,3 @@ const customMapStyle = [
     stylers: [{ visibility: "off" }],
   },
 ];
-
-
