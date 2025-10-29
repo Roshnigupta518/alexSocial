@@ -45,7 +45,16 @@ import CustomContainer from '../../../components/container';
 
 const ClaimBusinessScreen = ({ navigation, route }) => {
   const follow = route?.params || {};
-  const place_id = follow.place_id || follow._id;
+  console.log({follow})
+  const place_id =
+  follow?.source === 'google'
+    ? follow?.place_id
+    : follow?.source === 'local'
+    ? follow?._id
+    : follow?.place_id && follow.place_id.trim() !== ''
+    ? follow.place_id
+    : follow?._id;
+
   const name = follow.name || '';
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState(null);

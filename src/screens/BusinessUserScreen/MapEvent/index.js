@@ -18,41 +18,49 @@ import ImageConstants from '../../../constants/ImageConstants';
 import { useLocation } from '../../../hooks/MyLocation';
 import { getAllBusinessCategoryRequest, getPlacesByMapRequest } from '../../../services/Utills';
 import Toast from '../../../constants/Toast';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import Base64Image from '../../../components/Base64Image';
 import StarRating from '../../../components/StarRating';
 import { useFocusEffect } from '@react-navigation/native';
+import { CityMapAction } from '../../../redux/Slices/CityMapSlice';
 
 const ExploreMapScreen = ({ navigation, route }) => {
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState();
   const [categories, setCategories] = useState([])
   const [data, setData] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState()
   const [isFollowing, setIsFollowing] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [filteredPlaces, setFilteredPlaces] = useState([]);
+  const [isCatLoading, setIsCatLoading] = useState(false)
 
   const mapRef = useRef(null);
   const prevCityRef = useRef(CityMapSlice?.city);
-
+  const dispatch = useDispatch()
   const bottomSheetRef = useRef(null);
   const { location, error, loading, locationArea, openLocationSettings, getLocation, permissionHandle } = useLocation();
 
   const filterCategoryId = useSelector(state => state.FilterCategorySlice.selectedCategory);
   const CityMapSlice = useSelector(state => state.CityMapSlice.data)
-
+  console.log({ CityMapSlice })
   useFocusEffect(
     React.useCallback(() => {
       const categoryId = filterCategoryId || '';
       const city = CityMapSlice?.city || '';
-  
+
       // Only fetch + move map when the city actually changed
       if (prevCityRef.current !== city) {
         prevCityRef.current = city;
+
+        // ✅ clear old data instantly to avoid flicker
+        setData([]);
+        setFilteredPlaces([]);
+        setIsLoading(true);
+
         getDataHandle(categoryId, city);
-  
+
         // Optional smooth move to new city
         setTimeout(() => {
           if (mapRef.current && location) {
@@ -67,10 +75,12 @@ const ExploreMapScreen = ({ navigation, route }) => {
       } else if (filterCategoryId) {
         // Category filter changed → only refresh data, no map jump
         getDataHandle(categoryId, city);
+      } else {
+        getDataHandle(categoryId, city);
       }
     }, [filterCategoryId, CityMapSlice?.city])
   );
-  
+
   const getDataHandle = async (categoryId = '', city = '') => {
     if (!location || !location.latitude || !location.longitude) {
       console.log('Skipping API call, location not ready yet');
@@ -84,11 +94,10 @@ const ExploreMapScreen = ({ navigation, route }) => {
     if (city) {
       params = `city=${city}`;
     } else {
-      // ✅ If city not provided → always include lat/lon
-      // const latitude = location?.latitude ;
-      // const longitude = location?.longitude ;
-      const latitude = 27.9199132;
-      const longitude = -82.8150127;
+      const latitude = location?.latitude;
+      const longitude = location?.longitude;
+      // const latitude = 27.9199132;
+      // const longitude = -82.8150127;
 
       params = `latitude=${latitude}&longitude=${longitude}`;
     }
@@ -98,6 +107,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
     try {
       const data = await getPlacesByMapRequest(params);
       if (data?.status) {
+        console.log({data:data.result})
         // setData(data.result || []);
         const normalizedData = data.result.map(p => ({
           ...p,
@@ -108,6 +118,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
             ? Number(p.loc.coordinates[0])
             : Number(p.longitude),
         }));
+        console.log({normalizedData})
         setData(normalizedData || []);
       } else {
         setData([]);
@@ -117,12 +128,14 @@ const ExploreMapScreen = ({ navigation, route }) => {
       console.log('Error fetching map data:', err);
       setData([]);
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 600)
     }
   };
 
   const getCategories = () => {
-    setIsLoading(true);
+    setIsCatLoading(true);
     getAllBusinessCategoryRequest()
       .then(res => {
         console.log({ res })
@@ -131,17 +144,24 @@ const ExploreMapScreen = ({ navigation, route }) => {
       .catch(err => {
         Toast.error('Business Categories', err?.message);
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => setIsCatLoading(false));
   };
 
   useEffect(() => {
     getCategories();
+  }, []);
 
-    if (location && location.latitude && location.longitude) {
-      getDataHandle();
+  useEffect(() => {
+    if (!location || !location.latitude || !location.longitude) return;
+
+    const city = CityMapSlice?.city || '';
+    const categoryId = filterCategoryId || '';
+
+    // if city already handled in useFocusEffect → skip duplicate call
+    if (prevCityRef.current === city) {
+      getDataHandle(categoryId, city);
     }
-  }, [location]);
-
+  }, [filterCategoryId, location]);
 
   useEffect(() => {
     if (mapRef.current) {
@@ -200,12 +220,12 @@ const ExploreMapScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     if (!mapRef.current || filteredPlaces.length === 0) return;
-  
+
     const coordinates = filteredPlaces.map(p => ({
       latitude: Number(p.latitude),
       longitude: Number(p.longitude),
     }));
-  
+
     if (coordinates.length > 0) {
       clearTimeout(mapRef.current._fitTimeout);
       mapRef.current._fitTimeout = setTimeout(() => {
@@ -216,23 +236,22 @@ const ExploreMapScreen = ({ navigation, route }) => {
       }, 300);
     }
   }, [filteredPlaces]);
-  
+
 
   useEffect(() => {
+    setFilteredPlaces([]);
     let places = [...data];
 
-    if (selectedCategories.length > 0) {
+    if (selectedCategories) {
       places = places.filter(p =>
-        selectedCategories.includes(
-          typeof p.category === 'object' ? p.category?._id : p.category
-        )
+        p.category_id == selectedCategories
       );
     }
 
     if (search && search.trim().length > 0) {
       const query = search.trim().toLowerCase();
       places = places.filter(p => {
-        const name = p.name || p.title || ''; // for google/local
+        const name = p.name || p.title || ''; 
         return name.toLowerCase().includes(query);
       });
     }
@@ -250,67 +269,86 @@ const ExploreMapScreen = ({ navigation, route }) => {
     console.log({ places })
   }, [data, selectedCategories, search, isFollowing, isVisited]);
 
+  useEffect(() => {
+    if (!mapRef.current) return;
+  
+    mapRef.current.animateToRegion({
+      latitude: filteredPlaces[0]?.latitude || location.latitude,
+      longitude: filteredPlaces[0]?.longitude || location.longitude,
+      latitudeDelta: 0.08,
+      longitudeDelta: 0.08,
+    }, 500);
+  }, [filteredPlaces]);
+  
+
   const toggleCategory = categoryId => {
     setSelectedCategories(prev => {
-      // if same category clicked again, clear selection
-      const isSame = prev[0] === categoryId;
-      const updated = isSame ? [] : [categoryId];
+      const isSame = prev === categoryId;
+      const updated = isSame ? '' : categoryId;
 
-      // fetch data again with new category filter
-      getDataHandle(isSame ? '' : categoryId);
+      // ✅ Always include the active city in the API call
+      const currentCity = CityMapSlice?.city || '';
+      getDataHandle(isSame ? '' : categoryId, currentCity);
 
       return updated;
     });
   };
+
   const snapPoints = useMemo(() => [200, '50%'], []);
 
   return (
     <View style={st.container}>
-      {!isLoading && location && (
-        <MapView
-          ref={mapRef}
-          style={st.container}
-          customMapStyle={customMapStyle}
-          showsUserLocation
-          region={{
-            latitude: location.latitude,
-            longitude: location.longitude,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}>
+      {location && (
+      <MapView
+        ref={mapRef}
+        style={st.container}
+        customMapStyle={customMapStyle}
+        showsUserLocation
+        region={{
+          latitude: location?.latitude || 0,
+          longitude: location?.longitude || 0,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        }}>
 
-          {filteredPlaces.map(place => {
-            const lat = place.latitude;
-            const lng = place.longitude;
-            if (!lat || !lng) return null; // skip marker if no coordinates
+        {filteredPlaces.map(place => {
+          const lat = place.latitude;
+          const lng = place.longitude;
+          if (!lat || !lng) return null; // skip marker if no coordinates
 
-            const imageUri =
-              place.source === 'google' && place.photos?.[0]
-                ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
-                : place.image?.[0] || place.banner || place.certificate || null;
+          const imageUri =
+            place.source === 'google' && place.photos?.[0]
+              ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
+              : place.image?.[0] || place.banner || place.certificate || null;
 
-            return (
-              <Marker
-                key={place.id}
-                coordinate={{ latitude: lat, longitude: lng }}
-                title={place.name}
-                icon={null}
-              >
-                {imageUri && (
-                  <View style={styles.markerContainer}>
-                    <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo} style={styles.markerImage} />
-                    <Text style={styles.markerText} numberOfLines={1}>
-                      {place.name}
-                    </Text>
-                  </View>
-                )}
-              </Marker>
-            );
-          })}
+          return (
+            <Marker
+              // key={place.id}
+              key={`${place.id}-${search || ''}-${selectedCategories || ''}-${isFollowing}-${isVisited}`}
+              coordinate={{ latitude: lat, longitude: lng }}
+              title={place.name}
+              anchor={{ x: 0.5, y: 0.5 }}
+              // tracksViewChanges={false} 
+            >
+              {imageUri && (
+                <View style={styles.markerContainer}>
+                  <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo} 
+                  style={styles.markerImage}
+                  resizeMode='cover'
+                  onError={() => console.log('❌ image failed for:', imageUri)}
+                   />
+                  <Text style={styles.markerText} numberOfLines={1}>
+                    {place.name}
+                  </Text>
+                </View>
+              )}
+            </Marker>
+          );
+        })}
 
 
-        </MapView>
-      )}
+      </MapView>
+      )} 
 
       <View style={st.searchContainer}>
         <View style={st.searchBox}>
@@ -353,22 +391,22 @@ const ExploreMapScreen = ({ navigation, route }) => {
                 );
               }
 
-              const isSelected = selectedCategories.includes(item._id);
+              // const isSelected = selectedCategories.includes(item._id);
               return (
                 <TouchableOpacity
                   onPress={() => toggleCategory(item._id)}
                   style={[
                     st.filterChip,
-                    isSelected && st.activeChip,
+                    item._id === selectedCategories && st.activeChip,
                   ]}>
                   <Text
                     style={[
                       st.errorText,
-                      isSelected && st.activeChipText,
+                      item._id === selectedCategories && st.activeChipText,
                     ]}>
                     {item.title}
                   </Text>
-                  {isSelected && (
+                  {item._id === selectedCategories && (
                     <Icon
                       name="close"
                       size={14}
@@ -416,7 +454,9 @@ const ExploreMapScreen = ({ navigation, route }) => {
                   </Text>
                 </TouchableOpacity>
               </View>
-              <Text style={[st.errorText]}>     {filteredPlaces?.length} Places</Text>
+              {!isLoading &&
+                <Text style={[st.errorText]}>     {filteredPlaces?.length} Places</Text>
+              }
             </View>
 
 
@@ -474,7 +514,10 @@ const ExploreMapScreen = ({ navigation, route }) => {
         />
 
       </BottomSheet>
-
+      {isCatLoading &&
+        <View style={[st.center]}>
+          <ActivityIndicator color={colors.primaryColor} size="large" />
+        </View>}
 
     </View>
   );
@@ -492,6 +535,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 2,
     borderColor: colors.primaryColor,
+    backgroundColor: colors.white
   },
   markerLabel: {
     backgroundColor: 'rgba(0,0,0,0.7)',
