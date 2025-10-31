@@ -39,13 +39,19 @@ const ExploreMapScreen = ({ navigation, route }) => {
 
 
   const mapRef = useRef(null);
-  const prevCityRef = useRef(CityMapSlice?.city);
   const dispatch = useDispatch()
   const bottomSheetRef = useRef(null);
+  const fitTimeoutRef = useRef(null);   // safe timeout holder
+const [mapReady, setMapReady] = useState(false); // flag when MapView fully mounted
+
+
   const { location, error, loading, locationArea, openLocationSettings, getLocation, permissionHandle } = useLocation();
 
   const filterCategoryId = useSelector(state => state.FilterCategorySlice.selectedCategory);
   const CityMapSlice = useSelector(state => state.CityMapSlice.data)
+  const prevCityRef = useRef(CityMapSlice?.city);
+
+
   console.log({ CityMapSlice })
   useFocusEffect(
     React.useCallback(() => {
@@ -204,47 +210,95 @@ const ExploreMapScreen = ({ navigation, route }) => {
     }
   }, [selectedCategories]);
 
+  // useEffect(() => {
+  //   if (filteredPlaces.length > 0 && mapRef.current) {
+  //     const coordinates = filteredPlaces.map(place => ({
+  //       latitude: place.latitude,
+  //       longitude: place.longitude,
+  //     }));
+  //     mapRef.current.fitToCoordinates(coordinates, {
+  //       edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
+  //       animated: true,
+  //     });
+  //   } else if (location && mapRef.current) {
+  //     // reset back to current user location
+  //     mapRef.current.animateToRegion({
+  //       latitude: location.latitude,
+  //       longitude: location.longitude,
+  //       latitudeDelta: 0.05,
+  //       longitudeDelta: 0.05,
+  //     });
+  //   }
+  // }, [filteredPlaces]);
+
+  // useEffect(() => {
+  //   if (!mapRef.current || filteredPlaces.length === 0) return;
+
+  //   const coordinates = filteredPlaces.map(p => ({
+  //     latitude: Number(p.latitude),
+  //     longitude: Number(p.longitude),
+  //   }));
+
+  //   if (coordinates.length > 0) {
+  //     clearTimeout(mapRef.current._fitTimeout);
+  //     mapRef.current._fitTimeout = setTimeout(() => {
+  //       mapRef.current.fitToCoordinates(coordinates, {
+  //         edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
+  //         animated: true,
+  //       });
+  //     }, 300);
+  //   }
+  // }, [filteredPlaces]);
+
+
+ 
   useEffect(() => {
-    if (filteredPlaces.length > 0 && mapRef.current) {
-      const coordinates = filteredPlaces.map(place => ({
-        latitude: place.latitude,
-        longitude: place.longitude,
-      }));
-      mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
-        animated: true,
-      });
-    } else if (location && mapRef.current) {
-      // reset back to current user location
-      mapRef.current.animateToRegion({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      });
-    }
-  }, [filteredPlaces]);
-
-  useEffect(() => {
-    if (!mapRef.current || filteredPlaces.length === 0) return;
-
-    const coordinates = filteredPlaces.map(p => ({
-      latitude: Number(p.latitude),
-      longitude: Number(p.longitude),
-    }));
-
-    if (coordinates.length > 0) {
-      clearTimeout(mapRef.current._fitTimeout);
-      mapRef.current._fitTimeout = setTimeout(() => {
-        mapRef.current.fitToCoordinates(coordinates, {
-          edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
-          animated: true,
-        });
-      }, 300);
-    }
-  }, [filteredPlaces]);
-
-
+    if (!mapReady || !mapRef.current) return; // ✅ don’t call map until ready
+  
+    const hasPlaces = Array.isArray(filteredPlaces) && filteredPlaces.length > 0;
+  
+    // clear pending timeouts
+    if (fitTimeoutRef.current) clearTimeout(fitTimeoutRef.current);
+  
+    fitTimeoutRef.current = setTimeout(() => {
+      try {
+        if (hasPlaces) {
+          const coordinates = filteredPlaces
+            .filter(p => p?.latitude && p?.longitude)
+            .map(p => ({
+              latitude: Number(p.latitude),
+              longitude: Number(p.longitude),
+            }));
+  
+          if (coordinates.length === 0) return;
+  
+          mapRef.current?.fitToCoordinates(coordinates, {
+            edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
+            animated: true,
+          });
+        } else if (location?.latitude && location?.longitude) {
+          mapRef.current?.animateToRegion(
+            {
+              latitude: location.latitude,
+              longitude: location.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            },
+            500,
+          );
+        }
+      } catch (err) {
+        console.log('❌ Safe map move prevented crash:', err);
+      }
+    }, 300);
+  
+    // cleanup
+    return () => {
+      if (fitTimeoutRef.current) clearTimeout(fitTimeoutRef.current);
+    };
+  }, [filteredPlaces, mapReady]);
+  
+ 
   useEffect(() => {
     setFilteredPlaces([]);
     let places = [...data];
@@ -311,6 +365,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
           style={st.container}
           customMapStyle={customMapStyle}
           showsUserLocation
+          onMapReady={() => setMapReady(true)}
           region={{
             latitude: location?.latitude || 0,
             longitude: location?.longitude || 0,
@@ -440,9 +495,10 @@ const ExploreMapScreen = ({ navigation, route }) => {
         <BottomSheetFlatList
           // data={filteredPlaces}
           data={showMapContent ? filteredPlaces : []}
-          keyExtractor={item => item.id}
+          // keyExtractor={item => item.id}
+          keyExtractor={ (item, idx) => item.id || item._id || String(idx) }
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 10 }}
+          contentContainerStyle={{ padding: 10 }} 
           ListHeaderComponent={() => (
             <View>
               <View style={st.row}>
