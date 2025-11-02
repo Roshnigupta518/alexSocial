@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image, FlatList, StyleSheet, Text } from 'react-native';
 import { colors } from '../../constants';
+import ImageConstants from '../../constants/ImageConstants';
 // 🔑 Reusable Google Photo Component
 const GooglePlaceImage = ({ photos = [], maxWidth = 30, style }) => {
   if (!photos || photos.length === 0) {
@@ -39,7 +40,7 @@ const getPhotoUrl = (photoRef) => {
       renderItem={({ item }) => {
         return(
         <Image
-          source={{ uri: getPhotoUrl(item) }}
+          source={getPhotoUrl(item) ? { uri: getPhotoUrl(item) } : ImageConstants.business_logo}
           style={[styles.image, style]}
           resizeMode="cover"
         />

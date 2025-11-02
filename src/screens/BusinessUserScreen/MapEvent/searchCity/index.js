@@ -22,18 +22,18 @@ const SearchCity = ({navigation}) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const staticOptions = [
-    {
-      icon: ImageConstants.location,
-      label: 'Near By',
-      action: () => mileListRef?.current?.show(),
-    },
+    // {
+    //   icon: ImageConstants.location,
+    //   label: 'Near By',
+    //   action: () => mileListRef?.current?.show(),
+    // },
     {
       icon: ImageConstants.globe,
-      label: 'Current city',
+      label: 'Current Location',
       action: () => {
         dispatch(
           CityMapAction({
-            location_title: 'Current city',
+            location_title: 'Current Location',
             location_type: 'all',
             location_coordinates: null,
             location_distance: null,
