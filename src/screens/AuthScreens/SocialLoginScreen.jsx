@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import ImageConstants from '../../constants/ImageConstants';
 import {colors, fonts, HEIGHT, wp} from '../../constants';
-import { getAuth, GoogleAuthProvider, signInWithCredential, FacebookAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithCredential, FacebookAuthProvider, OAuthProvider } from 'firebase/auth';
 import { firebaseApp } from '../../../firebaseConfig';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
@@ -115,6 +115,12 @@ const SocialLoginScreen = ({navigation}) => {
       action: () =>
         onAppleButtonPress()
           .then(res => {
+            console.log({res})
+            if (!res) {
+              // 🚫 Skip API call when Apple Sign-In was cancelled or failed
+              console.log('Apple Sign-In cancelled or failed — skipping API call');
+              return;
+            }
             MakeAppleLoginUser(res);
           })
           .catch(() => {
@@ -155,48 +161,114 @@ const SocialLoginScreen = ({navigation}) => {
   //   return auth().signInWithCredential(appleCredential);
   // }
 
+  // async function onAppleButtonPress() {
+  //   try {
+  //     setIsLoading(true);
+  //     setLoadingFor('apple');
+  
+  //     // 1️⃣ Start the Apple sign-in request
+  //     const appleAuthRequestResponse = await appleAuth.performRequest({
+  //       requestedOperation: appleAuth.Operation.LOGIN,
+  //       requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+  //     });
+  
+  //     // 2️⃣ Ensure identityToken is returned
+  //     if (!appleAuthRequestResponse.identityToken) {
+  //       setIsLoading(false);
+  //       setLoadingFor('');
+  //       throw new Error('Apple Sign-In failed - no identity token returned');
+  //     }
+  
+  //     const { identityToken, nonce } = appleAuthRequestResponse;
+  
+  //     // 3️⃣ Create a Firebase credential using OAuthProvider
+  //     const appleCredential = OAuthProvider.credential({
+  //       idToken: identityToken,
+  //       rawNonce: nonce,
+  //     });
+  
+  //     // 4️⃣ Sign in the user with Firebase
+  //     const userCredential = await signInWithCredential(auth, appleCredential);
+  //     console.log('Apple user logged in:', userCredential.user);
+  
+  //     setIsLoading(false);
+  //     setLoadingFor('');
+
+  //     console.log({userCredential})
+  
+  //     // 5️⃣ Call your function to handle backend / Redux login
+  //     // MakeAppleLoginUser(userCredential.user);
+  
+  //   } catch (err) {
+  //     setIsLoading(false);
+  //     setLoadingFor('');
+  //     // console.error('Apple Login Error:', err);
+
+  //       // ✅ Handle cancellation specifically
+  //   if (
+  //     err?.code === appleAuth.Error.CANCELED ||
+  //     err?.message?.includes('error 1000') ||
+  //     err?.message?.includes('AuthorizationError')
+  //   ) {
+  //     console.log('Apple Sign-In cancelled by user');
+  //     return;
+  //   }
+
+  //   // ❌ Any other genuine errors
+  //   console.error('Apple Login Error:', err);
+  //   Toast.error('Login', 'Apple login failed. Please try again.');
+
+  //   }
+  // }
+
   async function onAppleButtonPress() {
     try {
       setIsLoading(true);
       setLoadingFor('apple');
   
-      // 1️⃣ Start the Apple sign-in request
       const appleAuthRequestResponse = await appleAuth.performRequest({
         requestedOperation: appleAuth.Operation.LOGIN,
         requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
       });
   
-      // 2️⃣ Ensure identityToken is returned
       if (!appleAuthRequestResponse.identityToken) {
         setIsLoading(false);
         setLoadingFor('');
-        throw new Error('Apple Sign-In failed - no identity token returned');
+        console.log('User cancelled or no token returned');
+        return null; // 🚫 Return null instead of throwing error
       }
-  
+     console.log({appleAuthRequestResponse})
       const { identityToken, nonce } = appleAuthRequestResponse;
-  
-      // 3️⃣ Create a Firebase credential using OAuthProvider
       const appleCredential = OAuthProvider.credential({
         idToken: identityToken,
         rawNonce: nonce,
       });
-  
-      // 4️⃣ Sign in the user with Firebase
+     
       const userCredential = await signInWithCredential(auth, appleCredential);
-      console.log('Apple user logged in:', userCredential.user);
-  
+      console.log({userCredential})
       setIsLoading(false);
       setLoadingFor('');
-  
-      // 5️⃣ Call your function to handle backend / Redux login
-      MakeAppleLoginUser(userCredential.user);
+      return userCredential; // ✅ Return this so .then(res) gets a valid value
   
     } catch (err) {
       setIsLoading(false);
       setLoadingFor('');
+  
+      if (
+        err?.code === appleAuth.Error.CANCELED ||
+        err?.message?.includes('error 1000') ||
+        err?.message?.includes('AuthorizationError')
+      ) {
+        console.log('Apple Sign-In cancelled by user');
+        return null; // ✅ Return null so no API call happens
+      }
+  
       console.error('Apple Login Error:', err);
+      Toast.error('Login', 'Apple login failed. Please try again.');
+      return null;
     }
   }
+  
 
   async function onGoogleButtonPress() {
     setIsLoading(true);

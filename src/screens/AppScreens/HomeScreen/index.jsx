@@ -16,7 +16,7 @@ import ReelHeader from '../../../components/ReelComponent/ReelHeader';
 import ReelCard from '../../../components/ReelComponent/ReelCard';
 import { useIsFocused } from '@react-navigation/native';
 import CommentListSheet from '../../../components/ActionSheetComponent/CommentListSheet';
-import { GetAllPostsRequest, GetAllStoryRequest, likeStoryRequest, makeStorySeenRequest } from '../../../services/Utills';
+import { GetAllPostsRequest, GetAllStoryRequest, GetMyProfileRequest, likeStoryRequest, makeStorySeenRequest, updateProfileRequest } from '../../../services/Utills';
 import Toast from '../../../constants/Toast';
 import { useDispatch, useSelector } from 'react-redux';
 import ShareSheet from '../../../components/ActionSheetComponent/ShareSheet';
@@ -38,6 +38,8 @@ import { ChangeMuteAction } from '../../../redux/Slices/VideoMuteSlice';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ReadMore from '@fawazahmed/react-native-read-more';
+import { userDataAction } from '../../../redux/Slices/UserInfoSlice';
+import Storage from '../../../constants/Storage';
 
 const staticValues = {
   skip: 0,
@@ -52,6 +54,8 @@ const HomeScreen = ({ navigation, route }) => {
   const selectedCityData = useSelector(state => state.SelectedCitySlice?.data);
   const reelIndex = useSelector(state => state.ReelIndexSlice?.data);
   const userInfo = useSelector(state => state.UserInfoSlice.data);
+
+  console.log({userInfo})
 
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
@@ -604,6 +608,61 @@ const HomeScreen = ({ navigation, route }) => {
       Linking.openSettings()
     }
   }
+
+  const syncUserProfile = async () => {
+    try {
+      const res = await GetMyProfileRequest();
+      let data = { ...res?.result };
+     console.log('my profile data', data)
+      // Keep id & token from existing userInfo
+      Object.assign(data, {
+        id: userInfo?.id,
+        token: userInfo?.token,
+      });
+      // 2️⃣ Prepare payload for submit
+      let formData = new FormData();
+      // if (imageData != null) {
+      //   formData.append('profile_picture', imageData);
+      // }
+  
+      formData.append('anonymous_name', data?.anonymous_name || '');
+      formData.append('name', data?.name || '');
+      formData.append('instagram', data?.socialLinks?.instagram || '');
+      formData.append('twitter', data?.socialLinks?.twitter || '');
+      formData.append('tiktok', data?.socialLinks?.tiktok || '');
+      formData.append('facebook', data?.socialLinks?.facebook || '');
+      formData.append('youtube', data?.socialLinks?.youtube || '');
+      formData.append('address', data?.address || '');
+      formData.append('city', data?.city || '');
+      formData.append('zip', data?.zip || '');
+      formData.append('state', data?.state || '');
+      formData.append('bio', data?.bio || '');
+      formData.append('phone', data?.phone || '');
+      formData.append('isd', data?.isd || '');
+      formData.append('longitude', location?.longitude || 0);
+      formData.append('latitude', location?.latitude || 0);
+  
+      // 3️⃣ Submit updated profile
+      const updateRes = await updateProfileRequest(formData);
+      console.log({updateRes})
+      // Toast.success('Profile', updateRes?.message);
+  
+      // 4️⃣ Save updated data to local storage + redux
+      await Storage.store('userdata', data);
+      dispatch(userDataAction(data));
+  
+    } catch (err) {
+      // Toast.error('Profile Sync', err?.message);
+      console.log('Profile sync error:', err);
+    } finally {
+      // setIsLoading(false);
+    }
+  };
+
+  useEffect(()=>{
+    syncUserProfile()
+  },[location])
+  
 
   return (
     <>

@@ -1,5 +1,5 @@
   import React, {useCallback, useEffect, useState, memo} from 'react';
-  import {View, Text, Image, TouchableOpacity} from 'react-native';
+  import {View, Text, Image, TouchableOpacity, ScrollView} from 'react-native';
   import styles from './ReelStyle/ReelCard.Style';
   import VideoPlayer from './VideoPlayer';
   import ImageConstants from '../../constants/ImageConstants';
@@ -35,7 +35,7 @@
     const [isSaved, setIsSaved] = useState(data?.isSaved || false);
     const [shouldPlay, setShouldPlay] = useState(isItemOnFocus);
     const [muteIconVisible, setMuteIconVisible] = useState(false);
-    
+
     useEffect(() => {
       setShouldPlay(
         isItemOnFocus && data?.postData?.post?.mimetype == 'video/mp4',
@@ -289,6 +289,7 @@
                 flexWrap: 'wrap',
                 flexDirection: 'row',
               }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {data?.postData?.taggedUsers.map((item, index) => {
                 return (
                   <TouchableOpacity
@@ -310,6 +311,7 @@
                   </TouchableOpacity>
                 );
               })}
+              </ScrollView>
             </View>
           )}
           <View

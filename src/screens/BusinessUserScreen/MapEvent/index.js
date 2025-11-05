@@ -338,6 +338,8 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
                 ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
                 : place.image?.[0] || place.banner || place.certificate || null;
 
+                console.log('ggole hgvghvhb ==>', place.source === 'google' && imageUri)
+
             return (
               <Marker
                 // key={place.id}
@@ -347,7 +349,7 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
                 anchor={{ x: 0.5, y: 0.5 }}
               // tracksViewChanges={false} 
               >
-                {imageUri && (
+              {/* {imageUri && ( */}
                   <View style={styles.markerContainer}>
                     <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo}
                       style={styles.markerImage}
@@ -358,7 +360,7 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
                       {place.name}
                     </Text>
                   </View>
-                )}
+                {/* )} */}
               </Marker>
             );
           })}
@@ -584,8 +586,29 @@ const styles = StyleSheet.create({
 });
 
 const customMapStyle = [
+  // {
+  //   elementType: "labels",
+  //   stylers: [{ visibility: "off" }],
+  // },
+
+//  // Hide all POIs first
+  // {
+  //   featureType: "poi",
+  //   stylers: [{ visibility: "off" }]
+  // },
+//   // Hide medical (hospitals)
   {
-    elementType: "labels",
-    stylers: [{ visibility: "off" }],
+    featureType: "poi.medical",
+    stylers: [{ visibility: "off" }]
   },
+//   // Hide petrol pumps
+  // {
+  //   featureType: "poi.gas_station",
+  //   stylers: [{ visibility: "off" }]
+  // },
+//   // Optional: hide transit stops, etc.
+//   {
+//     featureType: "transit",
+//     stylers: [{ visibility: "off" }]
+//   }
 ];
