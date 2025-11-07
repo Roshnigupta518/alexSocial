@@ -151,9 +151,10 @@ export default StyleSheet.create({
     color: colors.white, },
 
     searchContainer: {
-      position: 'absolute',
-      top: 40,
-      width: '100%',
+      marginTop:wp(20)
+      // position: 'absolute',
+      // top: 40,
+      // width: '100%',
       // paddingHorizontal: 10,
       // zIndex: 10,
     },

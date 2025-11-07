@@ -435,10 +435,10 @@ export const GetMyProfileRequest = async () => {
   });
 };
 
-export const GetUserPostsRequest = async data => {
+export const GetUserPostsRequest = async (data, skip = 0, limit = 5) => {
   return await new Promise((resolve, reject) => {
     try {
-      HttpRequests.getAPI(api.getUsersPosts + data)
+      HttpRequests.getAPI(`${api.getUsersPosts}${data}?skip=${skip}&limit=${limit}`)
         .then(res => {
           if (res?.data) resolve(res?.data);
           else reject(res?.data);

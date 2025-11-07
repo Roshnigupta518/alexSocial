@@ -1,32 +1,33 @@
-import { StyleSheet, Text, View,  TouchableOpacity,
+import {
+  StyleSheet, Text, View, TouchableOpacity,
   FlatList,
   Image,
-  Platform, } from 'react-native'
-import React, {useRef, useState, useEffect} from 'react'
+  Platform,
+} from 'react-native'
+import React, { useRef, useState, useEffect } from 'react'
 import CustomContainer from '../../../../components/container'
-import { colors,wp, fonts } from '../../../../constants'
+import { colors, wp, fonts } from '../../../../constants'
 import ImageConstants from '../../../../constants/ImageConstants'
 import { GetTrendingCitiesRequest } from '../../../../services/Utills'
 import Toast from '../../../../constants/Toast'
-import {useDispatch} from 'react-redux';
-import Geolocation from '@react-native-community/geolocation'
-import MilesListSheet from '../../../../components/ActionSheetComponent/MilesListSheet'
+import { useDispatch } from 'react-redux';
 import NotFoundAnime from '../../../../components/NotFoundAnime'
 import SearchInput from '../../../../components/SearchInput'
 import { CityMapAction } from '../../../../redux/Slices/CityMapSlice'
 
-const SearchCity = ({navigation}) => {
-  const mileListRef = useRef();
+const SearchCity = ({ navigation }) => {
   const dispatch = useDispatch();
   const [searchTxt, setSearchTxt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [filteredCities, setFilteredCities] = useState([]);
+  const [googleResults, setGoogleResults] = useState([]);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [allCities, setAllCities] = useState([]);
+  const [searchedCities, setSearchedCities] = useState([]);
+
+  const GOOGLE_API_KEY = 'AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0';
 
   const staticOptions = [
-    // {
-    //   icon: ImageConstants.location,
-    //   label: 'Near By',
-    //   action: () => mileListRef?.current?.show(),
-    // },
     {
       icon: ImageConstants.globe,
       label: 'Current Location',
@@ -44,25 +45,7 @@ const SearchCity = ({navigation}) => {
       },
     },
   ];
-  const [allCities, setAllCities] = useState([]);
-  const [searchedCities, setSearchedCities] = useState([]);
-  const [coordinates, setCoordinates] = useState({
-    latitude: null,
-    longitude: null,
-  });
 
-  const getLocation = () => {
-    try {
-      Geolocation.getCurrentPosition(info => {
-        setCoordinates({
-          latitude: info?.coords?.latitude,
-          longitude: info?.coords?.longitude,
-        });
-      });
-    } catch (err) {
-      console.log('err:', err);
-    }
-  };
 
   const getCities = () => {
     setIsLoading(true);
@@ -77,14 +60,13 @@ const SearchCity = ({navigation}) => {
       .finally(() => setIsLoading(false));
   };
 
-  const _renderFirstList = ({item, index}) => {
+  const _renderFirstList = ({ item, index }) => {
     return (
       <View style={styles.firstListView}>
-        {/* <View style={styles.firstRowBorderLine} /> */}
         <TouchableOpacity
           onPress={item?.action}
           style={styles.firstRowItemStyle}
-          >
+        >
           <Image source={item?.icon} style={styles.imageIconStyle} />
           <Text style={styles.itemLabelStyle}>{item?.label}</Text>
         </TouchableOpacity>
@@ -92,25 +74,11 @@ const SearchCity = ({navigation}) => {
     );
   };
 
-
-  const _renderCityList = ({item, index}) => {
+  const _renderCityList = ({ item, index }) => {
     return (
       <View style={styles.cityViewStyle}>
-        {/* <View style={styles.firstRowBorderLine} /> */}
         <TouchableOpacity
-          onPress={() => {
-            dispatch(
-              CityMapAction({
-                location_title: item?._id,
-                location_type: 'city',
-                location_coordinates: null,
-                location_distance: null,
-                city: item?._id,
-              }),
-            );
-            // cityDataUpdated()
-            navigation.navigate('ExploreScreen');
-          }}
+          onPress={() => handleSelectCity(item?._id)}
           style={styles.firstRowItemStyle}>
           <Image
             source={ImageConstants.location}
@@ -135,13 +103,39 @@ const SearchCity = ({navigation}) => {
     );
   };
 
+  const renderGoogleCity = ({ item }) => (
+    <View style={styles.cityViewStyle}>
+      <TouchableOpacity
+        onPress={() => handleSelectCity(item?.structured_formatting?.main_text)}
+        style={styles.firstRowItemStyle}>
+        <Image
+          source={ImageConstants.location}
+          style={{
+            height: wp(30),
+            width: wp(30),
+            resizeMode: 'contain',
+            tintColor: colors.black,
+          }}
+        />
+        <Text
+          style={{
+            fontFamily: fonts.medium,
+            fontSize: wp(18),
+            color: colors.black,
+            marginLeft: 20,
+          }}>
+          {item?.description}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const CityRenderView = () => {
     return (
       <View
         style={{
           backgroundColor: colors.lightBlack,
           padding: wp(10),
-          // marginVertical: 30,
         }}>
         <Text
           style={{
@@ -161,31 +155,71 @@ const SearchCity = ({navigation}) => {
         data={staticOptions}
         renderItem={_renderFirstList}
         ListFooterComponent={<CityRenderView />}
-        ItemSeparatorComponent={()=><View style={styles.firstRowBorderLine} />}
+        ItemSeparatorComponent={() => <View style={styles.firstRowBorderLine} />}
       />
     );
   };
 
-  const searchCityKeyword = (txt) => {
-    if (!txt || txt.trim().length === 0) {
-      setSearchedCities(allCities);
-      return;
-    }
-  
-    const keyword = txt.toLowerCase().trim();
-  
-    const searchedArr = allCities?.filter((item) => {
-      return item?._id?.toLowerCase().includes(keyword);
-    });
-  
-    setSearchedCities(searchedArr);
-  };
-  
-
   useEffect(() => {
-    getLocation();
     getCities();
   }, []);
+
+  const handleSearch = async txt => {
+    setSearchTxt(txt);
+    if (!txt.trim()) {
+      setFilteredCities(allCities);
+      setGoogleResults([]);
+      return;
+    }
+
+    const keyword = txt.toLowerCase();
+    const filtered = allCities.filter(city =>
+      city?._id?.toLowerCase().includes(keyword),
+    );
+
+    if (filtered.length > 0) {
+      setFilteredCities(filtered);
+      setGoogleResults([]);
+    } else {
+      setFilteredCities([]);
+      await searchFromGoogle(txt);
+    }
+  };
+
+  const searchFromGoogle = async text => {
+    try {
+      setLoadingGoogle(true);
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+          text,
+        )}&types=(cities)&key=${GOOGLE_API_KEY}`,
+      );
+      const data = await response.json();
+      if (data?.status === 'OK') {
+        setGoogleResults(data?.predictions || []);
+        console.log({ predictions: data?.predictions })
+      } else {
+        setGoogleResults([]);
+      }
+    } catch (error) {
+      console.log('Google search error:', error);
+    } finally {
+      setLoadingGoogle(false);
+    }
+  };
+
+  const handleSelectCity = cityName => {
+    dispatch(
+      CityMapAction({
+        location_title: cityName,
+        location_type: 'city',
+        location_coordinates: null,
+        location_distance: null,
+        city: cityName,
+      }),
+    );
+    navigation.navigate('ExploreScreen');
+  };
 
   return (
     <CustomContainer>
@@ -194,10 +228,7 @@ const SearchCity = ({navigation}) => {
           <SearchInput
             containerStyle={styles.inputStyle}
             value={searchTxt}
-            onChangeText={txt => {
-              setSearchTxt(txt);
-              searchCityKeyword(txt);
-            }}
+            onChangeText={handleSearch}
           />
 
           <TouchableOpacity
@@ -208,30 +239,26 @@ const SearchCity = ({navigation}) => {
         </View>
         <View style={styles.parentListView}>
           <FlatList
-            data={searchedCities}
-            renderItem={_renderCityList}
-            ItemSeparatorComponent={()=><View style={styles.firstRowBorderLine}/> }
+            data={
+              searchTxt.length === 0
+                ? allCities
+                : filteredCities.length > 0
+                  ? filteredCities
+                  : googleResults
+            }
+            renderItem={
+              filteredCities.length > 0 || searchTxt.length === 0
+                ? _renderCityList
+                : renderGoogleCity
+            }
+            keyExtractor={(item, index) => index.toString()}
+            ItemSeparatorComponent={() => <View style={styles.firstRowBorderLine} />}
             ListEmptyComponent={<NotFoundAnime isLoading={isLoading} />}
             ListHeaderComponent={<StaticListRenderingWithTitle />}
           />
         </View>
       </View>
-      <MilesListSheet
-        ref={mileListRef}
-        onMileSelect={miles => {
-          dispatch(
-            CityMapAction({
-              location_title: `Near me ${miles} miles`,
-              location_type: 'nearme',
-              location_coordinates: coordinates,
-              location_distance: Number(miles),
-              city: null,
-            }),
-          );
-        //   cityDataUpdated()
-          navigation.navigate('ExploreScreen');
-        }}
-      />
+
     </CustomContainer>
   )
 }

@@ -43,6 +43,12 @@ const UserProfileDetail = ({ navigation, route }) => {
   const [activeTab, setActiveTab] = useState('video');
   const [isLoading, setIsLoading] = useState(false);
 
+  const [page, setPage] = useState(0);
+  const [limit] = useState(5);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+
   const userId = route?.params?.userId;
   const [isInternetConnected, setIsInternetConnected] = useState(true);
 
@@ -81,17 +87,39 @@ const UserProfileDetail = ({ navigation, route }) => {
       .finally(() => setIsFollowLoading(false));
   };
 
-  const getUsersPosts = async () => {
-    setIsLoading(true);
-    GetUserPostsRequest(userId || userInfo?.id)
-      .then(res => {
-        setPostData(res?.result);
-        setIsLoading(false);
-      })
-      .catch(err => {
-        Toast.error('Post', err?.message);
-        setIsLoading(false);
-      });
+  const getUsersPosts = async (isLoadMore = false) => {
+    if (isLoadMore && !hasMore) return;
+  
+    if (isLoadMore) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+      setPage(0);
+      setPostData([]);
+      setHasMore(true);
+    }
+  
+    try {
+      const skip = isLoadMore ? page * limit : 0;
+      const res = await GetUserPostsRequest(userId || userInfo?.id, skip, limit);
+  
+      const newPosts = res?.result || [];
+  
+      if (isLoadMore) {
+        setPostData(prev => [...prev, ...newPosts]);
+      } else {
+        setPostData(newPosts);
+      }
+  
+      if (newPosts.length < limit) setHasMore(false);
+  
+      setPage(prev => prev + 1);
+    } catch (err) {
+      Toast.error('Post', err?.message);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
   };
 
   const getFilteredData = () => {
@@ -107,6 +135,8 @@ const UserProfileDetail = ({ navigation, route }) => {
     // Reset old data immediately
   setUserDetails(null);
   setPostData([]);
+  setPage(0);
+  setHasMore(true);
   setIsLoading(true);
   
     getUserProfile();
@@ -315,6 +345,13 @@ const UserProfileDetail = ({ navigation, route }) => {
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={<NotFoundAnime isLoading={isLoading} />}
         showsVerticalScrollIndicator={false}
+        onEndReachedThreshold={0.5}
+        onEndReached={() => getUsersPosts(true)}
+        ListFooterComponent={
+          isLoadingMore ? (
+            <ActivityIndicator size="small" color={colors.primaryColor} />
+          ) : null
+        }
       />
     </CustomContainer>
   );

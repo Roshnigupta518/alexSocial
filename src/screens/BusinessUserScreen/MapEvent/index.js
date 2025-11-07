@@ -314,66 +314,13 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
 
   return (
     <View style={st.container}>
-      {location && (
-        <MapView
-          ref={mapRef}
-          style={st.container}
-          customMapStyle={customMapStyle}
-          showsUserLocation
-          onMapReady={() => setMapReady(true)}
-          region={{
-            latitude: location?.latitude || 0,
-            longitude: location?.longitude || 0,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}>
-
-          {showMapContent && filteredPlaces.map(place => {
-            const lat = place.latitude;
-            const lng = place.longitude;
-            if (!lat || !lng) return null; // skip marker if no coordinates
-
-            const imageUri =
-              place.source === 'google' && place.photos?.[0]
-                ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
-                : place.image?.[0] || place.banner || place.certificate || null;
-
-                console.log('ggole hgvghvhb ==>', place.source === 'google' && imageUri)
-
-            return (
-              <Marker
-                // key={place.id}
-                key={`${place.id}-${search || ''}-${selectedCategories || ''}-${isFollowing}-${isVisited}`}
-                coordinate={{ latitude: lat, longitude: lng }}
-                title={place.name}
-                anchor={{ x: 0.5, y: 0.5 }}
-              // tracksViewChanges={false} 
-              >
-              {/* {imageUri && ( */}
-                  <View style={styles.markerContainer}>
-                    <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo}
-                      style={styles.markerImage}
-                      resizeMode='cover'
-                      onError={() => console.log('❌ image failed for:', imageUri)}
-                    />
-                    <Text style={styles.markerText} numberOfLines={1}>
-                      {place.name}
-                    </Text>
-                  </View>
-                {/* )} */}
-              </Marker>
-            );
-          })}
 
 
-        </MapView>
-      )}
-
-      <View style={st.searchContainer}>
+<View style={st.searchContainer}>
         <View style={st.searchBox}>
           <Icon name="search" size={20} color="#666" style={{ marginRight: 8 }} />
           <TextInput
-            placeholder="Ask Tibbs about places and people"
+            placeholder="Ask about places"
             placeholderTextColor="#999"
             style={[st.errorText, { width: '85%' }]}
             value={search}
@@ -439,6 +386,55 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
           />
         </View>
       </View>
+      
+      {location && (
+        <MapView
+          ref={mapRef}
+          style={st.container}
+          customMapStyle={customMapStyle}
+          showsUserLocation
+          onMapReady={() => setMapReady(true)}
+          region={{
+            latitude: location?.latitude || 0,
+            longitude: location?.longitude || 0,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}>
+
+          {showMapContent && filteredPlaces.map(place => {
+            const lat = place.latitude;
+            const lng = place.longitude;
+            if (!lat || !lng) return null; // skip marker if no coordinates
+
+            const imageUri =
+              place.source === 'google' && place.photos?.[0]
+                ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
+                : place.image?.[0] || place.banner || place.certificate || null;
+
+            return (
+              <Marker
+                key={`${place.id}-${search || ''}-${selectedCategories || ''}-${isFollowing}-${isVisited}`}
+                coordinate={{ latitude: lat, longitude: lng }}
+                title={place.name}
+                anchor={{ x: 0.5, y: 0.5 }}
+              >
+                  <View style={styles.markerContainer}>
+                    <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo}
+                      style={styles.markerImage}
+                      resizeMode='cover'
+                      onError={() => console.log('❌ image failed for:', imageUri)}
+                    />
+                    <Text style={styles.markerText} numberOfLines={1}>
+                      {place.name}
+                    </Text>
+                  </View>
+              </Marker>
+            );
+          })}
+        </MapView>
+      )}
+
+     
 
 
       {/* ✅ NEW BottomSheet */}
@@ -586,29 +582,22 @@ const styles = StyleSheet.create({
 });
 
 const customMapStyle = [
-  // {
-  //   elementType: "labels",
-  //   stylers: [{ visibility: "off" }],
-  // },
-
-//  // Hide all POIs first
-  // {
-  //   featureType: "poi",
-  //   stylers: [{ visibility: "off" }]
-  // },
-//   // Hide medical (hospitals)
   {
     featureType: "poi.medical",
     stylers: [{ visibility: "off" }]
   },
-//   // Hide petrol pumps
-  // {
-  //   featureType: "poi.gas_station",
-  //   stylers: [{ visibility: "off" }]
-  // },
-//   // Optional: hide transit stops, etc.
-//   {
-//     featureType: "transit",
-//     stylers: [{ visibility: "off" }]
-//   }
 ];
+
+// const customMapStyle = [
+//   {
+//     featureType: 'poi',
+//     elementType: 'labels',
+//     stylers: [{ visibility: 'off' }],
+//   },
+//   {
+//     featureType: 'transit',
+//     elementType: 'labels.icon',
+//     stylers: [{ visibility: 'off' }],
+//   },
+// ];
+

@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
     Platform,
     StyleSheet,
-    FlatList, Dimensions
+    FlatList, Dimensions, ActivityIndicator
 } from 'react-native';
 import { colors, fonts, HEIGHT, WIDTH, wp } from '../../../constants';
 import BackHeader from '../../../components/BackHeader';
@@ -26,31 +26,53 @@ const PostByPlaces = ({ navigation, route }) => {
     const [postData, setPostData] = useState([]);
     const [isLoading, setIsLoading] = useState(false)
 
+    const [skip, setSkip] = useState(0);
+    const [limit] = useState(5);
+    const [hasMore, setHasMore] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+
     const { id, type, userId } = route?.params
 
-    const getUsersPosts = async () => {
-        setIsLoading(true)
-        let url
-        if (type == 'Cities') {
-            url = `${userId}?city=${id}`
+    const getUsersPosts = async (isLoadMore = false) => {
+        if (isLoadMore && isFetchingMore) return;
+    
+        if (!isLoadMore) setIsLoading(true);
+        else setIsFetchingMore(true);
+    
+        let url;
+        if (type === 'Cities') {
+            url = `${userId}?city=${id}&skip=${skip}&limit=${limit}`;
         } else {
-            url = `${userId}?country=${id}`
+            url = `${userId}?country=${id}&skip=${skip}&limit=${limit}`;
         }
-        GetUserPostsRequest(url)
-            .then(res => {
-                setPostData(res?.result);
-                setIsLoading(false)
-            })
-            .catch(err => {
-                console.log('err', err);
-                Toast.error('Post', err?.message);
-                setIsLoading(false)
-            });
+    
+        try {
+            const res = await GetUserPostsRequest(url);
+            const newData = res?.result || [];
+    
+            if (newData.length > 0) {
+                setPostData(prev => (isLoadMore ? [...prev, ...newData] : newData));
+                setSkip(prev => prev + limit);
+            } else {
+                setHasMore(false);
+            }
+        } catch (err) {
+            console.log('err', err);
+            Toast.error('Post', err?.message);
+        } finally {
+            if (!isLoadMore) setIsLoading(false);
+            else setIsFetchingMore(false);
+        }
     };
 
     useEffect(() => {
+        setSkip(0);
+        setHasMore(true);
+        setPostData([]);
         getUsersPosts();
     }, [id, type, userId]);
+    
 
     return (
         <>
@@ -95,6 +117,17 @@ const PostByPlaces = ({ navigation, route }) => {
                         keyExtractor={(item, index) => index.toString()}
                         contentContainerStyle={{ padding: 15 }}
                         ListEmptyComponent={<NotFoundAnime isLoading={isLoading} />}
+                        onEndReached={() => {
+                            if (hasMore && !isFetchingMore) getUsersPosts(true);
+                        }}
+                        onEndReachedThreshold={0.5}
+                        ListFooterComponent={
+                            isFetchingMore ? (
+                                <ActivityIndicator size="small" color={colors.primaryColor} />
+                            ) : !hasMore && postData.length > 0 ? (
+                               null
+                            ) : null
+                        }
                     />
 
 

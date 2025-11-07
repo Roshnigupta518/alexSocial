@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   StyleSheet,
-  FlatList, Dimensions, BackHandler
+  FlatList, Dimensions, BackHandler, ActivityIndicator
 } from 'react-native';
 import { colors, fonts, HEIGHT, WIDTH, wp } from '../../../constants';
 import BackHeader from '../../../components/BackHeader';
@@ -42,6 +42,11 @@ const ProfileDetail = ({ navigation, route }) => {
  
   const [activeTab, setActiveTab] = useState('video');
   const [isLoading, setIsLoading] = useState(false)
+
+  const [skip, setSkip] = useState(0);
+  const [limit] = useState(5);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -78,18 +83,29 @@ const ProfileDetail = ({ navigation, route }) => {
       });
   };
 
-  const getUsersPosts = async () => {
-    setIsLoading(true)
-    GetUserPostsRequest(route?.params?.userId || userInfo?.id)
-      .then(res => {
-        setPostData(res?.result);
-        setIsLoading(false)
-      })
-      .catch(err => {
-        console.log('err', err);
-        Toast.error('Post', err?.message);
-        setIsLoading(false)
-      });
+  const getUsersPosts = async (isLoadMore = false) => {
+    if (isLoadMore && isFetchingMore) return;
+  
+    if (!isLoadMore) setIsLoading(true);
+    else setIsFetchingMore(true);
+  
+    const userId = route?.params?.userId || userInfo?.id;
+  
+    try {
+      const res = await GetUserPostsRequest(userId, skip, limit);
+  
+      if (res?.result?.length > 0) {
+        setPostData(prev => (isLoadMore ? [...prev, ...res.result] : res.result));
+        setSkip(prev => prev + limit);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      Toast.error('Post', err?.message);
+    } finally {
+      if (!isLoadMore) setIsLoading(false);
+      else setIsFetchingMore(false);
+    }
   };
 
   const renderTabContent = () => {
@@ -128,6 +144,17 @@ const ProfileDetail = ({ navigation, route }) => {
         numColumns={3}
         keyExtractor={(item, index) => index.toString()}
         contentContainerStyle={{ padding: 15 }}
+        onEndReached={() => {
+          if (hasMore && !isFetchingMore) getUsersPosts(true);
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isFetchingMore ? (
+            <ActivityIndicator size="small" color={colors.primaryColor} />
+          ) : !hasMore ? (
+            null  //no more posts
+          ) : null
+        }
       />
     );
   };
@@ -138,10 +165,14 @@ const ProfileDetail = ({ navigation, route }) => {
       getUserProfile();
     }
   }, [isFocused]);
-
+  
   useEffect(() => {
+    setSkip(0);
+    setHasMore(true);
+    setPostData([]);
     getUsersPosts();
-  }, []);
+  }, [route?.params?.userId]);
+  
 
   useFocusEffect(
     useCallback(() => {
