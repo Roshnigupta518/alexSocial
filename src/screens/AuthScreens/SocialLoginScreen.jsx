@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import ImageConstants from '../../constants/ImageConstants';
 import {colors, fonts, HEIGHT, wp} from '../../constants';
-import { getAuth, GoogleAuthProvider, signInWithCredential, FacebookAuthProvider, OAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithCredential, FacebookAuthProvider, OAuthProvider, AppleAuthProvider } from 'firebase/auth';
 import { firebaseApp } from '../../../firebaseConfig';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
@@ -230,6 +230,8 @@ const SocialLoginScreen = ({navigation}) => {
         requestedOperation: appleAuth.Operation.LOGIN,
         requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
       });
+      
+      console.log('🍎 Apple Response:', JSON.stringify(appleAuthRequestResponse, null, 2));
   
       if (!appleAuthRequestResponse.identityToken) {
         setIsLoading(false);
@@ -239,17 +241,23 @@ const SocialLoginScreen = ({navigation}) => {
       }
      console.log({appleAuthRequestResponse})
       const { identityToken, nonce } = appleAuthRequestResponse;
-      const appleCredential = OAuthProvider.credential({
-        idToken: identityToken,
-        rawNonce: nonce,
-      });
+      // const appleCredential = OAuthProvider.credential({
+      //   idToken: identityToken,
+      //   rawNonce: nonce,
+      // });
      
-      const userCredential = await signInWithCredential(auth, appleCredential);
-      console.log({userCredential})
-      setIsLoading(false);
-      setLoadingFor('');
-      return userCredential; // ✅ Return this so .then(res) gets a valid value
-  
+      // const userCredential = await signInWithCredential(auth, appleCredential);
+      // console.log({userCredential})
+      // setIsLoading(false);
+      // setLoadingFor('');
+      // return userCredential; // ✅ Return this so .then(res) gets a valid value
+      
+
+       // Create a Firebase credential from the response
+      const appleCredential = AppleAuthProvider.credential(identityToken, nonce);
+        console.log({appleCredential})
+      // Sign the user in with the credential
+      return await signInWithCredential(auth, appleCredential);
     } catch (err) {
       setIsLoading(false);
       setLoadingFor('');
@@ -268,7 +276,6 @@ const SocialLoginScreen = ({navigation}) => {
       return null;
     }
   }
-  
 
   async function onGoogleButtonPress() {
     setIsLoading(true);

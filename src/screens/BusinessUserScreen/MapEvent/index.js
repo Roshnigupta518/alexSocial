@@ -337,7 +337,7 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
             horizontal
             showsHorizontalScrollIndicator={false}
             keyExtractor={item => (item === '__location__' ? '__location__' : item._id)}
-            contentContainerStyle={{ paddingStart: 10 }}
+            contentContainerStyle={{ paddingStart: 10,marginBottom:10 }}
             renderItem={({ item }) => {
               if (item === '__location__') {
                 // 👇 location chip
