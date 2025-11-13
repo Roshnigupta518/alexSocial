@@ -221,59 +221,106 @@ const SocialLoginScreen = ({navigation}) => {
   //   }
   // }
 
+  // async function onAppleButtonPress() {
+  //   try {
+  //     setIsLoading(true);
+  //     setLoadingFor('apple');
+  
+  //     const appleAuthRequestResponse = await appleAuth.performRequest({
+  //       requestedOperation: appleAuth.Operation.LOGIN,
+  //       requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+  //     });
+      
+  //     console.log('🍎 Apple Response:', JSON.stringify(appleAuthRequestResponse, null, 2));
+  
+  //     if (!appleAuthRequestResponse.identityToken) {
+  //       setIsLoading(false);
+  //       setLoadingFor('');
+  //       console.log('User cancelled or no token returned');
+  //       return null; // 🚫 Return null instead of throwing error
+  //     }
+  //    console.log({appleAuthRequestResponse})
+  //     const { identityToken, nonce } = appleAuthRequestResponse;
+  //     // const appleCredential = OAuthProvider.credential({
+  //     //   idToken: identityToken,
+  //     //   rawNonce: nonce,
+  //     // });
+     
+  //     // const userCredential = await signInWithCredential(auth, appleCredential);
+  //     // console.log({userCredential})
+  //     // setIsLoading(false);
+  //     // setLoadingFor('');
+  //     // return userCredential; // ✅ Return this so .then(res) gets a valid value
+      
+
+  //      // Create a Firebase credential from the response
+  //     const appleCredential = AppleAuthProvider.credential(identityToken, nonce);
+  //       console.log({appleCredential})
+  //     // Sign the user in with the credential
+  //     return await signInWithCredential(auth, appleCredential);
+  //   } catch (err) {
+  //     setIsLoading(false);
+  //     setLoadingFor('');
+  
+  //     if (
+  //       err?.code === appleAuth.Error.CANCELED ||
+  //       err?.message?.includes('error 1000') ||
+  //       err?.message?.includes('AuthorizationError')
+  //     ) {
+  //       console.log('Apple Sign-In cancelled by user');
+  //       return null; // ✅ Return null so no API call happens
+  //     }
+  
+  //     console.error('Apple Login Error:', err);
+  //     Toast.error('Login', 'Apple login failed. Please try again.');
+  //     return null;
+  //   }
+  // }
+
+
   async function onAppleButtonPress() {
     try {
       setIsLoading(true);
       setLoadingFor('apple');
   
-      const appleAuthRequestResponse = await appleAuth.performRequest({
+      const response = await appleAuth.performRequest({
         requestedOperation: appleAuth.Operation.LOGIN,
         requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
       });
-      
-      console.log('🍎 Apple Response:', JSON.stringify(appleAuthRequestResponse, null, 2));
   
-      if (!appleAuthRequestResponse.identityToken) {
-        setIsLoading(false);
-        setLoadingFor('');
-        console.log('User cancelled or no token returned');
-        return null; // 🚫 Return null instead of throwing error
+      console.log("🍎 Apple Response:", JSON.stringify(response));
+  
+      if (!response.identityToken) {
+        console.log("❌ No identity token returned");
+        return null;
       }
-     console.log({appleAuthRequestResponse})
-      const { identityToken, nonce } = appleAuthRequestResponse;
-      // const appleCredential = OAuthProvider.credential({
-      //   idToken: identityToken,
-      //   rawNonce: nonce,
-      // });
-     
-      // const userCredential = await signInWithCredential(auth, appleCredential);
-      // console.log({userCredential})
-      // setIsLoading(false);
-      // setLoadingFor('');
-      // return userCredential; // ✅ Return this so .then(res) gets a valid value
-      
-
-       // Create a Firebase credential from the response
-      const appleCredential = AppleAuthProvider.credential(identityToken, nonce);
-        console.log({appleCredential})
-      // Sign the user in with the credential
-      return await signInWithCredential(auth, appleCredential);
+  
+      const provider = new OAuthProvider('apple.com');
+  
+      const credential = provider.credential({
+        idToken: response.identityToken,
+        rawNonce: response.nonce,
+      });
+  
+      console.log("✅ Firebase Credential Created:", credential);
+  
+      // ✅ Firebase sign-in
+      const firebaseUser = await signInWithCredential(auth, credential);
+  
+      console.log("✅ Firebase User:", firebaseUser);
+  
+      // ✅ API call + local storage + Navigation
+      await MakeAppleLoginUser(firebaseUser);
+  
+      return firebaseUser;
+  
     } catch (err) {
+      console.error("Apple Login Error:", err);
+      Toast.error("Login", "Apple login failed. Please try again.");
+      return null;
+    } finally {
       setIsLoading(false);
       setLoadingFor('');
-  
-      if (
-        err?.code === appleAuth.Error.CANCELED ||
-        err?.message?.includes('error 1000') ||
-        err?.message?.includes('AuthorizationError')
-      ) {
-        console.log('Apple Sign-In cancelled by user');
-        return null; // ✅ Return null so no API call happens
-      }
-  
-      console.error('Apple Login Error:', err);
-      Toast.error('Login', 'Apple login failed. Please try again.');
-      return null;
     }
   }
 
