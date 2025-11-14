@@ -37,13 +37,11 @@ const ExploreMapScreen = ({ navigation, route }) => {
   const [isCatLoading, setIsCatLoading] = useState(false)
   const [showMapContent, setShowMapContent] = useState(true);
 
-
   const mapRef = useRef(null);
   const dispatch = useDispatch()
   const bottomSheetRef = useRef(null);
   const fitTimeoutRef = useRef(null);   // safe timeout holder
-const [mapReady, setMapReady] = useState(false); // flag when MapView fully mounted
-
+  const [mapReady, setMapReady] = useState(false); // flag when MapView fully mounted
 
   const { location, error, loading, locationArea, openLocationSettings, getLocation, permissionHandle } = useLocation();
 
@@ -62,15 +60,12 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
       if (prevCityRef.current !== city) {
         prevCityRef.current = city;
 
-        // ✅ clear old data instantly to avoid flicker
-        // setData([]);
-        // setFilteredPlaces([]);
         setIsLoading(true);
         setShowMapContent(false)
+        console.log('**********************hi')
 
         getDataHandle(categoryId, city);
 
-        // Optional smooth move to new city
         setTimeout(() => {
           if (mapRef.current && location) {
             mapRef.current.animateToRegion({
@@ -82,9 +77,15 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
           }
         }, 400);
       } else if (filterCategoryId) {
+        console.log('**********************hello')
         // Category filter changed → only refresh data, no map jump
+        setData([]);
+        setFilteredPlaces([]);
         getDataHandle(categoryId, city);
       } else {
+        console.log('**********************tummko kya')
+        setData([]);
+        setFilteredPlaces([]);
         getDataHandle(categoryId, city);
       }
     }, [filterCategoryId, CityMapSlice?.city])
@@ -96,6 +97,13 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
       return;
     }
 
+    // ✅ STEP 1: Immediately clear previous markers from map
+    setData([]);
+    setFilteredPlaces([]);
+    setShowMapContent(false);
+
+    setIsLoading(true);
+
     setIsLoading(true);
     let params = '';
 
@@ -105,8 +113,6 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
     } else {
       const latitude = location?.latitude;
       const longitude = location?.longitude;
-      // const latitude = 27.9199132;
-      // const longitude = -82.8150127;
 
       params = `latitude=${latitude}&longitude=${longitude}`;
     }
@@ -134,12 +140,40 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
           setIsLoading(false);
         }, 300);
       } else {
+        // ✅ No data found: ensure map shows no markers
         setData([]);
-        console.log('Map API returned false status:', data);
+        setFilteredPlaces([]);
+        setShowMapContent(false);
+
+        // ✅ Keep city center visible
+        const coords = CityMapSlice?.location_coordinates;
+        if (coords) {
+          mapRef.current.animateToRegion({
+            latitude: coords[0],
+            longitude: coords[1],
+            latitudeDelta: 0.1,
+            longitudeDelta: 0.1,
+          });
+        }
       }
     } catch (err) {
       console.log('Error fetching map data:', err);
+
       setData([]);
+      setFilteredPlaces([]);
+      setShowMapContent(false);
+
+      // ✅ Keep city centered if no data found
+      if (CityMapSlice?.location_coordinates) {
+        const [lat, lng] = CityMapSlice.location_coordinates;
+        mapRef.current?.animateToRegion({
+          latitude: lat,
+          longitude: lng,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.1,
+        });
+      }
+
     } finally {
       setTimeout(() => {
         setIsLoading(false);
@@ -195,43 +229,26 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
           },
           1000,
         );
-      } else if (location) {
-        // Reset to user location
-        mapRef.current.animateToRegion(
-          {
-            latitude: location.latitude,
-            longitude: location.longitude,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          },
-          1000,
-        );
       }
     }
   }, [selectedCategories]);
 
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
-    
-    if (filteredPlaces.length > 0 && mapRef.current) {
-      const coordinates = filteredPlaces.map(place => ({
-        latitude: place.latitude,
-        longitude: place.longitude,
+
+    if (filteredPlaces.length > 0) {
+      const coordinates = filteredPlaces.map(p => ({
+        latitude: Number(p.latitude),
+        longitude: Number(p.longitude),
       }));
       mapRef.current.fitToCoordinates(coordinates, {
         edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
         animated: true,
       });
-    } else if (location && mapRef.current) {
-      // reset back to current user location
-      mapRef.current.animateToRegion({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      });
     }
+    // ❌ Don’t move map when no places found — keep current city view
   }, [filteredPlaces]);
+
 
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
@@ -286,15 +303,10 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
   }, [data, selectedCategories, search, isFollowing, isVisited]);
 
   useEffect(() => {
-    if (!mapRef.current) return;
-
-    mapRef.current.animateToRegion({
-      latitude: filteredPlaces[0]?.latitude || location.latitude,
-      longitude: filteredPlaces[0]?.longitude || location.longitude,
-      latitudeDelta: 0.08,
-      longitudeDelta: 0.08,
-    }, 500);
-  }, [filteredPlaces]);
+    if (data?.length > 0) {
+      setFilteredPlaces(data);
+    }
+  }, [data, selectedCategories]);
 
 
   const toggleCategory = categoryId => {
@@ -314,9 +326,7 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
 
   return (
     <View style={st.container}>
-
-
-<View style={st.searchContainer}>
+      <View style={st.searchContainer}>
         <View style={st.searchBox}>
           <Icon name="search" size={20} color="#666" style={{ marginRight: 8 }} />
           <TextInput
@@ -337,7 +347,7 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
             horizontal
             showsHorizontalScrollIndicator={false}
             keyExtractor={item => (item === '__location__' ? '__location__' : item._id)}
-            contentContainerStyle={{ paddingStart: 10,marginBottom:10 }}
+            contentContainerStyle={{ paddingStart: 10, marginBottom: 10 }}
             renderItem={({ item }) => {
               if (item === '__location__') {
                 // 👇 location chip
@@ -386,38 +396,51 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
           />
         </View>
       </View>
-      
+
       {location && (
         <MapView
+          key={filteredPlaces.length}
           ref={mapRef}
           style={st.container}
           customMapStyle={customMapStyle}
-          showsUserLocation
+          showsUserLocation={false}
+          showsMyLocationButton={false}
+          toolbarEnabled={false}
+          showsCompass={false}
           onMapReady={() => setMapReady(true)}
           region={{
-            latitude: location?.latitude || 0,
-            longitude: location?.longitude || 0,
+            latitude:
+              CityMapSlice?.location_coordinates?.[0] ||
+              location?.latitude ||
+              0,
+            longitude:
+              CityMapSlice?.location_coordinates?.[1] ||
+              location?.longitude ||
+              0,
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
-          }}>
+          }}
+        >
 
-          {showMapContent && filteredPlaces.map(place => {
-            const lat = place.latitude;
-            const lng = place.longitude;
-            if (!lat || !lng) return null; // skip marker if no coordinates
+          {showMapContent && filteredPlaces.length > 0 &&
+            filteredPlaces.map((place, index) => {
+              const lat = place.latitude;
+              const lng = place.longitude;
+              if (!lat || !lng) return null; // skip marker if no coordinates
 
-            const imageUri =
-              place.source === 'google' && place.photos?.[0]
-                ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
-                : place.image?.[0] || place.banner || place.certificate || null;
+              const imageUri =
+                place.source === 'google' && place.photos?.[0]
+                  ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
+                  : place.image?.[0] || place.banner || place.certificate || null;
 
-            return (
-              <Marker
-                key={`${place.id}-${search || ''}-${selectedCategories || ''}-${isFollowing}-${isVisited}`}
-                coordinate={{ latitude: lat, longitude: lng }}
-                title={place.name}
-                anchor={{ x: 0.5, y: 0.5 }}
-              >
+              return (
+                <Marker
+                  // key={index}
+                  key={`${place._id || index}-${filteredPlaces.length}`}
+                  coordinate={{ latitude: lat, longitude: lng }}
+                  title={place.name}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                >
                   <View style={styles.markerContainer}>
                     <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo}
                       style={styles.markerImage}
@@ -428,14 +451,11 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
                       {place.name}
                     </Text>
                   </View>
-              </Marker>
-            );
-          })}
+                </Marker>
+              );
+            })}
         </MapView>
       )}
-
-     
-
 
       {/* ✅ NEW BottomSheet */}
       <BottomSheet
@@ -449,9 +469,9 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
           // data={filteredPlaces}
           data={showMapContent ? filteredPlaces : []}
           // keyExtractor={item => item.id}
-          keyExtractor={ (item, idx) => item.id || item._id || String(idx) }
+          keyExtractor={(item, idx) => item.id || item._id || String(idx)}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 10 }} 
+          contentContainerStyle={{ padding: 10 }}
           ListHeaderComponent={() => (
             <View>
               <View style={st.row}>
@@ -480,39 +500,40 @@ const [mapReady, setMapReady] = useState(false); // flag when MapView fully moun
           )}
           renderItem={({ item }) => {
             const imageUri = item.image?.[0] || item.banner || item.certificate || null
-            return(
-            <Pressable style={st.placeItem} onPress={() => {
-              navigation.navigate('ClaimBusinessScreen', { ...item })
-            }} >
+            return (
+              <Pressable style={st.placeItem} onPress={() => {
+                navigation.navigate('ClaimBusinessScreen', { ...item })
+              }} >
 
-              {item.source == 'google' ? (
-                <Base64Image
-                  photos={item.photos}
-                  maxWidth={400}
-                  style={st.placeImage}
-                />
-              ) :
-                <Image
-                  source={imageUri ? { uri: imageUri } : ImageConstants.business_logo }
-                  style={st.placeImage}
-                />
-              }
-
-              <View style={st.placeInfo}>
-                <Text style={st.errorText}>{item.name}</Text>
-                <View style={st.ratingRow}>
-                  <Text style={st.ratingText}>Followers: {item.total_followers}</Text>
-                  <Text style={st.ratingText}>Likes: {item.total_likes}</Text>
-
-                </View>
-                {item.rating &&
-                  <View style={{ marginLeft: 3 }}>
-                    <StarRating rating={item.rating} />
-                  </View>
+                {item.source == 'google' ? (
+                  <Base64Image
+                    photos={item.photos}
+                    maxWidth={400}
+                    style={st.placeImage}
+                  />
+                ) :
+                  <Image
+                    source={imageUri ? { uri: imageUri } : ImageConstants.business_logo}
+                    style={st.placeImage}
+                  />
                 }
-              </View>
-            </Pressable>
-          )}}
+
+                <View style={st.placeInfo}>
+                  <Text style={st.errorText}>{item.name}</Text>
+                  <View style={st.ratingRow}>
+                    <Text style={st.ratingText}>Followers: {item.total_followers}</Text>
+                    <Text style={st.ratingText}>Likes: {item.total_likes}</Text>
+
+                  </View>
+                  {item.rating &&
+                    <View style={{ marginLeft: 3 }}>
+                      <StarRating rating={item.rating} />
+                    </View>
+                  }
+                </View>
+              </Pressable>
+            )
+          }}
           ListEmptyComponent={() => {
             if (isLoading) {
               return (
@@ -588,16 +609,4 @@ const customMapStyle = [
   },
 ];
 
-// const customMapStyle = [
-//   {
-//     featureType: 'poi',
-//     elementType: 'labels',
-//     stylers: [{ visibility: 'off' }],
-//   },
-//   {
-//     featureType: 'transit',
-//     elementType: 'labels.icon',
-//     stylers: [{ visibility: 'off' }],
-//   },
-// ];
 

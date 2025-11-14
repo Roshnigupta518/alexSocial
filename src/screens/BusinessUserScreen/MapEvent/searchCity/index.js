@@ -208,18 +208,52 @@ const SearchCity = ({ navigation }) => {
     }
   };
 
-  const handleSelectCity = cityName => {
-    dispatch(
-      CityMapAction({
-        location_title: cityName,
-        location_type: 'city',
-        location_coordinates: null,
-        location_distance: null,
-        city: cityName,
-      }),
-    );
-    navigation.navigate('ExploreScreen');
-  };
+  // const handleSelectCity = cityName => {
+  //   dispatch(
+  //     CityMapAction({
+  //       location_title: cityName,
+  //       location_type: 'city',
+  //       location_coordinates: null,
+  //       location_distance: null,
+  //       city: cityName,
+  //     }),
+  //   );
+  //   navigation.navigate('ExploreScreen');
+  // };
+
+  const handleSelectCity = async (cityName) => {
+    try {
+      const geoResponse = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityName)}&key=${GOOGLE_API_KEY}`
+      );
+      const geoData = await geoResponse.json();
+      const location = geoData?.results?.[0]?.geometry?.location || null;
+  
+      dispatch(
+        CityMapAction({
+          location_title: cityName,
+          location_type: 'city',
+          location_coordinates: location ? [location.lat, location.lng] : null,
+          location_distance: null,
+          city: cityName,
+        }),
+      );
+  
+      navigation.navigate('ExploreScreen');
+    } catch (error) {
+      console.log('Error getting city coordinates:', error);
+      dispatch(
+        CityMapAction({
+          location_title: cityName,
+          location_type: 'city',
+          location_coordinates: null,
+          location_distance: null,
+          city: cityName,
+        }),
+      );
+      navigation.navigate('ExploreScreen');
+    }
+  };  
 
   return (
     <CustomContainer>
