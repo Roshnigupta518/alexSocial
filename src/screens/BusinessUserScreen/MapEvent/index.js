@@ -10,9 +10,10 @@ import {
   Image,
   TextInput,
   ActivityIndicator,
-  Pressable
+  Pressable, 
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView from "react-native-map-clustering";
+import { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import Icon from 'react-native-vector-icons/Ionicons';
 import ImageConstants from '../../../constants/ImageConstants';
 import { useLocation } from '../../../hooks/MyLocation';
@@ -23,6 +24,7 @@ import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import Base64Image from '../../../components/Base64Image';
 import StarRating from '../../../components/StarRating';
 import { useFocusEffect } from '@react-navigation/native';
+import { setSelectedCategoryId } from '../../../redux/Slices/FilterCategory';
 import { CityMapAction } from '../../../redux/Slices/CityMapSlice';
 
 const ExploreMapScreen = ({ navigation, route }) => {
@@ -50,9 +52,10 @@ const ExploreMapScreen = ({ navigation, route }) => {
   const prevCityRef = useRef(CityMapSlice?.city);
 
 
-  console.log({ CityMapSlice })
+  console.log({ CityMapSlice, location })
   useFocusEffect(
     React.useCallback(() => {
+      console.log('useFocusEffect')
       const categoryId = filterCategoryId || '';
       const city = CityMapSlice?.city || '';
 
@@ -82,13 +85,14 @@ const ExploreMapScreen = ({ navigation, route }) => {
         setData([]);
         setFilteredPlaces([]);
         getDataHandle(categoryId, city);
-      } else {
-        console.log('**********************tummko kya')
-        setData([]);
-        setFilteredPlaces([]);
-        getDataHandle(categoryId, city);
       }
-    }, [filterCategoryId, CityMapSlice?.city])
+      //  else {
+      //   console.log('**********************tummko kya')
+      //   setData([]);
+      //   setFilteredPlaces([]);
+      //   getDataHandle(categoryId, city);
+      // }
+    }, [filterCategoryId, CityMapSlice?.city, location])
   );
 
   const getDataHandle = async (categoryId = '', city = '') => {
@@ -249,7 +253,6 @@ const ExploreMapScreen = ({ navigation, route }) => {
     // ❌ Don’t move map when no places found — keep current city view
   }, [filteredPlaces]);
 
-
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
 
@@ -308,18 +311,44 @@ const ExploreMapScreen = ({ navigation, route }) => {
     }
   }, [data, selectedCategories]);
 
+  const toggleCategory = (categoryId) => {
+    const isSame = filterCategoryId === categoryId;
 
-  const toggleCategory = categoryId => {
-    setSelectedCategories(prev => {
-      const isSame = prev === categoryId;
-      const updated = isSame ? '' : categoryId;
+    const newId = isSame ? null : categoryId;
 
-      // ✅ Always include the active city in the API call
-      const currentCity = CityMapSlice?.city || '';
-      getDataHandle(isSame ? '' : categoryId, currentCity);
+    // Redux update
+    dispatch(setSelectedCategoryId(newId));
 
-      return updated;
+    // API call
+    const currentCity = CityMapSlice?.city || '';
+    getDataHandle(newId || '', currentCity);
+  };
+
+  const goToCurrentLocation = () => {
+    if (!location) return;
+
+    // Clear selected city filter
+    prevCityRef.current = null;
+    dispatch(
+      CityMapAction({
+        location_title: 'Current Location',
+        location_type: 'all',
+        location_coordinates: null,
+        location_distance: null,
+        city: null,
+      }),
+    );
+    // Move map
+    mapRef.current?.animateToRegion({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      latitudeDelta: 0.012,
+      longitudeDelta: 0.012,
     });
+
+    // Fetch near-by places
+    const categoryId = filterCategoryId || '';
+    getDataHandle(categoryId, '');
   };
 
   const snapPoints = useMemo(() => [200, '50%'], []);
@@ -367,22 +396,21 @@ const ExploreMapScreen = ({ navigation, route }) => {
                 );
               }
 
-              // const isSelected = selectedCategories.includes(item._id);
               return (
                 <TouchableOpacity
                   onPress={() => toggleCategory(item._id)}
                   style={[
                     st.filterChip,
-                    item._id === selectedCategories && st.activeChip,
+                    item._id === filterCategoryId && st.activeChip,
                   ]}>
                   <Text
                     style={[
                       st.errorText,
-                      item._id === selectedCategories && st.activeChipText,
+                      item._id === filterCategoryId && st.activeChipText,
                     ]}>
                     {item.title}
                   </Text>
-                  {item._id === selectedCategories && (
+                  {item._id === filterCategoryId && (
                     <Icon
                       name="close"
                       size={14}
@@ -408,6 +436,8 @@ const ExploreMapScreen = ({ navigation, route }) => {
           toolbarEnabled={false}
           showsCompass={false}
           onMapReady={() => setMapReady(true)}
+          isTextureMode={true} 
+          useTextureView={true}
           region={{
             latitude:
               CityMapSlice?.location_coordinates?.[0] ||
@@ -417,10 +447,9 @@ const ExploreMapScreen = ({ navigation, route }) => {
               CityMapSlice?.location_coordinates?.[1] ||
               location?.longitude ||
               0,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}
-        >
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}>
 
           {showMapContent && filteredPlaces.length > 0 &&
             filteredPlaces.map((place, index) => {
@@ -435,16 +464,15 @@ const ExploreMapScreen = ({ navigation, route }) => {
 
               return (
                 <Marker
-                  // key={index}
-                  key={`${place._id || index}-${filteredPlaces.length}`}
+                  key={place._id || index}
                   coordinate={{ latitude: lat, longitude: lng }}
                   title={place.name}
                   anchor={{ x: 0.5, y: 0.5 }}
+                // tracksViewChanges={false}
                 >
                   <View style={styles.markerContainer}>
                     <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo}
                       style={styles.markerImage}
-                      resizeMode='cover'
                       onError={() => console.log('❌ image failed for:', imageUri)}
                     />
                     <Text style={styles.markerText} numberOfLines={1}>
@@ -457,6 +485,27 @@ const ExploreMapScreen = ({ navigation, route }) => {
         </MapView>
       )}
 
+      <View
+        style={{
+          position: 'absolute',
+          top: 135,
+          right: 10,
+        }}>
+        <TouchableOpacity
+          onPress={goToCurrentLocation}
+          style={{
+            backgroundColor: 'white',
+            width: 45,
+            height: 45,
+            borderRadius: 50,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: '#000',
+          }}>
+          <Icon name="locate" size={22} color="#000" />
+        </TouchableOpacity>
+      </View>
+
       {/* ✅ NEW BottomSheet */}
       <BottomSheet
         ref={bottomSheetRef}
@@ -466,9 +515,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
         handleIndicatorStyle={{ backgroundColor: '#888' }}
       >
         <BottomSheetFlatList
-          // data={filteredPlaces}
           data={showMapContent ? filteredPlaces : []}
-          // keyExtractor={item => item.id}
           keyExtractor={(item, idx) => item.id || item._id || String(idx)}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 10 }}
@@ -501,9 +548,29 @@ const ExploreMapScreen = ({ navigation, route }) => {
           renderItem={({ item }) => {
             const imageUri = item.image?.[0] || item.banner || item.certificate || null
             return (
-              <Pressable style={st.placeItem} onPress={() => {
-                navigation.navigate('ClaimBusinessScreen', { ...item })
-              }} >
+              <Pressable style={st.placeItem}
+                onPress={() => {
+                  navigation.navigate('ClaimBusinessScreen', { ...item,
+
+                    onFollowUpdate: (businessId, isNowFollowing) => {
+                      // Update local data immediately
+                      console.log('udpate lod', businessId, isNowFollowing)
+                      const updateList = (list) =>
+                        list.map(p =>
+                          (p._id || p.place_id) === businessId
+                            ? { ...p, isFollowing: isNowFollowing, total_followers: isNowFollowing ? p.total_followers+1 :p.total_followers-1  }
+                            : p
+                        );
+                      
+                      setData(updateList);
+                      setFilteredPlaces(updateList);
+                      setIsFollowing(false)
+                      setIsVisited(false)
+                      console.log({updateList})
+                    },
+                   })
+                }} 
+              >
 
                 {item.source == 'google' ? (
                   <Base64Image
@@ -553,12 +620,14 @@ const ExploreMapScreen = ({ navigation, route }) => {
         />
 
       </BottomSheet>
-      {isCatLoading &&
+
+      
+      {/* {isCatLoading &&
         <View style={[st.center]}>
           <ActivityIndicator color={colors.primaryColor} size="large" />
-        </View>}
+        </View>} */}
 
-      {!showMapContent && (
+      {/* {!showMapContent && (
         <View style={[StyleSheet.absoluteFill, {
           backgroundColor: colors.black,
           justifyContent: 'center',
@@ -567,7 +636,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
         }]}>
           <ActivityIndicator size="large" color={colors.primaryColor} />
         </View>
-      )}
+      )} */}
 
     </View>
   );
@@ -580,12 +649,13 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center'
   },
   markerImage: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
     borderRadius: 50,
     borderWidth: 2,
     borderColor: colors.primaryColor,
-    backgroundColor: colors.white
+    backgroundColor: colors.white,
+    resizeMode: 'cover'
   },
   markerLabel: {
     backgroundColor: 'rgba(0,0,0,0.7)',
@@ -608,5 +678,4 @@ const customMapStyle = [
     stylers: [{ visibility: "off" }]
   },
 ];
-
 

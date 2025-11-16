@@ -684,7 +684,7 @@ const HomeScreen = ({ navigation, route }) => {
             <SafeAreaView >
               <InstagramStories
                 ref={storyref}
-                key={stories.length} 
+                // key={stories.length} 
                 stories={stories}
                 onStoryPress={(story) => {
                   storyref.current?.open(story.id);

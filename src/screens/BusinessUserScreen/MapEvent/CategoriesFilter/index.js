@@ -12,19 +12,17 @@ import { clearSelectedCategoryId, setSelectedCategoryId } from '../../../../redu
 import { useDispatch, useSelector } from 'react-redux';
 
 const FilterScreen = ({ navigation }) => {
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [categories, setCategories] = useState([])
   const [isLoading, setIsLoading] = useState(false)
 
   const dispatch = useDispatch();
   const filterCategoryId = useSelector(state => state.FilterCategorySlice.selectedCategory);
 
-console.log({filterCategoryId})
+  console.log({ filterCategoryId })
   const getCategories = () => {
     setIsLoading(true);
     getAllBusinessCategoryRequest()
       .then(res => {
-        // console.log({res})
         setCategories(res?.result);
       })
       .catch(err => {
@@ -34,7 +32,6 @@ console.log({filterCategoryId})
   };
 
   const handleClearFilters = () => {
-    // setSelectedCategory(null);
     dispatch(clearSelectedCategoryId(null))
   };
 
@@ -45,31 +42,30 @@ console.log({filterCategoryId})
   return (
     <CustomContainer>
       <BackHeader label='Select a filter for Noida' />
-        <FlatList
-          data={categories}
-          contentContainerStyle={[st.pd20, st.flex]}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.optionRow}
-              onPress={() =>
+      <FlatList
+        data={categories}
+        contentContainerStyle={[st.pd20, st.flex]}
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.optionRow}
+            onPress={() =>
               dispatch(setSelectedCategoryId(item._id))
-                }>
-              <Text style={styles.filterText}>{item.title}</Text>
-              <View style={styles.radioOuter}>
-                {filterCategoryId === item._id && <View style={styles.radioInner} />}
-              </View>
-            </TouchableOpacity>
-          )}
-          ListHeaderComponent={() => (
-            <View style={styles.sectionHeader}>
-              <Icon name="storefront-outline" size={18} color={colors.black} />
-              <Text style={st.labelStyle}>  Categories</Text>
+            }>
+            <Text style={styles.filterText}>{item.title}</Text>
+            <View style={styles.radioOuter}>
+              {filterCategoryId === item._id && <View style={styles.radioInner} />}
             </View>
-          )}
-          ListEmptyComponent={()=><NotFoundAnime isLoading={isLoading} />}
-         
-        />
+          </TouchableOpacity>
+        )}
+        ListHeaderComponent={() => (
+          <View style={styles.sectionHeader}>
+            <Icon name="storefront-outline" size={18} color={colors.black} />
+            <Text style={st.labelStyle}>  Categories</Text>
+          </View>
+        )}
+        ListEmptyComponent={() => <NotFoundAnime isLoading={isLoading} />}
+      />
 
       <View style={styles.bottomButtons}>
         <TouchableOpacity style={styles.clearBtn} onPress={() => handleClearFilters()} >
@@ -77,15 +73,12 @@ console.log({filterCategoryId})
         </TouchableOpacity>
         <TouchableOpacity style={[styles.showBtn, { opacity: filterCategoryId === null ? 0.6 : 1 }]}
           disabled={filterCategoryId === null}
-          // onPress={() => navigation.goBack()}
           onPress={() => {
-            // dispatch(setSelectedCategoryId(selectedCategory))
             navigation.navigate('ExploreScreen')
           }}>
           <Text style={st.filterText}>Show Results</Text>
         </TouchableOpacity>
       </View>
-
     </CustomContainer>
   );
 };
@@ -124,8 +117,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderTopWidth: 0.5,
     borderTopColor: '#333',
-    // position: 'absolute',
-    // bottom: 0
   },
   clearBtn: {
     flex: 1,

@@ -208,40 +208,32 @@ const SearchCity = ({ navigation }) => {
     }
   };
 
-  // const handleSelectCity = cityName => {
-  //   dispatch(
-  //     CityMapAction({
-  //       location_title: cityName,
-  //       location_type: 'city',
-  //       location_coordinates: null,
-  //       location_distance: null,
-  //       city: cityName,
-  //     }),
-  //   );
-  //   navigation.navigate('ExploreScreen');
-  // };
-
   const handleSelectCity = async (cityName) => {
     try {
       const geoResponse = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityName)}&key=${GOOGLE_API_KEY}`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          cityName
+        )}&key=${GOOGLE_API_KEY}`
       );
       const geoData = await geoResponse.json();
-      const location = geoData?.results?.[0]?.geometry?.location || null;
   
-      dispatch(
-        CityMapAction({
-          location_title: cityName,
-          location_type: 'city',
-          location_coordinates: location ? [location.lat, location.lng] : null,
-          location_distance: null,
-          city: cityName,
-        }),
-      );
+      if (geoData.results?.[0]) {
+        const { lat, lng } = geoData.results[0].geometry.location;
   
-      navigation.navigate('ExploreScreen');
+        dispatch(
+          CityMapAction({
+            location_title: cityName,
+            location_type: 'city',
+            location_coordinates: [lat, lng],
+            location_distance: null,
+            city: cityName,
+          })
+        );
+      } else {
+        throw new Error("No results");
+      }
     } catch (error) {
-      console.log('Error getting city coordinates:', error);
+      console.log('Geocoding failed, fallback:', error);
       dispatch(
         CityMapAction({
           location_title: cityName,
@@ -249,12 +241,13 @@ const SearchCity = ({ navigation }) => {
           location_coordinates: null,
           location_distance: null,
           city: cityName,
-        }),
+        })
       );
+    } finally {
       navigation.navigate('ExploreScreen');
     }
-  };  
-
+  };
+ 
   return (
     <CustomContainer>
       <View style={styles.subViewContainer}>

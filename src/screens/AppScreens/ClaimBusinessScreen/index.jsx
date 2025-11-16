@@ -42,6 +42,7 @@ import dynamicLinks from '@react-native-firebase/dynamic-links';
 import Share from 'react-native-share';
 import { useSelector } from 'react-redux';
 import CustomContainer from '../../../components/container';
+import CustomReadMore from '../../../components/CustomReadMore';
 
 const ClaimBusinessScreen = ({ navigation, route }) => {
   const follow = route?.params || {};
@@ -292,6 +293,11 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
 
   const makeFollowBusiness = () => {
     setIsFollowLoading(true);
+
+    // Current state se naya state decide karo
+  const currentFollowing = data?.isbusinessFollow || false;
+  const willFollow = !currentFollowing; // ← Yeh hi bhejna hai
+
     MakeFollowedBusinessRequest({ business_id: place_id })
       .then(res => {
         Toast.success('Request', res?.message);
@@ -306,6 +312,13 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
               : Math.max(0, (prev?.businessFollowerCount || 0) - 1),
           };
         });
+
+        // ✅ CALLBACK TO UPDATE MAP SCREEN
+      if (route.params?.onFollowUpdate) {
+        console.log('fjfjdnvhjfnvhjnfd')
+        route.params.onFollowUpdate(place_id, willFollow); // true = followed
+      }
+
       })
       .catch(err => {
         Toast.error('Request', err?.message);
@@ -444,14 +457,21 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
           <View>
             <View style={{ padding: 15 }}>
               {!!data?.details && (
-                <ReadMore
-                  numberOfLines={2}
-                  style={styles.descriptionTxtStyle}
-                  seeMoreStyle={{ color: colors.primaryColor }}
-                  seeLessStyle={{ color: colors.primaryColor }}
-                >
-                  {data?.details}
-                </ReadMore>
+                // <ReadMore
+                //   numberOfLines={2}
+                //   style={styles.descriptionTxtStyle}
+                //   seeMoreStyle={{ color: colors.primaryColor }}
+                //   seeLessStyle={{ color: colors.primaryColor }}
+                // >
+                //   {data?.details}
+                // </ReadMore>
+
+                <CustomReadMore
+              text={data?.details}
+              numberOfLines={2}
+              >
+                {data?.details}
+              </CustomReadMore>
               )}
 
               {!!data?.address && (

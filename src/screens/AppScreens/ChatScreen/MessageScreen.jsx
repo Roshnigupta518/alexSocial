@@ -26,6 +26,8 @@ const MessageScreen = ({navigation, route}) => {
 
   const [messages, setMessages] = useState([]);
   const [isInternetConnected, setIsInternetConnected] = useState(true);
+
+  console.log({chats: route?.params})
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected !== null && state.isConnected === false) {
@@ -137,6 +139,7 @@ const MessageScreen = ({navigation, route}) => {
             .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
             ?.reverse();
           setMessages([...sortedArray]);
+          console.log({sortedArray})
         }
       });
     } catch (err) {
@@ -152,6 +155,7 @@ const MessageScreen = ({navigation, route}) => {
   
   
   const onSend = useCallback((messages = []) => {
+    console.log({messages})
     let epochTime = new Date();
     let msg = {
       _id: messages[0]?._id,
