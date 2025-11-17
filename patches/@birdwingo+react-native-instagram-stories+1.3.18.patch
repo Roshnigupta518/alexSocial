@@ -301,7 +301,7 @@ index 34038e4..3522ff5 100644
    absolute: {
      position: 'absolute',
 diff --git a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/index.tsx b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/index.tsx
-index dd93855..23d761f 100644
+index dd93855..b439312 100644
 --- a/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/index.tsx
 +++ b/node_modules/@birdwingo/react-native-instagram-stories/src/components/Modal/index.tsx
 @@ -3,10 +3,11 @@ import React, {
@@ -317,233 +317,342 @@ index dd93855..23d761f 100644
  import {
    HEIGHT, LONG_PRESS_DURATION, STORY_ANIMATION_DURATION, WIDTH,
  } from '../../core/constants';
-@@ -261,91 +262,170 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
+@@ -35,6 +36,14 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
+   const hideElements = useSharedValue( false );
+   const lastViewed = useSharedValue<{ [key: string]:number }>( {} );
+   const firstRender = useSharedValue( true );
++  const gestureContext = useSharedValue<GestureContext>({
++    x: 0,
++    userId: '',
++    moving: false,
++    vertical: false,
++    pressedX: 0,
++    pressedAt: 0
++  });
+ 
+   const userIndex = useDerivedValue( () => Math.round( x.value / WIDTH ) );
+   const storyIndex = useDerivedValue( () => stories[userIndex.value]?.stories.findIndex(
+@@ -261,91 +270,259 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
  
    };
  
 -  const onGestureEvent = useAnimatedGestureHandler( {
 -    onStart: ( e, ctx: GestureContext ) => {
-+  // Replace useAnimatedGestureHandler with Gesture.Pan
-+const panGesture = Gesture.Pan()
-+.onBegin((e) => {
-+  'worklet';
-+  // store initial state in shared values instead of ctx
-+  panGesture.ctx = {
-+    x: x.value,
-+    userId: userId.value,
-+    moving: false,
-+    vertical: false,
-+  };
-+  paused.value = true;
-+})
-+.onUpdate((e) => {
-+  'worklet';
-+  const ctx = panGesture.ctx;
-+
-+  if (
-+    ctx.x === x.value &&
-+    (ctx.vertical || Math.abs(e.velocityX) < Math.abs(e.velocityY))
-+  ) {
-+    ctx.vertical = true;
-+    y.value = e.translationY / 2;
-+  } else {
-+    ctx.moving = true;
-+    x.value = Math.max(
-+      0,
-+      Math.min(ctx.x + -e.translationX, WIDTH * (stories.length - 1)),
-+    );
-+  }
-+})
-+.onEnd((e) => {
-+  'worklet';
-+  const ctx = panGesture.ctx;
-+
-+  if (ctx.vertical) {
-+    if (e.translationY > 100) {
-+      runOnJS(onClose)();
-+    } else {
-+      if (e.translationY < -100 && onSwipeUp) {
-+        runOnJS(onSwipeUp)(
-+          stories[userIndex.value]?.id,
-+          stories[userIndex.value]?.stories[storyIndex.value ?? 0]?.id,
-+        );
-+      }
-+      y.value = withTiming(0);
-+      runOnJS(startAnimation)(true);
-+    }
-+  } else if (ctx.moving) {
-+    const diff = x.value - ctx.x;
-+    let newX;
- 
+-
 -      ctx.x = x.value;
 -      ctx.userId = userId.value;
 -      paused.value = true;
-+    if (Math.abs(diff) < WIDTH / 4) {
-+      newX = ctx.x;
-+    } else {
-+      newX =
-+        diff > 0
-+          ? Math.ceil(x.value / WIDTH) * WIDTH
-+          : Math.floor(x.value / WIDTH) * WIDTH;
-+    }
- 
+-
 -    },
 -    onActive: ( e, ctx ) => {
-+    const newUserId = stories[Math.round(newX / WIDTH)]?.id;
-+    if (newUserId !== undefined) {
-+      runOnJS(scrollTo)(
-+        newUserId,
-+        true,
-+        newUserId === ctx.userId,
-+        ctx.userId,
-+      );
-+    }
-+  }
- 
+-
 -      if ( ctx.x === x.value
 -        && ( ctx.vertical || ( Math.abs( e.velocityX ) < Math.abs( e.velocityY ) ) ) ) {
-+  ctx.moving = false;
-+  ctx.vertical = false;
-+  ctx.userId = undefined;
-+  hideElements.value = false;
-+  paused.value = false;
-+});
++  const panGesture = Gesture.Pan()
++  .onBegin(() => {
++    'worklet';
++    // Correct way: use shared value, NOT gesture.ctx
++    gestureContext.value = {
++      x: x.value,
++      userId: userId.value || '',
++      moving: false,
++      vertical: false,
++      pressedX: 0,
++      pressedAt: 0,
++    };
++    paused.value = true;
++    hideElements.value = true;
++  })
++  .onUpdate((e) => {
++    'worklet';
++    const ctx = gestureContext.value;
++
++    // Detect vertical swipe early
++    if (!ctx.moving && !ctx.vertical) {
++      if (Math.abs(e.translationY) > Math.abs(e.translationX) + 10) {
++        gestureContext.value = { ...ctx, vertical: true };
++      } else if (Math.abs(e.translationX) > 10) {
++        gestureContext.value = { ...ctx, moving: true };
++      }
++    }
  
 -        ctx.vertical = true;
 -        y.value = e.translationY / 2;
-+  // const onGestureEvent = useAnimatedGestureHandler( {
-+  //   onStart: ( e, ctx: GestureContext ) => {
++    if (ctx.vertical) {
++      y.value = Math.max(0, e.translationY / 2);
++    } else if (ctx.moving) {
++      const newX = ctx.x - e.translationX;
++      x.value = Math.max(0, Math.min(newX, WIDTH * (stories.length - 1)));
++    }
++  })
++  .onEnd((e) => {
++    'worklet';
++    const ctx = gestureContext.value;
  
--      } else {
-+  //     ctx.x = x.value;
-+  //     ctx.userId = userId.value;
-+  //     paused.value = true;
- 
++    if (ctx.vertical) {
++      if (e.translationY > HEIGHT * 0.35) {
++        runOnJS(onClose)();
+       } else {
+-
 -        ctx.moving = true;
 -        x.value = Math.max(
 -          0,
 -          Math.min( ctx.x + -e.translationX, WIDTH * ( stories.length - 1 ) ),
 -        );
-+  //   },
-+  //   onActive: ( e, ctx ) => {
- 
--      }
-+  //     if ( ctx.x === x.value
-+  //       && ( ctx.vertical || ( Math.abs( e.velocityX ) < Math.abs( e.velocityY ) ) ) ) {
+-
++        if (e.translationY < -120 && onSwipeUp) {
++          runOnJS(onSwipeUp)(
++            stories[userIndex.value]?.id,
++            stories[userIndex.value]?.stories[storyIndex.value ?? 0]?.id,
++          );
++        }
++        y.value = withTiming(0, { duration: 300 });
++        runOnJS(startAnimation)(true);
+       }
++    } else if (ctx.moving) {
++      const diff = x.value - ctx.x;
++      const threshold = WIDTH * 0.25;
  
 -    },
 -    onFinish: ( e, ctx ) => {
+-
+-      if ( ctx.vertical ) {
+-
+-        if ( e.translationY > 100 ) {
++      let targetX: number;
++      if (Math.abs(diff) < threshold) {
++        targetX = ctx.x;
++      } else {
++        targetX = diff > 0
++          ? Math.ceil(x.value / WIDTH) * WIDTH
++          : Math.floor(x.value / WIDTH) * WIDTH;
++      }
+ 
+-          onClose();
++      const targetIndex = Math.round(targetX / WIDTH);
++      const newUserId = stories[targetIndex]?.id;
+ 
+-        } else {
++      if (newUserId && newUserId !== ctx.userId) {
++        x.value = withTiming(targetX, { duration: 300 });
++        runOnJS(scrollTo)(newUserId, true, false, ctx.userId);
++      } else {
++        x.value = withTiming(ctx.x, { duration: 300 });
++      }
++    }
+ 
+-          if ( e.translationY < -100 && onSwipeUp ) {
++    // Reset
++    paused.value = false;
++    hideElements.value = false;
++    gestureContext.value = {
++      x: 0,
++      userId: '',
++      moving: false,
++      vertical: false,
++      pressedX: 0,
++      pressedAt: 0,
++    };
++  });
++
++  // Replace useAnimatedGestureHandler with Gesture.Pan
++// const panGesture = Gesture.Pan()
++// .onBegin((e) => {
++//   'worklet';
++//   // store initial state in shared values instead of ctx
++//   panGesture.ctx = {
++//     x: x.value,
++//     userId: userId.value,
++//     moving: false,
++//     vertical: false,
++//   };
++//   paused.value = true;
++// })
++// .onUpdate((e) => {
++//   'worklet';
++//   const ctx = panGesture.ctx;
++
++//   if (
++//     ctx.x === x.value &&
++//     (ctx.vertical || Math.abs(e.velocityX) < Math.abs(e.velocityY))
++//   ) {
++//     ctx.vertical = true;
++//     y.value = e.translationY / 2;
++//   } else {
++//     ctx.moving = true;
++//     x.value = Math.max(
++//       0,
++//       Math.min(ctx.x + -e.translationX, WIDTH * (stories.length - 1)),
++//     );
++//   }
++// })
++// .onEnd((e) => {
++//   'worklet';
++//   const ctx = panGesture.ctx;
++
++//   if (ctx.vertical) {
++//     if (e.translationY > 100) {
++//       runOnJS(onClose)();
++//     } else {
++//       if (e.translationY < -100 && onSwipeUp) {
++//         runOnJS(onSwipeUp)(
++//           stories[userIndex.value]?.id,
++//           stories[userIndex.value]?.stories[storyIndex.value ?? 0]?.id,
++//         );
++//       }
++//       y.value = withTiming(0);
++//       runOnJS(startAnimation)(true);
++//     }
++//   } else if (ctx.moving) {
++//     const diff = x.value - ctx.x;
++//     let newX;
++
++//     if (Math.abs(diff) < WIDTH / 4) {
++//       newX = ctx.x;
++//     } else {
++//       newX =
++//         diff > 0
++//           ? Math.ceil(x.value / WIDTH) * WIDTH
++//           : Math.floor(x.value / WIDTH) * WIDTH;
++//     }
++
++//     const newUserId = stories[Math.round(newX / WIDTH)]?.id;
++//     if (newUserId !== undefined) {
++//       runOnJS(scrollTo)(
++//         newUserId,
++//         true,
++//         newUserId === ctx.userId,
++//         ctx.userId,
++//       );
++//     }
++//   }
++
++//   ctx.moving = false;
++//   ctx.vertical = false;
++//   ctx.userId = undefined;
++//   hideElements.value = false;
++//   paused.value = false;
++// });
++
++  // const onGestureEvent = useAnimatedGestureHandler( {
++  //   onStart: ( e, ctx: GestureContext ) => {
++
++  //     ctx.x = x.value;
++  //     ctx.userId = userId.value;
++  //     paused.value = true;
++
++  //   },
++  //   onActive: ( e, ctx ) => {
++
++  //     if ( ctx.x === x.value
++  //       && ( ctx.vertical || ( Math.abs( e.velocityX ) < Math.abs( e.velocityY ) ) ) ) {
++
 +  //       ctx.vertical = true;
 +  //       y.value = e.translationY / 2;
- 
--      if ( ctx.vertical ) {
++
 +  //     } else {
- 
--        if ( e.translationY > 100 ) {
++
 +  //       ctx.moving = true;
 +  //       x.value = Math.max(
 +  //         0,
 +  //         Math.min( ctx.x + -e.translationX, WIDTH * ( stories.length - 1 ) ),
 +  //       );
- 
--          onClose();
++
 +  //     }
- 
--        } else {
++
 +  //   },
 +  //   onFinish: ( e, ctx ) => {
- 
--          if ( e.translationY < -100 && onSwipeUp ) {
++
 +  //     if ( ctx.vertical ) {
++
++  //       if ( e.translationY > 100 ) {
++
++  //         onClose();
++
++  //       } else {
  
 -            runOnJS( onSwipeUp )(
 -              stories[userIndex.value]?.id,
 -              stories[userIndex.value]?.stories[storyIndex.value ?? 0]?.id,
 -            );
-+  //       if ( e.translationY > 100 ) {
- 
--          }
-+  //         onClose();
- 
--          y.value = withTiming( 0 );
--          startAnimation( true );
-+  //       } else {
- 
--        }
 +  //         if ( e.translationY < -100 && onSwipeUp ) {
- 
--      } else if ( ctx.moving ) {
++
 +  //           runOnJS( onSwipeUp )(
 +  //             stories[userIndex.value]?.id,
 +  //             stories[userIndex.value]?.stories[storyIndex.value ?? 0]?.id,
 +  //           );
  
--        const diff = x.value - ctx.x;
--        let newX;
+-          }
 +  //         }
  
--        if ( Math.abs( diff ) < WIDTH / 4 ) {
+-          y.value = withTiming( 0 );
+-          startAnimation( true );
 +  //         y.value = withTiming( 0 );
 +  //         startAnimation( true );
  
--          newX = ctx.x;
+-        }
 +  //       }
  
--        } else {
+-      } else if ( ctx.moving ) {
 +  //     } else if ( ctx.moving ) {
+ 
+-        const diff = x.value - ctx.x;
+-        let newX;
++  //       const diff = x.value - ctx.x;
++  //       let newX;
+ 
+-        if ( Math.abs( diff ) < WIDTH / 4 ) {
++  //       if ( Math.abs( diff ) < WIDTH / 4 ) {
+ 
+-          newX = ctx.x;
++  //         newX = ctx.x;
+ 
+-        } else {
++  //       } else {
  
 -          newX = diff > 0
 -            ? Math.ceil( x.value / WIDTH ) * WIDTH
 -            : Math.floor( x.value / WIDTH ) * WIDTH;
-+  //       const diff = x.value - ctx.x;
-+  //       let newX;
- 
--        }
-+  //       if ( Math.abs( diff ) < WIDTH / 4 ) {
- 
--        const newUserId = stories[Math.round( newX / WIDTH )]?.id;
--        if ( newUserId !== undefined ) {
-+  //         newX = ctx.x;
- 
--          scrollTo( newUserId, true, newUserId === ctx.userId, ctx.userId );
-+  //       } else {
- 
--        }
 +  //         newX = diff > 0
 +  //           ? Math.ceil( x.value / WIDTH ) * WIDTH
 +  //           : Math.floor( x.value / WIDTH ) * WIDTH;
  
--      }
+-        }
 +  //       }
+ 
+-        const newUserId = stories[Math.round( newX / WIDTH )]?.id;
+-        if ( newUserId !== undefined ) {
++  //       const newUserId = stories[Math.round( newX / WIDTH )]?.id;
++  //       if ( newUserId !== undefined ) {
+ 
+-          scrollTo( newUserId, true, newUserId === ctx.userId, ctx.userId );
++  //         scrollTo( newUserId, true, newUserId === ctx.userId, ctx.userId );
+ 
+-        }
++  //       }
+ 
+-      }
++  //     }
  
 -      ctx.moving = false;
 -      ctx.vertical = false;
 -      ctx.userId = undefined;
 -      hideElements.value = false;
 -      paused.value = false;
-+  //       const newUserId = stories[Math.round( newX / WIDTH )]?.id;
-+  //       if ( newUserId !== undefined ) {
- 
--    },
--  } );
-+  //         scrollTo( newUserId, true, newUserId === ctx.userId, ctx.userId );
-+
-+  //       }
-+
-+  //     }
-+
 +  //     ctx.moving = false;
 +  //     ctx.vertical = false;
 +  //     ctx.userId = undefined;
 +  //     hideElements.value = false;
 +  //     paused.value = false;
-+
+ 
+-    },
+-  } );
 +  //   },
 +  // } );
  
    const onPressIn = () => {
  
-@@ -461,7 +541,8 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
+@@ -461,7 +638,8 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
  
    return (
      <Modal statusBarTranslucent={statusBarTranslucent} visible={visible} transparent animationType="none" testID="storyRNModal" onRequestClose={onClose}>
@@ -553,7 +662,7 @@ index dd93855..23d761f 100644
          <Animated.View style={ModalStyles.container} testID="storyModal">
            <Pressable
              onPressIn={onPressIn}
-@@ -502,6 +583,7 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
+@@ -502,6 +680,7 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
                    loaderColor={loaderColor}
                    loaderBackgroundColor={loaderBackgroundColor}
                    key={story.id}
@@ -561,7 +670,7 @@ index dd93855..23d761f 100644
                    {...props}
                  />
                ) )}
-@@ -509,7 +591,8 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
+@@ -509,7 +688,8 @@ const StoryModal = forwardRef<StoryModalPublicMethods, StoryModalProps>( ( {
            </Pressable>
            {footerComponent && footerComponent}
          </Animated.View>
