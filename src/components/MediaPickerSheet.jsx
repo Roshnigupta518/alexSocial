@@ -14,6 +14,8 @@ const MediaPickerSheet = forwardRef(
   ) => {
     const actionsheetRef = useRef(null);
 
+    const MAX_FILE_SIZE = 700 * 1024 * 1024; // 700MB
+
     useImperativeHandle(ref, () => ({
       open: () => {
         actionsheetRef.current?.show();
@@ -86,10 +88,10 @@ const MediaPickerSheet = forwardRef(
                 CropImage(res.assets[0].uri, res.assets);
               }, 1000);
             } else {
-              if (res?.assets[0].fileSize < 313699773) {
+              if (res?.assets[0].fileSize < MAX_FILE_SIZE) {
                 onMediaClick(data);
               } else {
-                Toast.error('Post', 'File size exceeded more than 300 MB.');
+                Toast.error('Post', 'File size exceeded more than 700 MB.');
               }
             }
 
@@ -119,10 +121,10 @@ const MediaPickerSheet = forwardRef(
                 CropImage(res.assets[0].uri, res.assets);
               }, 1000);
             } else {
-              if (res?.assets[0].fileSize < 310699773) {
+              if (res?.assets[0].fileSize < MAX_FILE_SIZE) {
                 onMediaClick(data);
               } else {
-                Toast.error('Post', 'File size exceeded more than 300 MB.');
+                Toast.error('Post', 'File size exceeded more than 700 MB.');
               }
             }
 
