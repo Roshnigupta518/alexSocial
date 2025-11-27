@@ -35,10 +35,12 @@ export const handleShareFunction = async (data, place_id) => {
       domainUriPrefix: 'https://alexsocial.page.link',
       android: {
         packageName: 'com.alexsocial',
+        fallbackUrl: 'https://play.google.com/store/apps/details?id=com.alexsocial',
       },
       ios: {
-        bundleId: 'com.alexsocial',
+        bundleId: 'com.alexapp',
         appStoreId: '6470377502',
+        fallbackUrl: 'https://apps.apple.com/app/id6470377502',
       },
       social: {
         title: data?.name || 'Check out this business',
@@ -77,10 +79,12 @@ export const handleSharePostFunction = async (data) => {
       domainUriPrefix: 'https://alexsocial.page.link',
       android: {
         packageName: 'com.alexsocial',
+        fallbackUrl: 'https://play.google.com/store/apps/details?id=com.alexsocial',
       },
       ios: {
-        bundleId: 'com.alexsocial',
+        bundleId: 'com.alexapp',
         appStoreId: '6470377502',
+        fallbackUrl: 'https://apps.apple.com/app/id6470377502',
       },
       social: {
         title: data?.postData?.caption || 'Check out this post',
@@ -117,10 +121,12 @@ export const handleShareStoryFunction = async (data, storyref) => {
       domainUriPrefix: 'https://alexsocial.page.link',
       android: {
         packageName: 'com.alexsocial',
+        fallbackUrl: 'https://play.google.com/store/apps/details?id=com.alexsocial',
       },
       ios: {
-        bundleId: 'com.alexsocial',
+        bundleId: 'com.alexapp',
         appStoreId: '6470377502',
+        fallbackUrl: 'https://apps.apple.com/app/id6470377502',
       },
       social: {
         title: data?.postData?.caption || 'Check out this story',
