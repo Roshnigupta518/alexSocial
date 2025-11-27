@@ -91,18 +91,52 @@ const ReelViewer = ({route}) => {
     }, [])
   );
 
+  // useEffect(() => {
+  //   if (isFocused && flashListRef.current && postArray.length > 0) {
+  //     setTimeout(() => {
+  //       flashListRef.current.scrollToIndex({
+  //         index: currentIndex,
+  //         animated: false,
+  //         viewPosition: 0,
+  //       });
+  //     }); 
+  //   }
+  // }, [isFocused, postArray.length, currentIndex]);
+
   useEffect(() => {
     if (isFocused && flashListRef.current && postArray.length > 0) {
-      setTimeout(() => {
-        // InteractionManager.runAfterInteractions(() => {
-        flashListRef.current.scrollToIndex({
-          index: currentIndex,
-          animated: false,
-          viewPosition: 0,
-        });
-      }); // Adjust timeout as needed
+      // clamp the requested index to valid range
+      const requestedIndex = Number.isFinite(currentIndex) ? currentIndex : 0;
+      const safeIndex = Math.max(0, Math.min(requestedIndex, postArray.length - 1));
+  
+      // Wait for layout / interactions to finish, then try to scroll
+      InteractionManager.runAfterInteractions(() => {
+        try {
+          // only call if ref still present and index valid
+          if (flashListRef.current && safeIndex >= 0 && safeIndex < postArray.length) {
+            flashListRef.current.scrollToIndex({
+              index: safeIndex,
+              animated: false,
+              viewPosition: 0,
+            });
+          }
+        } catch (err) {
+          // fallback: scroll to offset to avoid crash
+          const height = Math.round(screenHeight);
+          const offset = safeIndex * height;
+          try {
+            flashListRef.current?.scrollToOffset?.({ offset, animated: false });
+          } catch (err2) {
+            // last resort: scrollToEnd
+            flashListRef.current?.scrollToEnd?.({ animated: false });
+          }
+          // log the error to crashlytics for debugging
+          crashlytics().recordError(err);
+        }
+      });
     }
   }, [isFocused, postArray.length, currentIndex]);
+  
 
   const handleDeletePost = () => {
     if (postArray.length === 0) return;
