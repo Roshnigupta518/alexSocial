@@ -1,20 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
     View,
-    Text,
-    SafeAreaView,
-    Image,
-    TouchableOpacity,
-    Platform,
     StyleSheet,
-    FlatList, Dimensions, ActivityIndicator
+    FlatList, ActivityIndicator
 } from 'react-native';
-import { colors, fonts, HEIGHT, WIDTH, wp } from '../../../constants';
+import { colors, } from '../../../constants';
 import BackHeader from '../../../components/BackHeader';
-import ImageConstants from '../../../constants/ImageConstants';
 import { useSelector } from 'react-redux';
-import { useIsFocused } from '@react-navigation/native';
-import { GetUserPostsRequest } from '../../../services/Utills';
+import {  GetUserPostsRequestForLocation } from '../../../services/Utills';
 import Toast from '../../../constants/Toast';
 import MediaItem from '../../../components/GridView';
 import NotFoundAnime from '../../../components/NotFoundAnime';
@@ -30,7 +23,6 @@ const PostByPlaces = ({ navigation, route }) => {
     const [limit] = useState(5);
     const [hasMore, setHasMore] = useState(true);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
-
 
     const { id, type, userId } = route?.params
 
@@ -48,11 +40,16 @@ const PostByPlaces = ({ navigation, route }) => {
         }
     
         try {
-            const res = await GetUserPostsRequest(url);
+            const res = await GetUserPostsRequestForLocation(url);
             const newData = res?.result || [];
     
             if (newData.length > 0) {
-                setPostData(prev => (isLoadMore ? [...prev, ...newData] : newData));
+                setPostData(prev => {
+                    const merged = isLoadMore ? [...prev, ...newData] : newData;
+                    const unique = Array.from(new Map(merged.map(i => [i.postData._id, i])).values());
+                    return unique;
+                });
+                
                 setSkip(prev => prev + limit);
             } else {
                 setHasMore(false);
@@ -75,30 +72,11 @@ const PostByPlaces = ({ navigation, route }) => {
     
 
     return (
-        <>
+     
             <CustomContainer>
                 <BackHeader
                 label={`Posts of ${id}`}
                 />
-                {/* <View style={[st.card,{paddingHorizontal:20}]}>
-                    <View
-                        style={st.cardContent}>
-                        <View style={st.cardBar} />
-                        <View
-                            style={st.internalCard}>
-
-                            <Text
-                                numberOfLines={2}
-                                style={st.cardTitle}>
-                                {id}
-                            </Text>
-                        </View>
-                    </View>
-                </View> */}
-                <View
-                    style={{
-                        flex: 1,
-                    }}>
                     <FlatList
                         data={postData}
                         renderItem={({ item, index }) => (
@@ -114,7 +92,7 @@ const PostByPlaces = ({ navigation, route }) => {
                             />
                         )}
                         numColumns={3}
-                        keyExtractor={(item, index) => index.toString()}
+                        keyExtractor={(item) => item.postData._id?.toString()}
                         contentContainerStyle={{ padding: 15 }}
                         ListEmptyComponent={<NotFoundAnime isLoading={isLoading} />}
                         onEndReached={() => {
@@ -122,26 +100,17 @@ const PostByPlaces = ({ navigation, route }) => {
                         }}
                         onEndReachedThreshold={0.5}
                         ListFooterComponent={
-                            isFetchingMore ? (
+                            postData.length > 0 && isFetchingMore ? (
                                 <ActivityIndicator size="small" color={colors.primaryColor} />
-                            ) : !hasMore && postData.length > 0 ? (
-                               null
                             ) : null
                         }
+                        
                     />
-
-
-                </View>
             </CustomContainer>
-        </>
+     
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.white,
-    },
-});
+
 
 export default PostByPlaces;

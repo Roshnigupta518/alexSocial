@@ -93,7 +93,6 @@ const ProfileDetail = ({ navigation, route }) => {
   
     try {
       const res = await GetUserPostsRequest(userId, skip, limit);
-  
       if (res?.result?.length > 0) {
         setPostData(prev => (isLoadMore ? [...prev, ...res.result] : res.result));
         setSkip(prev => prev + limit);

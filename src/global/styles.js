@@ -60,6 +60,9 @@ export default StyleSheet.create({
     color: colors.black,
     width: WIDTH / 2.2,
   },
+  txAlign:{
+    textAlign:'center'
+  },
   rightTxt: {
     fontFamily: fonts.regular,
     fontSize: wp(12),

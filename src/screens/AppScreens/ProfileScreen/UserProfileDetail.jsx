@@ -329,7 +329,8 @@ const UserProfileDetail = ({ navigation, route }) => {
         data={filteredData}
         keyExtractor={(item, index) => index.toString()}
         numColumns={3}
-        renderItem={({ item, index }) => (
+        renderItem={({ item, index }) => {
+          return(
           <MediaItem
             item={item}
             onPress={() =>
@@ -341,6 +342,7 @@ const UserProfileDetail = ({ navigation, route }) => {
             index={index}
           />
         )}
+      }
         contentContainerStyle={{ padding: 15 }}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={<NotFoundAnime isLoading={isLoading} />}

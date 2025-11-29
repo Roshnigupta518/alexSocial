@@ -435,6 +435,23 @@ export const GetMyProfileRequest = async () => {
   });
 };
 
+export const GetUserPostsRequestForLocation = async (data) => {
+  return await new Promise((resolve, reject) => {
+    try {
+      HttpRequests.getAPI(`${api.getUsersPosts}${data}`)
+        .then(res => {
+          if (res?.data) resolve(res?.data);
+          else reject(res?.data);
+        })
+        .catch(err => {
+          reject(err?.response?.data);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 export const GetUserPostsRequest = async (data, skip = 0, limit = 5) => {
   return await new Promise((resolve, reject) => {
     try {

@@ -69,16 +69,42 @@ const ExploreMapScreen = ({ navigation, route }) => {
 
         getDataHandle(categoryId, city);
 
+        // setTimeout(() => {
+        //   if (mapRef.current && location) {
+        //     mapRef.current.animateToRegion({
+        //       latitude: location.latitude,
+        //       longitude: location.longitude,
+        //       latitudeDelta: 0.1,
+        //       longitudeDelta: 0.1,
+        //     });
+        //   }
+        // }, 400);
+
+
         setTimeout(() => {
-          if (mapRef.current && location) {
-            mapRef.current.animateToRegion({
-              latitude: location.latitude,
-              longitude: location.longitude,
-              latitudeDelta: 0.1,
-              longitudeDelta: 0.1,
-            });
+          if (mapRef.current) {
+            // If user selected a city → move map to that city center
+            if (CityMapSlice?.location_coordinates) {
+              const [lat, lng] = CityMapSlice.location_coordinates;
+              mapRef.current.animateToRegion({
+                latitude: lat,
+                longitude: lng,
+                latitudeDelta: 0.1,
+                longitudeDelta: 0.1,
+              });
+            }
+            // Else → move to current location
+            else if (location) {
+              mapRef.current.animateToRegion({
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.1,
+                longitudeDelta: 0.1,
+              });
+            }
           }
         }, 400);
+        
       } else if (filterCategoryId) {
         console.log('**********************hello')
         // Category filter changed → only refresh data, no map jump

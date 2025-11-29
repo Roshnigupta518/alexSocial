@@ -1,17 +1,30 @@
-import React from 'react';
-import { Image, TouchableOpacity, StyleSheet, View } from 'react-native';
+import React,{useState} from 'react';
+import { Image, TouchableOpacity, StyleSheet, View, Text } from 'react-native';
 import ImageConstants from '../../constants/ImageConstants';
 import { wp, WIDTH, colors } from '../../constants';
+import st from '../../global/styles';
 
 const MediaItem = ({ item, size, onPress, index }) => {
+    
+    const [hasError, setHasError] = useState(false);
+    const [hasVdoError, setHasVdoError] = useState(false);
+
+    const imageUri = item?.postData?.post?.data;
+
     return (
-        <TouchableOpacity
-            onPress={onPress}>
+        <TouchableOpacity onPress={onPress}>
             {item?.postData?.post?.mimetype != 'video/mp4' ? (
-                <Image
-                    source={{ uri: item?.postData?.post?.data }}
-                    style={styles.userPostImage}
-                />
+                hasError ? (
+                    <View style={[styles.userPostImage, st.center]}>
+                        <Text style={[st.activeChipText, st.txAlign]}>Image not available</Text>
+                    </View>
+                ) : (
+                    <Image
+                        source={{ uri: imageUri }}
+                        style={styles.userPostImage}
+                        onError={() => setHasError(true)}
+                    />
+                )
             ) : (
                 <View style={styles.videoContainer}>
                     <View style={styles.playIconStyle}>
@@ -24,13 +37,19 @@ const MediaItem = ({ item, size, onPress, index }) => {
                             }}
                         />
                     </View>
+                    {hasVdoError ? (
+                    <View style={[styles.userPostImage]}>
+                        <Text style={[st.activeChipText, st.txAlign]}>{'\n'}Thumbnail not available</Text>
+                    </View>
+                ) : (
                     <Image
                         source={item?.postData?.post_thumbnail ? 
                             { uri: item?.postData?.post_thumbnail } : 
                             ImageConstants.business_logo}
-                        style={ styles.userPostImage
-                    }
+                        style={ styles.userPostImage}
+                        onError={() => setHasVdoError(true)}
                     />
+                        )}
                 </View>
             )}
         </TouchableOpacity>
@@ -46,6 +65,9 @@ const styles = StyleSheet.create({
         height: 120,
         width: WIDTH / 3.5,
         margin: 4,
+        borderColor:colors.gray,
+        borderWidth:0.3,
+        borderRadius:3
       },
       videoContainer: {
         // padding: 4,
