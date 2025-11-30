@@ -91,18 +91,6 @@ const ReelViewer = ({route}) => {
     }, [])
   );
 
-  // useEffect(() => {
-  //   if (isFocused && flashListRef.current && postArray.length > 0) {
-  //     setTimeout(() => {
-  //       flashListRef.current.scrollToIndex({
-  //         index: currentIndex,
-  //         animated: false,
-  //         viewPosition: 0,
-  //       });
-  //     }); 
-  //   }
-  // }, [isFocused, postArray.length, currentIndex]);
-
   useEffect(() => {
     if (isFocused && flashListRef.current && postArray.length > 0) {
       // clamp the requested index to valid range
@@ -136,12 +124,12 @@ const ReelViewer = ({route}) => {
       });
     }
   }, [isFocused, postArray.length, currentIndex]);
-  
 
   const handleDeletePost = () => {
     if (postArray.length === 0) return;
 
-    const deletedId = postArray[currentItemIndex]?.postData?._id;
+    const deletedId = postArray[currentItemIndex]?.postData?._id || postArray[currentItemIndex]?._id;
+    console.log({deletedId})
 
       if (onDeletePost) {
         onDeletePost(deletedId); // Inform ProfileDetail to remove the post
@@ -155,6 +143,7 @@ const ReelViewer = ({route}) => {
   
     setPostArray(updatedArray);
     setCurrentItemIndex(newIndex);
+    console.log({newIndex})
   };  
 
   const _renderReels = useCallback(({item, index}) => {

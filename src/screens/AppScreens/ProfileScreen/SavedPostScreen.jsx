@@ -81,6 +81,12 @@ const SavedPostScreen = ({navigation, route}) => {
           navigation.navigate('ReelViewer', {
             data: postData,
             currentIndex: index,
+            onDeletePost: (deletedId) => {
+              setPostData(prev => prev.filter(item => item?.postData?._id !== deletedId));
+              if (route.params?.onPostDelete) {
+                route.params.onPostDelete(deletedId);
+            }
+            },
           })
         }>
         {item?.postData?.post?.mimetype != 'video/mp4' ? (

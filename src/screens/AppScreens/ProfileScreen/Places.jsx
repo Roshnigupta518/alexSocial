@@ -105,7 +105,16 @@ const UserPlaces = ({ navigation, route }) => {
         return (
             <PlacesItem item={item}
                 index={index}
-                onPress={() => navigation.navigate('PostByPlaces',{id:item._id, type, userId: id})} />
+                // onPress={() => navigation.navigate('PostByPlaces',{id:item._id, type, userId: id})}
+                onPress={() =>
+                    navigation.navigate('PostByPlaces', {
+                      id: item._id,
+                      type,
+                      userId: id,
+                      onPostDelete: route.params?.onPostDelete, // pass callback from ProfileDetail
+                    })
+                  }
+                />
         )
     })
 

@@ -96,8 +96,8 @@ const ExploreMapScreen = ({ navigation, route }) => {
             // Else → move to current location
             else if (location) {
               mapRef.current.animateToRegion({
-                latitude: location.latitude,
-                longitude: location.longitude,
+                latitude: location?.latitude,
+                longitude: location?.longitude,
                 latitudeDelta: 0.1,
                 longitudeDelta: 0.1,
               });
@@ -112,18 +112,13 @@ const ExploreMapScreen = ({ navigation, route }) => {
         setFilteredPlaces([]);
         getDataHandle(categoryId, city);
       }
-      //  else {
-      //   console.log('**********************tummko kya')
-      //   setData([]);
-      //   setFilteredPlaces([]);
-      //   getDataHandle(categoryId, city);
-      // }
     }, [filterCategoryId, CityMapSlice?.city, location])
   );
 
   const getDataHandle = async (categoryId = '', city = '') => {
     if (!location || !location.latitude || !location.longitude) {
       console.log('Skipping API call, location not ready yet');
+      setIsLoading(false)
       return;
     }
 
@@ -131,8 +126,6 @@ const ExploreMapScreen = ({ navigation, route }) => {
     setData([]);
     setFilteredPlaces([]);
     setShowMapContent(false);
-
-    setIsLoading(true);
 
     setIsLoading(true);
     let params = '';

@@ -196,8 +196,14 @@ const ProfileDetail = ({ navigation, route }) => {
      <CustomContainer>
         <BackHeader label="Profile Details"
           onPress={() => navigation.navigate('HomeScreen')}
-          rightView={() => <TouchableOpacity onPress={() => navigation.navigate('Setting')} >
-            <Image source={ImageConstants.settings} style={styles.imgsty} />
+          rightView={() => <TouchableOpacity
+           onPress={() => navigation.navigate('Setting',{
+            onDeletePost: deletedId => {
+              setPostData(prev => prev.filter(item => item?.postData?._id !== deletedId));
+            },
+           })} >
+            <Image source={ImageConstants.settings} style={styles.imgsty}
+             />
           </TouchableOpacity>}
           profileEdit={true}
           onEdit={() => navigation.navigate('EditProfileScreen')}
@@ -267,6 +273,9 @@ const ProfileDetail = ({ navigation, route }) => {
                     navigation.navigate('UserPlaces', {
                       id: userInfo?.id,
                       type: 'Cities',
+                      onPostDelete: (deletedId) => {
+                        setPostData(prev => prev.filter(item => item?.postData?._id !== deletedId));
+                      },
                     })
                   }>
                     <Text style={styles.contentTextStyle}>{formatCount(userDetails?.cityes_count)}</Text>
@@ -279,6 +288,9 @@ const ProfileDetail = ({ navigation, route }) => {
                     navigation.navigate('UserPlaces', {
                       id: userInfo?.id,
                       type: 'Countries',
+                      onPostDelete: (deletedId) => {
+                        setPostData(prev => prev.filter(item => item?.postData?._id !== deletedId));
+                      },
                     })
                   }>
                     <Text style={styles.contentTextStyle}>{formatCount(userDetails?.countries_count)}</Text>

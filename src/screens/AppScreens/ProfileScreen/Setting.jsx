@@ -27,7 +27,7 @@ import { firebaseApp } from '../../../../firebaseConfig';
 import BackHeader from '../../../components/BackHeader';
 import CustomContainer from '../../../components/container';
 
-const ProfileScreen = ({navigation}) => {
+const ProfileScreen = ({navigation, route}) => {
   const auth = getAuth(firebaseApp);
   const [isInternetConnected, setIsInternetConnected] = useState(true);
   useEffect(() => {
@@ -65,7 +65,14 @@ const ProfileScreen = ({navigation}) => {
     {
       icon: ImageConstants.save,
       name: 'Saved Post',
-      screen: () => navigation.navigate('SavedPostScreen'),
+      screen: () => navigation.navigate('SavedPostScreen',{
+        onPostDelete: deletedId => {
+          // inform ProfileDetail
+            if (route.params?.onDeletePost) {
+                route.params.onDeletePost(deletedId);
+            }
+        },
+      }),
       shouldShowActionIcon: true,
       shouldDisable: false,
     },
