@@ -82,6 +82,8 @@ const ExploreMapScreen = ({ navigation, route }) => {
 
 
         setTimeout(() => {
+          if (!mapReady) return;
+          
           if (mapRef.current) {
             // If user selected a city → move map to that city center
             if (CityMapSlice?.location_coordinates) {
@@ -171,6 +173,8 @@ const ExploreMapScreen = ({ navigation, route }) => {
         // ✅ Keep city center visible
         const coords = CityMapSlice?.location_coordinates;
         if (coords) {
+          if (!mapRef.current) return; 
+
           mapRef.current.animateToRegion({
             latitude: coords[0],
             longitude: coords[1],
@@ -446,7 +450,8 @@ const ExploreMapScreen = ({ navigation, route }) => {
 
       {location && (
         <MapView
-          key={filteredPlaces.length}
+          // key={filteredPlaces.length}
+          key={CityMapSlice?.city + '_' + (filterCategoryId || '')}  
           ref={mapRef}
           style={st.container}
           customMapStyle={customMapStyle}
@@ -474,7 +479,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
             filteredPlaces.map((place, index) => {
               const lat = place.latitude;
               const lng = place.longitude;
-              if (!lat || !lng) return null; // skip marker if no coordinates
+              if (!lat || !lng) return null; 
 
               const imageUri =
                 place.source === 'google' && place.photos?.[0]
@@ -487,7 +492,6 @@ const ExploreMapScreen = ({ navigation, route }) => {
                   coordinate={{ latitude: lat, longitude: lng }}
                   title={place.name}
                   anchor={{ x: 0.5, y: 0.5 }}
-                // tracksViewChanges={false}
                 >
                   <View style={styles.markerContainer}>
                     <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo}
@@ -639,23 +643,6 @@ const ExploreMapScreen = ({ navigation, route }) => {
         />
 
       </BottomSheet>
-
-      
-      {/* {isCatLoading &&
-        <View style={[st.center]}>
-          <ActivityIndicator color={colors.primaryColor} size="large" />
-        </View>} */}
-
-      {/* {!showMapContent && (
-        <View style={[StyleSheet.absoluteFill, {
-          backgroundColor: colors.black,
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: 0.5
-        }]}>
-          <ActivityIndicator size="large" color={colors.primaryColor} />
-        </View>
-      )} */}
 
     </View>
   );

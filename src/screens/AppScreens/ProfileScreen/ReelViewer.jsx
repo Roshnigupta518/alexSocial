@@ -125,27 +125,60 @@ const ReelViewer = ({route}) => {
     }
   }, [isFocused, postArray.length, currentIndex]);
 
-  const handleDeletePost = () => {
+  console.log({postArray})
+
+  // const handleDeletePost = () => {
+  //   if (postArray.length === 0) return;
+
+  //   const deletedId = postArray[currentItemIndex]?.postData?._id || postArray[currentItemIndex]?._id;
+  //   console.log({deletedId})
+
+  //     if (onDeletePost) {
+  //       onDeletePost(deletedId); // Inform ProfileDetail to remove the post
+  //     }
+  
+  //   const updatedArray = [...postArray];
+  //   updatedArray.splice(currentItemIndex, 1); // Safely remove current item
+  
+  //   // Avoid crashing due to invalid index
+  //   const newIndex = Math.max(currentItemIndex - 1, 0);
+  
+  //   setPostArray(updatedArray);
+  //   setCurrentItemIndex(newIndex);
+  //   console.log({newIndex})
+  // };
+  
+  const handleDeletePost = useCallback(() => {
     if (postArray.length === 0) return;
-
-    const deletedId = postArray[currentItemIndex]?.postData?._id || postArray[currentItemIndex]?._id;
-    console.log({deletedId})
-
-      if (onDeletePost) {
-        onDeletePost(deletedId); // Inform ProfileDetail to remove the post
-      }
   
-    const updatedArray = [...postArray];
-    updatedArray.splice(currentItemIndex, 1); // Safely remove current item
+    const deletedItem = postArray[currentItemIndex];
+    const deletedId = deletedItem?.postData?._id || deletedItem?._id;
   
-    // Avoid crashing due to invalid index
-    const newIndex = Math.max(currentItemIndex - 1, 0);
+    if (onDeletePost) {
+      onDeletePost(deletedId);
+    }
   
-    setPostArray(updatedArray);
+    const newArray = postArray.filter((_, idx) => idx !== currentItemIndex);
+    
+    let newIndex = currentItemIndex;
+    if (newIndex >= newArray.length && newArray.length > 0) {
+      newIndex = newArray.length - 1;
+    }
+  
+    setPostArray(newArray);
     setCurrentItemIndex(newIndex);
-    console.log({newIndex})
-  };  
-
+  
+    // Smooth scroll to correct position
+    if (flashListRef.current && newArray.length > 0) {
+      InteractionManager.runAfterInteractions(() => {
+        flashListRef.current.scrollToIndex({
+          index: newIndex,
+          animated: true,
+        });
+      });
+    }
+  }, [postArray, currentItemIndex, onDeletePost]);
+  
   const _renderReels = useCallback(({item, index}) => {
       return (
         <View style={[styles.cardContainer,{height:screenHeight}]}>
@@ -199,7 +232,10 @@ const ReelViewer = ({route}) => {
           ref={flashListRef}
           data={postArray}
           renderItem={_renderReels}
-          keyExtractor={(item, index) => `${item._id || 'idx'}_${index}`}
+          // keyExtractor={(item, index) => `${item._id || 'idx'}_${index}`}
+          keyExtractor={(item, index) => 
+            item?.postData?._id || item?._id || `reel_${index}`
+          }
           showsVerticalScrollIndicator={false}
           disableIntervalMomentum
           onViewableItemsChanged={_onViewableItemsChanged}
@@ -207,8 +243,8 @@ const ReelViewer = ({route}) => {
           pagingEnabled
           snapToInterval={Math.round(screenHeight)}
           initialNumToRender={2}
-          maxToRenderPerBatch={2}  
-          windowSize={2}
+          maxToRenderPerBatch={4}  
+          windowSize={5}
           removeClippedSubviews={false}
           getItemLayout={(data, index) => ({
             length: Math.round(screenHeight),
@@ -217,7 +253,8 @@ const ReelViewer = ({route}) => {
           })}
           contentInset={{top: 0, bottom: 0, left: 0, right: 0}}
           contentInsetAdjustmentBehavior="automatic"
-          extraData={Math.round(screenHeight)}
+          // extraData={Math.round(screenHeight)}
+          extraData={{ currentItemIndex, screenHeight: Math.round(screenHeight) }}
           contentContainerStyle={{ padding: 0, margin: 0,paddingBottom: insets.bottom + 20, }}
           
           ListEmptyComponent={ListEmptyComponent}
