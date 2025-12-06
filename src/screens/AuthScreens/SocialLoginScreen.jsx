@@ -130,52 +130,182 @@ const SocialLoginScreen = ({navigation}) => {
     },
   ];
 
+  // async function onAppleButtonPress() {
+  //   try {
+  //     setIsLoading(true);
+  //     setLoadingFor('apple');
+  
+  //     const response = await appleAuth.performRequest({
+  //       requestedOperation: appleAuth.Operation.LOGIN,
+  //       requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+  //     });
+  
+  //     console.log("🍎 Apple Response:", JSON.stringify(response));
+  
+  //     if (!response.identityToken) {
+  //       console.log("❌ No identity token returned");
+  //       return null;
+  //     }
+  
+  //     const provider = new OAuthProvider('apple.com');
+  
+  //     const credential = provider.credential({
+  //       idToken: response.identityToken,
+  //       rawNonce: response.nonce,
+  //     });
+  
+  //     console.log("✅ Firebase Credential Created:", credential);
+  
+  //     // ✅ Firebase sign-in
+  //     const firebaseUser = await signInWithCredential(auth, credential);
+  
+  //     console.log("✅ Firebase User:", firebaseUser);
+  
+  //     // ✅ API call + local storage + Navigation
+  //     await MakeAppleLoginUser(firebaseUser);
+  
+  //     return firebaseUser;
+  
+  //   } catch (err) {
+  //     console.error("Apple Login Error:", err);
+  //     Toast.error("Login", "Apple login failed. Please try again.");
+  //     return null;
+  //   } finally {
+  //     setIsLoading(false);
+  //     setLoadingFor('');
+  //   }
+  // }
+
+  // const MakeAppleLoginUser = async res => {
+  //   let data = {
+  //     name: res?.user?.displayName == null ? '' : res?.user?.displayName,
+  //     email: res?.additionalUserInfo?.profile?.email,
+  //     type: 'apple',
+  //     device_token: fcmToken || 'token_denied',
+  //     access_token: res?.user?.uid,
+  //     device_type: Platform.OS == 'android' ? '1' : '2',
+  //   };
+
+  //   SocialLoginRequest(data)
+  //     .then(res => {
+  //       Toast.success('Login', res?.message);
+  //       let user = res?.result || {};
+
+  //       const updatedUser = Object.assign({}, user, {
+  //         type: 'apple',
+  //       });
+
+  //       Storage.store('userdata', updatedUser).then(() => {
+  //         dispatch(userDataAction(updatedUser));
+  //         navigation.dispatch(
+  //           CommonActions.reset({
+  //             index: 0,
+  //             routes: [{name: 'HomeScreen'}],
+  //           }),
+  //         );
+
+  //         setIsLoading(false);
+  //         setLoadingFor('');
+  //       });
+  //     })
+  //     .catch(err => {
+  //       Toast.error('Login', err?.message);
+  //       setIsLoading(false);
+  //       setLoadingFor('');
+  //     });
+  // };
+
+ 
   async function onAppleButtonPress() {
     try {
       setIsLoading(true);
       setLoadingFor('apple');
   
-      const response = await appleAuth.performRequest({
+      const appleResponse = await appleAuth.performRequest({
         requestedOperation: appleAuth.Operation.LOGIN,
-        requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
       });
   
-      console.log("🍎 Apple Response:", JSON.stringify(response));
-  
-      if (!response.identityToken) {
-        console.log("❌ No identity token returned");
-        return null;
+      if (!appleResponse.identityToken) {
+        Toast.error('Login', 'Apple authentication failed');
+        return;
       }
   
       const provider = new OAuthProvider('apple.com');
-  
       const credential = provider.credential({
-        idToken: response.identityToken,
-        rawNonce: response.nonce,
+        idToken: appleResponse.identityToken,
+        rawNonce: appleResponse.nonce,
       });
   
-      console.log("✅ Firebase Credential Created:", credential);
+      // Firebase login
+      let firebaseUserCredential = await signInWithCredential(auth, credential);
   
-      // ✅ Firebase sign-in
-      const firebaseUser = await signInWithCredential(auth, credential);
+      // MAGIC LINE: Force reload user data
+      await firebaseUserCredential.user.reload();
   
-      console.log("✅ Firebase User:", firebaseUser);
+      // अब दुबारा user object लो (अब email आएगा!)
+      const updatedUser = auth.currentUser;
   
-      // ✅ API call + local storage + Navigation
-      await MakeAppleLoginUser(firebaseUser);
+      console.log("Real Email after reload:", updatedUser.email); // यहाँ आएगा: xyz@privaterelay.appleid.com
   
-      return firebaseUser;
+      // Name सिर्फ first time मिलता है
+      let name = updatedUser.displayName;
+      if (appleResponse.fullName?.givenName || appleResponse.fullName?.familyName) {
+        name = `${appleResponse.fullName.givenName || ''} ${appleResponse.fullName.familyName || ''}`.trim();
+      }
   
-    } catch (err) {
-      console.error("Apple Login Error:", err);
-      Toast.error("Login", "Apple login failed. Please try again.");
-      return null;
+      await MakeAppleLoginUser({
+        uid: updatedUser.uid,
+        email: updatedUser.email || '', // अब ये null नहीं होगा
+        name: name || 'Apple User',
+      });
+  
+    } catch (error) {
+      if (error.code === appleAuth.Error.CANCELED) return;
+      console.error('Apple Login Error:', error);
+      Toast.error('Login', 'Apple login failed');
     } finally {
       setIsLoading(false);
       setLoadingFor('');
     }
   }
 
+  const MakeAppleLoginUser = async ({ uid, email, name }) => {
+    const data = {
+      name: name || 'Apple User',
+      email: email || '', // अब ये हमेशा आएगा
+      type: 'apple',
+      device_token: fcmToken || 'token_denied',
+      access_token: uid,
+      device_type: Platform.OS === 'ios' ? '2' : '1',
+    };
+  
+    try {
+      const res = await SocialLoginRequest(data);
+      Toast.success('Login', res?.message);
+  
+      const user = res?.result || {};
+      const updatedUser = {
+        ...user,
+        type: 'apple',
+        name: user.name || name || 'Apple User',
+        email: user.email || email || '',
+      };
+  
+      await Storage.store('userdata', updatedUser);
+      dispatch(userDataAction(updatedUser));
+  
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'HomeScreen' }],
+        })
+      );
+    } catch (err) {
+      Toast.error('Login', err?.message || 'Login failed');
+    }
+  };
+ 
   async function onGoogleButtonPress() {
     setIsLoading(true);
     setLoadingFor('google');
@@ -242,45 +372,6 @@ const SocialLoginScreen = ({navigation}) => {
       throw error;
     }
   }
-
-  const MakeAppleLoginUser = async res => {
-    let data = {
-      name: res?.user?.displayName == null ? '' : res?.user?.displayName,
-      email: res?.additionalUserInfo?.profile?.email,
-      type: 'apple',
-      device_token: fcmToken || 'token_denied',
-      access_token: res?.user?.uid,
-      device_type: Platform.OS == 'android' ? '1' : '2',
-    };
-
-    SocialLoginRequest(data)
-      .then(res => {
-        Toast.success('Login', res?.message);
-        let user = res?.result || {};
-
-        const updatedUser = Object.assign({}, user, {
-          type: 'apple',
-        });
-
-        Storage.store('userdata', updatedUser).then(() => {
-          dispatch(userDataAction(updatedUser));
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{name: 'HomeScreen'}],
-            }),
-          );
-
-          setIsLoading(false);
-          setLoadingFor('');
-        });
-      })
-      .catch(err => {
-        Toast.error('Login', err?.message);
-        setIsLoading(false);
-        setLoadingFor('');
-      });
-  };
 
   const MakeFbUserLogin = async ({additionalUserInfo}) => {
     let data = {

@@ -438,7 +438,7 @@ export const GetMyProfileRequest = async () => {
 export const GetUserPostsRequestForLocation = async (data) => {
   return await new Promise((resolve, reject) => {
     try {
-      HttpRequests.getAPI(`${api.getUsersPosts}${data}`)
+      HttpRequests.getAPI(`${api.getUsersPostsLocation}${data}`)
         .then(res => {
           if (res?.data) resolve(res?.data);
           else reject(res?.data);
@@ -452,10 +452,10 @@ export const GetUserPostsRequestForLocation = async (data) => {
   });
 };
 
-export const GetUserPostsRequest = async (data, skip = 0, limit = 5) => {
+export const GetUserPostsRequest = async (data, skip = 0, limit = 5, type) => {
   return await new Promise((resolve, reject) => {
     try {
-      HttpRequests.getAPI(`${api.getUsersPosts}${data}?skip=${skip}&limit=${limit}`)
+      HttpRequests.getAPI(`${api.getUsersPosts}${data}?skip=${skip}&limit=${limit}&type=${type}`)
         .then(res => {
           if (res?.data) resolve(res?.data);
           else reject(res?.data);

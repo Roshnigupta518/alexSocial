@@ -12,7 +12,8 @@ export const api = {
   addPost: '/api/v1/user/create-post',
   likeDislikePost: '/api/v1/user/post/like',
   getUserProfile: '/api/v1/user/profile/',
-  getUsersPosts: '/api/v1/user/get-posts-of-user/',
+  getUsersPosts: '/api/v1/user/get-posts-of-user-new/', //get-posts-of-user
+  getUsersPostsLocation: '/api/v1/user/get-posts-of-user/',
   commentList: '/api/v1/user/post/comment/list/',
   postComment: '/api/v1/user/post/comment/',
   deleteComment: '/api/v1/user/post/comment/delete/',
