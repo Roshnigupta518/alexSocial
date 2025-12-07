@@ -96,6 +96,14 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
     getAllData();
   },[follow])
 
+  useEffect(() => {
+    if (route?.params?.shouldRefresh) {
+      getAllData(); // your post list API
+      navigation.setParams({ shouldRefresh: false });
+    }
+  }, [route?.params?.shouldRefresh]);
+  
+
   const getAllData = () => {
     setIsLoading(true);
     GetBusinessDetailById(place_id || '')
@@ -577,14 +585,12 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
   };
 
   return (
-    // <View style={{ flex: 1, backgroundColor: colors.white }}>
     <CustomContainer>
       <FlatList
         data={filteredData}
         keyExtractor={(_, index) => String(index)}
         numColumns={3}
         renderItem={({ item, index }) => (
-         
           <MediaItem
             item={item}
             index={index}
@@ -598,7 +604,6 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
               })
             }
           />
-         
         )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={!isLoading ? <NotFoundAnime isLoading={isLoading} /> : null}
@@ -608,7 +613,6 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
         }}
      />
      </CustomContainer>
-    // </View>
   );
 };
 

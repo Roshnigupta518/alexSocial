@@ -96,6 +96,8 @@ const UserProfileDetail = ({ navigation, route }) => {
       const res = await GetUserPostsRequest(userId, skip, limit, fileTypeParam);
       const newData = res?.result ?? [];
 
+      console.log({newDatalength: newData.length})
+
       if (type === 'video') {
         setVideoPosts(prev => (isLoadMore ? [...prev, ...newData] : newData));
         setVideoPage(prev => prev + 1);
@@ -131,7 +133,7 @@ useEffect(() => {
   const loadInitial = async () => {
     try {
       await getUserProfile();
-      await getPosts('video', false); 
+      // await getPosts('video', false); 
     } catch (err) {
       console.log(err);
     }
@@ -151,6 +153,12 @@ useEffect(() => {
     }
   }
 }, [activeTab]);
+
+
+useEffect(()=>{
+  console.log({videoPosts:videoPosts.length})
+
+},[videoPosts])
 
   const finalData = activeTab === 'video' ? videoPosts : photoPosts;
   const isLoading = activeTab === 'video' ? isVideoLoading : isPhotoLoading;

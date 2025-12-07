@@ -25,11 +25,13 @@ import {tagBusinessAction} from '../../../redux/Slices/TagBusinessSlice';
 import NoInternetModal from '../../../components/NoInternetModal';
 import NetInfo from '@react-native-community/netinfo';
 import CustomContainer from '../../../components/container';
+import NotFoundAnime from '../../../components/NotFoundAnime';
 
 const TagBusinessScreen = ({navigation}) => {
   const tagBusinessList = useSelector(state => state.tagBusinessSlice?.data);
   const dispatch = useDispatch();
   const [allBusiness, setAllBusiness] = useState([]);
+  const [googleBusiness, setGoogleBusiness] = useState([]);
   const [searchedBusiness, setSearchBusiness] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [searchTxt, setSearchTxt] = useState('');
@@ -38,6 +40,8 @@ const TagBusinessScreen = ({navigation}) => {
     longitude: '',
   });
   const [isInternetConnected, setIsInternetConnected] = useState(true);
+  const [isLoading, setIsLoading] = useState(false)
+
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected !== null && state.isConnected === false) {
@@ -77,42 +81,92 @@ const TagBusinessScreen = ({navigation}) => {
   };
 
   const getAllBusiness = async () => {
+    setIsLoading(true)
     getAllBusinessListRequest()
       .then(res => {
         setAllBusiness([...res?.result]);
         setSearchBusiness([...res?.result]);
+        setIsLoading(false)
       })
       .catch(err => {
         Toast.error('Users', err?.message);
+        setIsLoading(false)
       });
   };
 
   const getGoogleBusiness = txt => {
+    setIsLoading(true)
     getGoogleBusinessesRequest(coordinates.latitude, coordinates.longitude, txt)
       .then(res => {
-        setAllBusiness(res?.results);
+        // setAllBusiness(res?.results);
+        // setSearchBusiness(res?.results);
+        setGoogleBusiness(res?.results);
         setSearchBusiness(res?.results);
+
+        setIsLoading(false)
       })
       .catch(err => {
         console.log('see here: ', err);
+        setIsLoading(false)
       });
   };
+
+  const searchLocalBusiness = (txt) => {
+    if (txt.length === 0) {
+      setSearchBusiness(allBusiness);
+      return;
+    }
+  
+    const filtered = allBusiness.filter(item =>
+      item?.name?.toLowerCase()?.includes(txt.toLowerCase()) ||
+      item?.address?.toLowerCase()?.includes(txt.toLowerCase())
+    );
+  
+    setSearchBusiness(filtered);
+    return filtered.length;
+  };
+  
 
   // Debounce the API call function
   const debouncedApiCall = _.debounce(txt => {
     getGoogleBusiness(txt);
   }, 1000);
 
-  const handleInputChange = txt => {
+  // const handleInputChange = txt => {
+  //   setSearchTxt(txt);
+  //   setSelectedBusiness(null);
+  //   if (txt?.length < 2) {
+  //     getAllBusiness();
+  //   } else {
+  //     debouncedApiCall(txt);
+  //   }
+  // };
+
+  const handleInputChange = (txt) => {
     setSearchTxt(txt);
     setSelectedBusiness(null);
-    if (txt?.length < 2) {
-      getAllBusiness();
-    } else {
+
+     // ⭐ If input empty → show full list
+      if (txt.length === 0) {
+        setSearchBusiness(allBusiness);
+        return;
+      }
+  
+    if (txt.length < 1) {
+      // default full list
+      setSearchBusiness(allBusiness);
+      return;
+    }
+  
+    // Step 1 → search local first
+    const localCount = searchLocalBusiness(txt);
+  
+    // Step 2 → If no local match, call Google API
+    if (localCount === 0) {
       debouncedApiCall(txt);
     }
   };
-
+  
   useEffect(() => {
     getLocation();
     getAllBusiness();
@@ -331,6 +385,7 @@ const TagBusinessScreen = ({navigation}) => {
       </TouchableOpacity>
     );
   }}
+  ListEmptyComponent={()=> <NotFoundAnime isLoading={isLoading} /> }
 />
 
 

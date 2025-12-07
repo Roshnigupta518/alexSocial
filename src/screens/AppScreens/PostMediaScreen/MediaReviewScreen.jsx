@@ -34,6 +34,8 @@ const MediaReviewScreen = ({navigation, route}) => {
   
   const businessItem = route?.params?.businessItem
 
+  console.log({businessItem})
+
   const video = useRef(null);
   const [apiCalledCount, setApiCalledCount] = useState({
     count: 0,
@@ -181,7 +183,13 @@ const MediaReviewScreen = ({navigation, route}) => {
           console.log('responseData-=-=-', JSON.stringify(responseData));
           if (responseData?.status) {
             Toast.success('Post', responseData?.message);
-            navigation.navigate('Home', {shouldScrollTopReel: true});
+            if(businessItem){
+              navigation.navigate("ClaimBusinessScreen", {
+              ...businessItem,  shouldRefresh: true, 
+              });
+            }else{
+              navigation.navigate('Home', {shouldScrollTopReel: true});
+            }
           } else {
             Toast.error('Post', responseData?.message);
           }

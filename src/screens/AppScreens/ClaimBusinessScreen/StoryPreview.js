@@ -183,7 +183,7 @@ const StoryPreview = ({ route, navigation }) => {
         };
         
 
-  DeviceEventEmitter.emit('STORY_UPLOADED', newStory);
+       DeviceEventEmitter.emit('STORY_UPLOADED', newStory);
 
         navigation.navigate('Home', { shouldScrollTopReel: true });
       } else {
