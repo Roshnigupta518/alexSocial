@@ -4,6 +4,7 @@
 import 'react-native-reanimated'; // ✅ MANDATORY - MUST be at top
 import 'react-native-permissions';
 import 'react-native-get-random-values';
+import 'react-native-gesture-handler'
 
 import {AppRegistry, LogBox} from 'react-native';
 import App from './src/App';
@@ -14,6 +15,13 @@ import {useEffect} from 'react';
 import messaging from '@react-native-firebase/messaging';
 import {logoutUserFromStack} from './src/navigation/NavigationRefProp';
 import {showMessage} from 'react-native-flash-message';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { enableExperimentalWorkletReentrancyFix } from 'react-native-reanimated';
+import { enableFreeze } from 'react-native-screens';
+enableFreeze(true);  // Screen unmount pe crash rokta hai
+
+// Add this line – it disables the aggressive reentrancy check that crashes
+enableExperimentalWorkletReentrancyFix?.();
 
 messaging().onNotificationOpenedApp(remoteMessage => {
   console.log(
@@ -59,10 +67,11 @@ messaging()
 
 const AppWrapper = () => {
   return (
-    <Provider store={Store}>
-      
-      <App />
-    </Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={Store}>
+        <App />
+      </Provider>
+    </GestureHandlerRootView>
   );
 };
 LogBox.ignoreAllLogs(true);

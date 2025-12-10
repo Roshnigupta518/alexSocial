@@ -6,9 +6,14 @@ import ImageConstants from '../../constants/ImageConstants';
 const GooglePlaceImage = ({ photos = [], maxWidth = 30, style }) => {
   if (!photos || photos.length === 0) {
     return (
-      <View style={[styles.noPhotoContainer, style]}>
-        <Text style={styles.noPhotoText}>No photo available</Text>
-      </View>
+      // <View style={[styles.noPhotoContainer, style]}>
+      //   <Text style={styles.noPhotoText}>No photo available</Text>
+        
+      // </View>
+
+      <Image source={ImageConstants.business_logo}  style={[styles.image, style]}
+        resizeMode="cover" />
+        
     );
   }
 

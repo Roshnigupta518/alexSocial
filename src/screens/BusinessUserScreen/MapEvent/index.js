@@ -26,7 +26,7 @@ import StarRating from '../../../components/StarRating';
 import { useFocusEffect } from '@react-navigation/native';
 import { setSelectedCategoryId } from '../../../redux/Slices/FilterCategory';
 import { CityMapAction } from '../../../redux/Slices/CityMapSlice';
-
+import ImageWithFallback from '../../../components/ImageWithFallback';
 const ExploreMapScreen = ({ navigation, route }) => {
   const [selectedCategories, setSelectedCategories] = useState();
   const [categories, setCategories] = useState([])
@@ -374,6 +374,25 @@ const ExploreMapScreen = ({ navigation, route }) => {
     getDataHandle(categoryId, '');
   };
 
+  const onMarkerPress = (item) => {
+    navigation.navigate('ClaimBusinessScreen', { ...item,
+      onFollowUpdate: (businessId, isNowFollowing) => {
+        console.log('udpate lod', businessId, isNowFollowing)
+        const updateList = (list) =>
+          list.map(p =>
+            (p._id || p.place_id) === businessId
+              ? { ...p, isFollowing: isNowFollowing, total_followers: isNowFollowing ? p.total_followers+1 :p.total_followers-1  }
+              : p
+          );
+        setData(updateList);
+        setFilteredPlaces(updateList);
+        setIsFollowing(false)
+        setIsVisited(false)
+        console.log({updateList})
+      },
+     })
+  }
+
   const snapPoints = useMemo(() => [200, '50%'], []);
 
   return (
@@ -462,7 +481,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
           onMapReady={() => setMapReady(true)}
           isTextureMode={true} 
           useTextureView={true}
-          region={{
+          initialRegion={{
             latitude:
               CityMapSlice?.location_coordinates?.[0] ||
               location?.latitude ||
@@ -483,7 +502,7 @@ const ExploreMapScreen = ({ navigation, route }) => {
 
               const imageUri =
                 place.source === 'google' && place.photos?.[0]
-                  ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=100&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
+                  ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=200&photo_reference=${place.photos[0]}&key=AIzaSyAbFHI5aGGL3YVP0KvD9nDiFKsi_cX3bS0`
                   : place.image?.[0] || place.banner || place.certificate || null;
 
               return (
@@ -492,11 +511,12 @@ const ExploreMapScreen = ({ navigation, route }) => {
                   coordinate={{ latitude: lat, longitude: lng }}
                   title={place.name}
                   anchor={{ x: 0.5, y: 0.5 }}
+                  onPress={()=>onMarkerPress(place)}
                 >
                   <View style={styles.markerContainer}>
-                    <Image source={imageUri ? { uri: imageUri } : ImageConstants.business_logo}
+                    <ImageWithFallback
+                      imageUri={imageUri}
                       style={styles.markerImage}
-                      onError={() => console.log('❌ image failed for:', imageUri)}
                     />
                     <Text style={styles.markerText} numberOfLines={1}>
                       {place.name}
@@ -573,26 +593,9 @@ const ExploreMapScreen = ({ navigation, route }) => {
             return (
               <Pressable style={st.placeItem}
                 onPress={() => {
-                  navigation.navigate('ClaimBusinessScreen', { ...item,
-
-                    onFollowUpdate: (businessId, isNowFollowing) => {
-                      // Update local data immediately
-                      console.log('udpate lod', businessId, isNowFollowing)
-                      const updateList = (list) =>
-                        list.map(p =>
-                          (p._id || p.place_id) === businessId
-                            ? { ...p, isFollowing: isNowFollowing, total_followers: isNowFollowing ? p.total_followers+1 :p.total_followers-1  }
-                            : p
-                        );
-                      
-                      setData(updateList);
-                      setFilteredPlaces(updateList);
-                      setIsFollowing(false)
-                      setIsVisited(false)
-                      console.log({updateList})
-                    },
-                   })
-                }} 
+                  onMarkerPress(item)
+                }
+              } 
               >
 
                 {item.source == 'google' ? (
@@ -661,7 +664,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primaryColor,
     backgroundColor: colors.white,
-    resizeMode: 'cover'
+    // backgroundColor: 'transparent',
+    resizeMode: 'cover',
+    overflow: 'hidden'
   },
   markerLabel: {
     backgroundColor: 'rgba(0,0,0,0.7)',
