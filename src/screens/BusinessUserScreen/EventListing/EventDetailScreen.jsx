@@ -22,6 +22,8 @@ import moment from 'moment';
 import NetInfo from '@react-native-community/netinfo';
 import NoInternetModal from '../../../components/NoInternetModal';
 import CustomContainer from '../../../components/container';
+import st from '../../../global/styles';
+
 const EventDetailScreen = ({navigation, route}) => {
   const {data} = route?.params;
   const [isInternetConnected, setIsInternetConnected] = useState(true);
@@ -202,6 +204,7 @@ const EventDetailScreen = ({navigation, route}) => {
                       flexDirection: 'row',
                       marginBottom: 4,
                     }}>
+                      <View style={{width:'8%'}}>
                     <Image
                       source={ImageConstants.blue_location}
                       style={{
@@ -210,6 +213,8 @@ const EventDetailScreen = ({navigation, route}) => {
                         tintColor: colors.primaryColor,
                       }}
                     />
+                    </View>
+                    <View style={{width:'92%'}}>
                     <Text
                       style={{
                         fontFamily: fonts.regular,
@@ -219,6 +224,7 @@ const EventDetailScreen = ({navigation, route}) => {
                       }}>
                       {data?.location}
                     </Text>
+                    </View>
                   </View>
                 )}
 
@@ -229,11 +235,13 @@ const EventDetailScreen = ({navigation, route}) => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                     }}>
+                      <View style={st.wdh60}>
                     <View
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
                       }}>
+                        <View style={st.wdh10}>
                       <Image
                         source={ImageConstants.phone}
                         style={{
@@ -242,6 +250,8 @@ const EventDetailScreen = ({navigation, route}) => {
                           tintColor: colors.primaryColor,
                         }}
                       />
+                      </View>
+                      <View style={st.wdh50}>
                       <Text
                         style={{
                           fontFamily: fonts.regular,
@@ -251,11 +261,15 @@ const EventDetailScreen = ({navigation, route}) => {
                         }}>
                         {data?.phone}
                       </Text>
+                      </View>
+                      </View>
                     </View>
+
                     <View
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
+                        width:'40%'
                       }}>
                       <Image
                         source={ImageConstants.wallet}

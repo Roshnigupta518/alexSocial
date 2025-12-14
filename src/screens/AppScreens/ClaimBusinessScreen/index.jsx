@@ -378,10 +378,7 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
             source={data?.banner ? { uri: data?.banner } : ImageConstants.business_banner}
             style={{ height: HEIGHT / 4, width: WIDTH }}
           >
-            
               <BackHeader />
-            
-
             <View style={[st.cir_pos, { zIndex: 2 }]}>
               <TouchableOpacity style={st.circle} onPress={handleShare}>
                 <Image source={ImageConstants.send_1} style={st.imgsty} />

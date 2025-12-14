@@ -242,8 +242,8 @@ const HomeScreen = ({ navigation, route }) => {
           }
         });
 
-        pagination.totalRecords = res?.totalrecord;
-        // pagination.totalRecords = res?.totalrecord?.totalPostCount ?? 0;
+        // pagination.totalRecords = res?.totalrecord;
+        pagination.totalRecords = res?.totalrecord?.totalPostCount ?? 0;
 
         setHasTriedFetchingPosts(true);
       })
@@ -566,7 +566,7 @@ const HomeScreen = ({ navigation, route }) => {
 
   const _renderReels = useCallback(
     ({ item, index }) => {
-      // if(item.type == 'post'){
+      if(item.type == 'post'){
       return (
         <View style={[styles.cardContainer, { height: screenHeight }]}>
           <ReelCard
@@ -587,28 +587,28 @@ const HomeScreen = ({ navigation, route }) => {
           />
         </View>
       );
-    // }
-    // else if(item.type == 'event'){
-    //  return(
-    //   <View style={[styles.cardContainer, { height: screenHeight }]}>
-    //      <EventCard 
-    //         idx={index}
-    //         screen={'Home'}
-    //         data={item}
-    //         onCommentClick={idx => {
-    //           actionsheetRef.current?.show(
-    //             postArray[idx]?.postData?.user_id?._id,
-    //           );
-    //         }}
-    //         onFollowingUserClick={() => followingUserRef.current?.show()}
-    //         onMenuClick={() => menuSheetRef.current?.show()}
-    //         onShareClick={() => shareSheetRef.current?.show()}
-    //         isItemOnFocus={currentItemIndex == index && isOnFocusItem}
-    //         screenHeight={screenHeight}
-    //         isStoryOpen={isStoryOpen} />
-    //   </View>
-    //  )
-    // }
+    }
+    else if(item.type == 'event'){
+     return(
+      <View style={[styles.cardContainer, { height: screenHeight }]}>
+         <EventCard 
+            idx={index}
+            screen={'Home'}
+            data={item}
+            onCommentClick={idx => {
+              actionsheetRef.current?.show(
+                postArray[idx]?.postData?.user_id?._id,
+              );
+            }}
+            onFollowingUserClick={() => followingUserRef.current?.show()}
+            onMenuClick={() => menuSheetRef.current?.show()}
+            onShareClick={() => shareSheetRef.current?.show()}
+            isItemOnFocus={currentItemIndex == index && isOnFocusItem}
+            screenHeight={screenHeight}
+            isStoryOpen={isStoryOpen} />
+      </View>
+     )
+    }
     },
     [postArray, currentItemIndex, isOnFocusItem],
   );
@@ -1174,4 +1174,3 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
-

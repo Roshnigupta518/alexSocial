@@ -242,6 +242,15 @@ export default StyleSheet.create({
     ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
     
     viewsText: { color: '#aaa', fontSize: 12, marginTop: 2 },
+    wdh60:{
+      width:'60%'
+    },
+    wdh10:{
+      width:'10%'
+    },
+    wdh50:{
+      width: '50%'
+    }
 
 })
 

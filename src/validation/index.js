@@ -25,7 +25,7 @@ const checkValidation = (regexType, value, extraValue = null) => {
         const cleaned = value.trim();
 
         if (cleaned.length < 3 || cleaned.length > 50) {
-            return 'Name must be between 3 and 50 characters';
+            return 'Name must be between 3 to 50 characters';
         }
 
         if (!RegexType[regexType]?.regex.test(cleaned)) {

@@ -186,6 +186,65 @@ const styles = StyleSheet.create({
     height: WIDTH / 6,
     width: WIDTH / 6,
   },
+
+    dateContainer: {
+      // position: 'absolute',
+      // right: 16,
+      // bottom: '25%',
+      // alignItems: 'center',
+      flexDirection:'row',
+      justifyContent: 'flex-end'
+    },
+  
+    dateBox: {
+      // backgroundColor: 'rgba(0,0,0,0.75)',
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 10,
+      alignItems: 'center',
+    },
+  
+    dateText: {
+      fontFamily: fonts.bold,
+              fontSize: wp(29),
+              color: colors.white,
+              fontWeight:600,
+    },
+  
+    monthText: {
+      fontSize: wp(12),
+      fontFamily: fonts.medium,
+      color: colors.white,
+      letterSpacing: 1,
+      backgroundColor: colors.red,
+      paddingHorizontal:6,
+      borderRadius:2,
+      fontWeight:600
+    },
+  
+    timeBox: {
+      backgroundColor: colors.red,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      borderRadius: 10,
+      height:40,
+      justifyContent:'center',
+      marginLeft:20
+      // borderBottomRightRadius: 10,
+    },
+  
+    timeText: {
+      fontSize: wp(12),
+      fontFamily: fonts.bold,
+      color: colors.white,
+    },
+    borderLeftSty:{ 
+      borderLeftWidth: 1,
+       borderLeftColor: 'red',
+        height: 50,
+         marginTop: 15 
+        }
+ 
 });
 
 export default styles;

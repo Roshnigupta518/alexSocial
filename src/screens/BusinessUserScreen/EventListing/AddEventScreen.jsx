@@ -224,7 +224,7 @@ const AddEventScreen = ({navigation}) => {
             </View>
 
             <BusinessUserInputs
-              label="Add Phone Number"
+              label="Add Mobile Number"
               placeholder="Write here"
               keyboardType={'number-pad'}
               maxlenght={15}

@@ -36,16 +36,16 @@ const EventValidation = (
     Toast.error('Event', 'Please provide description');
     return false;
   } else if (date == null) {
-    Toast.error('Event', 'Please enter event date');
+    Toast.error('Event', 'Please select event date');
     return false;
   } else if (time == null) {
-    Toast.error('Event', 'Please enter event time');
+    Toast.error('Event', 'Please select event time');
     return false;
   } else if (eventPhoto == null) {
     Toast.error('Event', 'Please upload event image');
     return false;
   } else if (fee?.length == 0) {
-    Toast.error('Event', 'Please enter fee amount');
+    Toast.error('Event', 'Please add fee amount');
     return false;
   } else if (isNaN(Number(fee))) {
     Toast.error('Event', 'Please enter valid fee amount');

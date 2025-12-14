@@ -8,7 +8,7 @@ export const api = {
   login: '/api/v1/user/login',
   forgetPassword: '/api/v1/user/forgot-password',
   socialLogin: '/api/v1/user/social-login',
-  getAllPost: '/api/v1/user/get-posts',  //get-posts-new
+  getAllPost: '/api/v1/user/get-posts-new',  //get-posts
   addPost: '/api/v1/user/create-post',
   likeDislikePost: '/api/v1/user/post/like',
   getUserProfile: '/api/v1/user/profile/',
