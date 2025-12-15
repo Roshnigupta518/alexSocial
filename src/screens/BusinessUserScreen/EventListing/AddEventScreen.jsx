@@ -327,13 +327,31 @@ const AddEventScreen = ({navigation}) => {
               placeholder="Write here"
               value={state.fee}
               theme="light"
-              keyboardType="number-pad"
+              keyboardType="decimal-pad"
+              // onChangeText={txt => {
+              //   let txtData = txt?.replace(/[-&.,]/g, '').trim();
+              //   setState(prevState => ({
+              //     ...prevState,
+              //     fee: txtData,
+              //   }));
+              // }}
+
               onChangeText={txt => {
-                let txtData = txt?.replace(/[-&.,]/g, '').trim();
-                setState(prevState => ({
-                  ...prevState,
-                  fee: txtData,
-                }));
+                // Allow only numbers and one decimal point
+                let value = txt.replace(/[^0-9.]/g, '');
+              
+                // Prevent more than one decimal
+                if ((value.match(/\./g) || []).length > 1) {
+                  return;
+                }
+              
+                // Limit to 2 digits after decimal
+                if (value.includes('.')) {
+                  const [int, dec] = value.split('.');
+                  value = int + '.' + dec.slice(0, 2);
+                }
+              
+                setState(prev => ({ ...prev, fee: value }));
               }}
             />
           </KeyboardAvoidingScrollView>
@@ -360,7 +378,7 @@ const AddEventScreen = ({navigation}) => {
                   ) {
                     setEventTime(res);
                   } else {
-                    Toast.error('Time', 'Time and should be upcoming time.');
+                    Toast.error('Time', 'Time should be upcoming time.');
                   }
                 }
               } else {

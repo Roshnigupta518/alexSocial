@@ -47,11 +47,19 @@ const EventValidation = (
   } else if (fee?.length == 0) {
     Toast.error('Event', 'Please add fee amount');
     return false;
-  } else if (isNaN(Number(fee))) {
-    Toast.error('Event', 'Please enter valid fee amount');
-    return false;
-  } else if (Number(fee) < 1) {
-    Toast.error('Event', 'Please enter valid fee amount');
+  // } else if (isNaN(Number(fee))) {
+  //   Toast.error('Event', 'Please enter valid fee amount');
+  //   return false;
+  // }
+    } else if (!/^\d+(\.\d{1,2})?$/.test(fee)) {
+      Toast.error('Event', 'Please add valid fee amount');
+      return false;
+    } else if (Number(fee) <= 0) {
+      Toast.error('Event', 'Please add valid fee amount');
+      return false;
+    }
+  else if (Number(fee) < 1) {
+    Toast.error('Event', 'Please add valid fee amount');
     return false;
   } else return true;
 };
