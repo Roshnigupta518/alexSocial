@@ -26,6 +26,7 @@ import st from '../../../global/styles';
 
 const EventDetailScreen = ({navigation, route}) => {
   const {data} = route?.params;
+  console.log({EventDetailScreen: data})
   const [isInternetConnected, setIsInternetConnected] = useState(true);
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -72,7 +73,7 @@ const EventDetailScreen = ({navigation, route}) => {
     <>
       <CustomContainer>
         <ImageBackground
-          source={ImageConstants.event_banner}
+          source={data.banner?{uri:data.banner}:ImageConstants.event_banner}
           style={{
             height: HEIGHT / 3,
             width: WIDTH,

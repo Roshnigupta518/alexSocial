@@ -36,9 +36,10 @@ const AddEventScreen = ({navigation}) => {
   const [eventDate, setEventDate] = useState(null);
   const [eventTime, setEventTime] = useState(null);
   const [logoImage, setLogoImage] = useState(null);
+  const [bannerImage, setBannerImage] = useState(null)
   const [eventImage, setEventImage] = useState([]);
   const [isInternetConnected, setIsInternetConnected] = useState(true);
-  const [business, setBusiness] = useState()
+  const [business, setBusiness] = useState(null)
   const [businessList, setBusinessList] = useState([])
 
   useEffect(() => {
@@ -111,6 +112,7 @@ const AddEventScreen = ({navigation}) => {
     if (
       !EventValidation(
         logoImage,
+        bannerImage,
         state.event_name,
         state.phone,
         state.description?.trim(),
@@ -121,6 +123,7 @@ const AddEventScreen = ({navigation}) => {
         state.location,
         state.lat,
         state.lng,
+        business
       )
     ) {
       return;
@@ -145,8 +148,9 @@ const AddEventScreen = ({navigation}) => {
       {logoImage?.map((i)=>{
         data.append('logo', i);
       })}
-      // data.append('image', eventImage);
-      // data.append('logo', logoImage);
+      {bannerImage?.map((i)=>{
+        data.append('banner', i);
+      })}
       data.append('timezone', timezone);
       data.append('business_id', business)
       console.log({data})
@@ -181,6 +185,10 @@ const AddEventScreen = ({navigation}) => {
     setLogoImage(prev => prev.filter((_, i) => i !== index));
   }
 
+  const removeBannerLogo = (index) => {
+    setBannerImage(prev => prev.filter((_, i) => i !== index));
+  }
+
   return (
     <>
       <CustomContainer>
@@ -200,6 +208,13 @@ const AddEventScreen = ({navigation}) => {
               theme="light"
               getImageFile={res => setLogoImage(res)}
               onRemoveImage={removeImageLogo}
+            />
+             <BusinessImagePicker
+              label="Add Banner"
+              image={bannerImage}
+              theme="light"
+              getImageFile={res => setBannerImage(res)}
+              onRemoveImage={removeBannerLogo}
             />
 
             <BusinessUserInputs
