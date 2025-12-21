@@ -17,7 +17,7 @@ function BottomTabStack() {
   return (
     <Tab.Navigator
       initialRouteName={'Home'}
-      screenOptions={{headerShown: false, unmountOnBlur: false,}}
+      screenOptions={{headerShown: false, unmountOnBlur: false, animation:false}}
       tabBar={props => <CustomBottomTab {...props} />}
       // tabBar={props => (
       //   <SafeAreaView edges={['bottom']} style={{ backgroundColor: '#fff' }}>

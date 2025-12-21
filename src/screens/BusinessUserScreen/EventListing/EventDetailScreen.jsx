@@ -337,7 +337,8 @@ const EventDetailScreen = ({navigation, route}) => {
                     <FlatList
                       data={[...data?.image] || []}
                       horizontal={true}
-                      scrollEnabled={false}
+                      scrollEnabled={true}
+                      showsHorizontalScrollIndicator={false}
                       renderItem={({item, index}) => {
                         return (
                           <Image

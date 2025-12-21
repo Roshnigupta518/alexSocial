@@ -59,7 +59,7 @@ const Stack = createStackNavigator();
 function AppStack({isLoggedIn = false}) {
   return (
     <Stack.Navigator
-      screenOptions={{headerShown: false}}
+      screenOptions={{headerShown: false, animation:false}}
       initialRouteName={isLoggedIn ? 'HomeScreen' : 'SocialLoginScreen'}>
       <Stack.Screen name="SocialLoginScreen" component={SocialLoginScreen} />
       <Stack.Screen name="BirthScreen" component={BirthScreen} />

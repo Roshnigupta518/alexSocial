@@ -13,7 +13,7 @@ import {
   BusinessUserInputs,
   BusinessUserDescriptionInput,
   BusinessImagePicker,
-} from '../commonComponents/BusinessUserInputs';
+} from '../commonComponents/EventUserInputs';
 import {KeyboardAvoidingScrollView} from 'react-native-keyboard-avoiding-scroll-view';
 import CustomButton from '../../../components/CustomButton';
 import ImageConstants from '../../../constants/ImageConstants';
@@ -22,12 +22,12 @@ import TimeSheet from '../commonComponents/TimeSheet';
 import Toast from '../../../constants/Toast';
 import EventValidation from './EventValidation';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
-import {CreateEventRequest} from '../../../services/Utills';
+import {CreateEventRequest, getMyBusinessListRequest} from '../../../services/Utills';
 import moment from 'moment';
-import momentTimeZone from 'moment-timezone';
 import NoInternetModal from '../../../components/NoInternetModal';
 import NetInfo from '@react-native-community/netinfo';
 import CustomContainer from '../../../components/container';
+import CustomPicker from '../../../components/customPicker';
 
 const AddEventScreen = ({navigation}) => {
   const dateRef = useRef();
@@ -36,8 +36,11 @@ const AddEventScreen = ({navigation}) => {
   const [eventDate, setEventDate] = useState(null);
   const [eventTime, setEventTime] = useState(null);
   const [logoImage, setLogoImage] = useState(null);
-  const [eventImage, setEventImage] = useState(null);
+  const [eventImage, setEventImage] = useState([]);
   const [isInternetConnected, setIsInternetConnected] = useState(true);
+  const [business, setBusiness] = useState()
+  const [businessList, setBusinessList] = useState([])
+
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected !== null && state.isConnected === false) {
@@ -75,7 +78,36 @@ const AddEventScreen = ({navigation}) => {
     showLocation: '',
   });
 
+  const getBusinessList = () => {
+    try {
+      setIsLoading(true)
+      getMyBusinessListRequest()
+        .then(res => {
+          const data = res?.result
+          let tempSubAct =
+          data.map(item => ({
+            label: item.name,
+            value: item._id,
+          })) || [];
+          setBusinessList(tempSubAct || []);
+
+        })
+        .catch(err => {
+          Toast.error('Business', err?.message);
+        })
+        .finally(() => setIsLoading(false));
+    } catch (err) {
+      Toast.error('Business', JSON.stringify(err));
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(()=>{
+    getBusinessList()
+  },[])
+
   const SubmitEvent = () => {
+    console.log({eventDate, eventTime})
     if (
       !EventValidation(
         logoImage,
@@ -95,6 +127,8 @@ const AddEventScreen = ({navigation}) => {
     } else {
       setIsLoading(true);
 
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       let data = new FormData();
       data.append('title', state.event_name);
       data.append('description', state.description);
@@ -105,8 +139,17 @@ const AddEventScreen = ({navigation}) => {
       data.append('longitude', state.lng);
       data.append('phone', '+' + state.phone?.replace('+', ''));
       data.append('entry_fee', state.fee);
-      data.append('image', eventImage);
-      data.append('logo', logoImage);
+      {eventImage?.map((i)=>{
+        data.append('image', i);
+      })}
+      {logoImage?.map((i)=>{
+        data.append('logo', i);
+      })}
+      // data.append('image', eventImage);
+      // data.append('logo', logoImage);
+      data.append('timezone', timezone);
+      data.append('business_id', business)
+      console.log({data})
       CreateEventRequest(data)
         .then(res => {
           Toast.success('Event', res?.message);
@@ -130,6 +173,14 @@ const AddEventScreen = ({navigation}) => {
     return differenceInHours;
   }
 
+  const removeImage = index => {
+    setEventImage(prev => prev.filter((_, i) => i !== index));
+  };  
+
+  const removeImageLogo = index => {
+    setLogoImage(prev => prev.filter((_, i) => i !== index));
+  }
+
   return (
     <>
       <CustomContainer>
@@ -148,6 +199,7 @@ const AddEventScreen = ({navigation}) => {
               image={logoImage}
               theme="light"
               getImageFile={res => setLogoImage(res)}
+              onRemoveImage={removeImageLogo}
             />
 
             <BusinessUserInputs
@@ -319,8 +371,23 @@ const AddEventScreen = ({navigation}) => {
               label="Add photos of your Events"
               image={eventImage}
               theme="light"
-              getImageFile={res => setEventImage(res)}
+              multiple={true}
+              // getImageFile={res => setEventImage(res)}
+              getImageFile={res => {
+                console.log('Images received:', res); // ✅ ab array dikhega
+                setEventImage(prev => [...prev, ...res]);
+              }}
+              onRemoveImage={removeImage}
             />
+
+               <CustomPicker
+                  items={businessList}
+                  label={'Select Business'}
+                  placeholder=''
+                  value={business}
+                  onValueChange={(val)=>setBusiness(val)}
+                  fontFamily={fonts.medium}
+                />
 
             <BusinessUserInputs
               label="Add Entry Fee"
@@ -328,14 +395,6 @@ const AddEventScreen = ({navigation}) => {
               value={state.fee}
               theme="light"
               keyboardType="decimal-pad"
-              // onChangeText={txt => {
-              //   let txtData = txt?.replace(/[-&.,]/g, '').trim();
-              //   setState(prevState => ({
-              //     ...prevState,
-              //     fee: txtData,
-              //   }));
-              // }}
-
               onChangeText={txt => {
                 // Allow only numbers and one decimal point
                 let value = txt.replace(/[^0-9.]/g, '');

@@ -225,14 +225,14 @@ const HomeScreen = ({ navigation, route }) => {
 
     GetAllPostsRequest(url)
       .then(res => {
-        // setPostArray(prevPosts => [...prevPosts, ...res?.result]);
-        setPostArray(prevPosts => {
-          const merged = [...prevPosts, ...res?.result];
-          const uniquePosts = Array.from(
-            new Map(merged.map(item => [item?.postData?._id, item])).values()
-          );
-          return uniquePosts;
-        });
+        setPostArray(prevPosts => [...prevPosts, ...res?.result]);
+        // setPostArray(prevPosts => {
+        //   const merged = [...prevPosts, ...res?.result];
+        //   const uniquePosts = Array.from(
+        //     new Map(merged.map(item => [item?.postData?._id, item])).values()
+        //   );
+        //   return uniquePosts;
+        // });
 
 
         // Prefetch images
@@ -244,7 +244,7 @@ const HomeScreen = ({ navigation, route }) => {
 
         // pagination.totalRecords = res?.totalrecord;
         pagination.totalRecords = res?.totalrecord?.totalPostCount ?? 0;
-
+        console.log({getpostResponse: res })
         setHasTriedFetchingPosts(true);
       })
       .catch(err => {
@@ -566,6 +566,7 @@ const HomeScreen = ({ navigation, route }) => {
 
   const _renderReels = useCallback(
     ({ item, index }) => {
+      console.log({item})
       if(item.type == 'post'){
       return (
         <View style={[styles.cardContainer, { height: screenHeight }]}>
@@ -588,7 +589,7 @@ const HomeScreen = ({ navigation, route }) => {
         </View>
       );
     }
-    else if(item.type == 'event'){
+     if(item.type == 'event'){
      return(
       <View style={[styles.cardContainer, { height: screenHeight }]}>
          <EventCard 
@@ -925,7 +926,13 @@ const HomeScreen = ({ navigation, route }) => {
             contentContainerStyle={{
               alignSelf: 'center',
             }}
-            keyExtractor={(item, index) => `${item.postData?._id || item._id || item.id || 'idx'}_${index}`}
+            // keyExtractor={(item, index) => `${item.postData?._id || item._id || item.id || 'idx'}_${index}`}
+            keyExtractor={(item) =>
+              item.type === 'post'
+                ? `post_${item.postData._id}`
+                : `event_${item.eventData._id}`
+            }
+            
             extraData={{ screenHeight }}
             ListEmptyComponent={() => {
               if (shouldShowLoader) {

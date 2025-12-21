@@ -76,13 +76,38 @@ const EventReelCard = ({
     <View style={[styles.container, { height: screenHeight }]}>
       <ImageBackground
         source={{ uri: event?.image?.[0] }}
-        style={[styles.uploadedImageStyle(true), { height: screenHeight }]}>
+        style={[styles.uploadedImageStyle(true), { height: screenHeight }]}
+        resizeMode='contain'
+        >
 
         <View style={[styles.firstRowContainer(true)]}>
+
+          <TouchableOpacity style={{marginBottom:60}}
+           onPress={() => {
+            navigation.navigate('ClaimBusinessScreen', {
+              _id: event.business_id,          // 👈 IMPORTANT
+              name: event.business?.name,
+              source: 'local',
+              fromEvent: true
+            });
+            
+          }}>
+            <Text style={{
+               fontFamily: fonts.bold,
+               fontWeight: 600,
+               fontSize: wp(18),
+               color: colors.white,
+               textTransform: 'uppercase',
+               textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+    transform: [{ rotate: '-12deg' }],
+            }}>{event?.business?.name}</Text>
+          </TouchableOpacity>
        
           <View style={{ flexDirection: 'row' }}>
             <View style={{ width: '50%' }}>
-              <View style={{ flexDirection: 'row' }}>
+              <View style={{ flexDirection: 'row',alignItems:'center' }}>
                 <Icon name={'map-pin'} size={16} color={colors.red} />
 
                 <Text style={{
@@ -92,7 +117,7 @@ const EventReelCard = ({
                   color: colors.white,
                   textTransform: 'uppercase'
                 }}>
-                  {event?.location}
+                  {` `+event?.location}
                 </Text>
               </View>
 
