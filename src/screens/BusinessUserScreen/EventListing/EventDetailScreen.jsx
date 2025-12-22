@@ -164,7 +164,7 @@ const EventDetailScreen = ({navigation, route}) => {
                       fontSize: wp(14),
                       marginLeft: wp(5),
                     }}>
-                    {moment(data?.date, 'DD-MM-YYYY').format('dddd, DD MMMM')}
+                    {moment(data?.date, 'YYYY-MM-DD').format('dddd, DD MMMM')}
                   </Text>
                 </View>
 

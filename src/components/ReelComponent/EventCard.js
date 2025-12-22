@@ -51,21 +51,23 @@ const EventReelCard = ({
 
   const splitDateAndMonth = (dateStr = '') => {
     if (!dateStr) return { day: '', month: '' };
-
-    const [day, month, year] = dateStr.split('-');
-
+  
+    const date = new Date(dateStr);
+  
+    const day = date.getDate(); // 22
+  
     const monthNames = [
       'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
       'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
     ];
-
-    return {
-      day,                         // 14
-      month: monthNames[Number(month) - 1], // DEC
-    };
+  
+    const month = monthNames[date.getMonth()]; // DEC
+  
+    return { day, month };
   };
+  
 
-  const { day, month } = splitDateAndMonth(event?.date);
+  const { day, month } = splitDateAndMonth(event?.startAt);
 
 
   const onPressHandle = (data) => {
@@ -82,7 +84,7 @@ const EventReelCard = ({
 
         <View style={[styles.firstRowContainer(true)]}>
 
-          <TouchableOpacity style={{marginBottom:60}}
+          <TouchableOpacity style={{marginBottom:15}}
            onPress={() => {
             navigation.navigate('ClaimBusinessScreen', {
               _id: event.business_id,          // 👈 IMPORTANT
@@ -97,11 +99,10 @@ const EventReelCard = ({
                fontWeight: 600,
                fontSize: wp(18),
                color: colors.white,
-               textTransform: 'uppercase',
                textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
-    transform: [{ rotate: '-12deg' }],
+    // transform: [{ rotate: '-12deg' }],
             }}>{event?.business?.name}</Text>
           </TouchableOpacity>
        

@@ -136,7 +136,7 @@ const AddEventScreen = ({navigation}) => {
       data.append('title', state.event_name);
       data.append('description', state.description);
       data.append('location', state.location);
-      data.append('date', moment(eventDate, 'YYYY-MM-DD').format('DD-MM-YYYY'));
+      data.append('date', moment(eventDate, 'YYYY-MM-DD').format('YYYY-MM-DD'));
       data.append('time', eventTime);
       data.append('latitude', state.lat);
       data.append('longitude', state.lng);

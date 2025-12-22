@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
 
   firstRowContainer: condition => {
     return {
-      paddingBottom: Platform.OS == 'android' ? 20 : wp(45),
+      paddingBottom: Platform.OS == 'android' ? 40 : wp(45),
       // paddingBottom:20,
       paddingHorizontal: 15,
       position: 'absolute',
