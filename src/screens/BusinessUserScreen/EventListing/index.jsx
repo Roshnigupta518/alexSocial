@@ -24,7 +24,8 @@ import {useIsFocused} from '@react-navigation/native';
 import NoInternetModal from '../../../components/NoInternetModal';
 import NetInfo from '@react-native-community/netinfo';
 import CustomContainer from '../../../components/container';
-const EventUserListingScreen = ({navigation}) => {
+
+const EventUserListingScreen = ({navigation, route}) => {
   const swipeRef = useRef();
   const isFocused = useIsFocused();
   const userInfo = useSelector(state => state.UserInfoSlice.data);
@@ -82,14 +83,21 @@ const EventUserListingScreen = ({navigation}) => {
     setEventSearchList(txt?.length < 1 ? [...eventList] : [...search_res]);
   };
 
+  // useEffect(() => {
+  //   if (isFocused) {
+  //     setIsLoading(true);
+  //     setTimeout(() => {
+  //       getEventList();
+  //     }, 800);
+  //   }
+  // }, [isFocused]);
+
   useEffect(() => {
-    if (isFocused) {
-      setIsLoading(true);
-      setTimeout(() => {
-        getEventList();
-      }, 800);
+    if (isFocused && (route?.params?.refresh === true || eventList.length === 0)) {
+      getEventList();
+      navigation.setParams({ refresh: false });
     }
-  }, [isFocused]);
+  }, [isFocused, route?.params?.refresh]);
 
   const EmptyView = () => {
     return (
