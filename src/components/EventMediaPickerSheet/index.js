@@ -31,7 +31,7 @@ const MediaPickerSheet = forwardRef(
         name: assets[0]?.fileName,
       };
       console.log('data=-=-', JSON.stringify(data));
-      onMediaClick(data);
+      onMediaClick([data]);
       // ImagePicker.openCropper({
       //   path,
       //   cropping: false,

@@ -157,8 +157,7 @@ const AddEventScreen = ({navigation}) => {
       CreateEventRequest(data)
         .then(res => {
           Toast.success('Event', res?.message);
-          navigation.setParams({ refresh: true });
-          navigation.goBack();
+          navigation.navigate('EventUserListingScreen',{ refresh: true });
         })
         .catch(err => {
           Toast.error('Event', err?.message);
