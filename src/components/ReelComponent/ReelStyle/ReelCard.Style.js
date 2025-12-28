@@ -240,10 +240,10 @@ const styles = StyleSheet.create({
     },
     borderLeftSty:{ 
       borderLeftWidth: 1,
-       borderLeftColor: 'red',
-        height: 50,
-         marginTop: 15 
-        }
+      borderLeftColor: 'red',
+      height: wp(70),
+      marginTop: 15 
+    }
  
 });
 

@@ -75,12 +75,22 @@ const EventReelCard = ({
   }
 
   return (
-    <View style={[styles.container, { height: screenHeight }]}>
+    <View style={[styles.container]}>
       <ImageBackground
         source={{ uri: event?.image?.[0] }}
-        style={[styles.uploadedImageStyle(true), { height: screenHeight }]}
-        resizeMode='contain'
+        style={[styles.uploadedImageStyle(true), { height: '100%', width: '100%' }]}
+      resizeMode="cover"
+      blurRadius={20} 
         >
+
+<Image
+    source={{ uri: event?.image?.[0] }}
+    style={{
+      width: '100%',
+      height: '100%',
+      resizeMode: 'contain', // 👈 NO STRETCH
+    }}
+  />
 
         <View style={[styles.firstRowContainer(true)]}>
 

@@ -8,7 +8,7 @@ import {
   Alert,
   BackHandler,
   Image, TouchableOpacity, DeviceEventEmitter,
-  Text, Platform, PermissionsAndroid, AppState, ScrollView, Linking
+  Text, Platform, PermissionsAndroid, AppState, ScrollView, Linking, Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, HEIGHT, wp } from '../../../constants';
@@ -41,6 +41,7 @@ import ReadMore from '@fawazahmed/react-native-read-more';
 import { userDataAction } from '../../../redux/Slices/UserInfoSlice';
 import Storage from '../../../constants/Storage';
 import EventCard from '../../../components/ReelComponent/EventCard';
+import { FlashList } from '@shopify/flash-list';
 
 const staticValues = {
   skip: 0,
@@ -56,15 +57,14 @@ const HomeScreen = ({ navigation, route }) => {
   const reelIndex = useSelector(state => state.ReelIndexSlice?.data);
   const userInfo = useSelector(state => state.UserInfoSlice.data);
 
-  console.log({ userInfo })
-
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const statusBarHeight = insets.top;
+  const DEVICE_HEIGHT = Dimensions.get('screen').height;
 
   const screenHeight = Platform.OS === 'ios'
-    ? HEIGHT - tabBarHeight - statusBarHeight
-    : HEIGHT - tabBarHeight - statusBarHeight;
+    ? DEVICE_HEIGHT - tabBarHeight - statusBarHeight
+    : DEVICE_HEIGHT - tabBarHeight - statusBarHeight;
 
   const storyref = useRef(null)
   const prevNearBy = useRef(nearByType);
@@ -235,9 +235,8 @@ const HomeScreen = ({ navigation, route }) => {
         });
 
         // pagination.totalRecords = res?.totalrecord;
-        pagination.totalRecords =
-          (res?.totalrecord?.totalPostCount || 0) +
-          (res?.totalrecord?.totalEventCount || 0),
+        pagination.totalRecords = res?.totalrecord?.totalPostCount || 0;
+        setHasMore(pagination.skip + limit < pagination.totalRecords);
           console.log({ getpostResponse: res })
         setHasTriedFetchingPosts(true);
       })
@@ -438,21 +437,55 @@ const HomeScreen = ({ navigation, route }) => {
     }
   };
 
+  const _onViewableItemsChanged = useCallback(
+    ({ viewableItems }) => {
+      if (!viewableItems?.length) return;
 
-  const _onViewableItemsChanged = useCallback(({ viewableItems }) => {
-    if (viewableItems[0]) {
-      const index = viewableItems[0]?.index;
+      console.log(
+        'VIEWABLE 👉',
+        viewableItems.map(v => v.index)
+      );
+  
+      const lastVisibleItem = viewableItems[viewableItems.length - 1];
+      const index = lastVisibleItem?.index ?? 0;
+  
       setCurrentItemIndex(index);
       dispatch(ReelIndexAction(index));
-      // Load more if needed
-      if (pagination.skip < pagination.totalRecords &&
-        postArray?.length - 2 <= index &&
-        !pagination.isLoading) {
-        pagination.skip += pagination.limit;
-        getAllPosts();
+  
+      // Only load more when last item visible AND hasMore
+      if (index === postArray.length - 1 && hasMore && !pagination.isLoading) {
+        console.log('🔥 LOAD MORE');
+        setPagination(prev => ({
+          ...prev,
+          skip: prev.skip + limit, 
+          isLoading: true,
+        }));
       }
+    },
+    [postArray.length, pagination.isLoading, hasMore],
+  );
+  
+  useEffect(() => {
+    if (pagination.isLoading) {
+      getAllPosts();
     }
-  }, [postArray.length, pagination]);
+  }, [pagination.skip]);
+  
+
+  // const _onViewableItemsChanged = useCallback(({ viewableItems }) => {
+  //   if (viewableItems[0]) {
+  //     const index = viewableItems[0]?.index;
+  //     setCurrentItemIndex(index);
+  //     dispatch(ReelIndexAction(index));
+  //     // Load more if needed
+  //     if (pagination.skip < pagination.totalRecords &&
+  //       postArray?.length - 2 <= index &&
+  //       !pagination.isLoading) {
+  //       pagination.skip += pagination.limit;
+  //       getAllPosts();
+  //     }
+  //   }
+  // }, [postArray.length, pagination]);
 
   const _viewabilityConfig = {
     itemVisiblePercentThreshold: 50,
@@ -558,7 +591,7 @@ const HomeScreen = ({ navigation, route }) => {
     ({ item, index }) => {
       const isEvent = item.type === 'event'
         return (
-          <View style={[styles.cardContainer, { height: screenHeight }]}>
+          <View style={[styles.cardContainer, { height: screenHeight  }]}>
             {isEvent?(
               <EventCard
               idx={index}
@@ -887,37 +920,40 @@ const HomeScreen = ({ navigation, route }) => {
           style={{
             height: screenHeight,
           }}>
-          <FlatList
+          <FlashList
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
-            nestedScrollEnabled
+            // nestedScrollEnabled
             ref={flashListRef}
             data={postArray}
             renderItem={_renderReels}
             showsVerticalScrollIndicator={false}
-            initialScrollIndex={currentItemIndex}
-            disableIntervalMomentum
+            // initialScrollIndex={currentItemIndex}
+            // disableIntervalMomentum
             onViewableItemsChanged={_onViewableItemsChanged}
-            viewabilityConfig={_viewabilityConfig}
-            // estimatedItemSize={2}
+            
+            viewabilityConfig={{
+              itemVisiblePercentThreshold: 50,
+            }}
+            
+            
             pagingEnabled
-            initialNumToRender={2}
-            removeClippedSubviews={true}
-            windowSize={5}
-            maxToRenderPerBatch={5}
+            decelerationRate="fast"
+           
+            // initialNumToRender={10}
+            removeClippedSubviews={false}
+            // windowSize={15}
+            // maxToRenderPerBatch={10}
+            // updateCellsBatchingPeriod={50}
             // getItemLayout={getItemLayout}
             contentInset={{ top: 0, bottom: 0, left: 0, right: 0 }}
-            contentContainerStyle={{
-              alignSelf: 'center',
-            }}
-            // keyExtractor={(item, index) => `${item.postData?._id || item._id || item.id || 'idx'}_${index}`}
+            // contentContainerStyle={{ alignItems:'center' }}
             keyExtractor={(item) =>
               item.type === 'post'
-                ? `post_${item.postData._id || index}`
-                : `event_${item.eventData._id || index}`
+                ? `post_${item.postData._id}`
+                : `event_${item.eventData._id}`
             }
-
             extraData={{ screenHeight }}
             ListEmptyComponent={() => {
               if (shouldShowLoader) {
@@ -977,7 +1013,6 @@ const HomeScreen = ({ navigation, route }) => {
             }}
           />
         </View>
-
 
         <CommentListSheet
           ref={actionsheetRef}
