@@ -56,6 +56,7 @@ const HomeScreen = ({ navigation, route }) => {
   const selectedCityData = useSelector(state => state.SelectedCitySlice?.data);
   const reelIndex = useSelector(state => state.ReelIndexSlice?.data);
   const userInfo = useSelector(state => state.UserInfoSlice.data);
+  const shouldMute = useSelector(state => state.VideoMuteSlice.isMute);
 
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
@@ -108,6 +109,7 @@ const HomeScreen = ({ navigation, route }) => {
   const [hasMore, setHasMore] = useState(true);
   const [currentStory, setCurrentStory] = useState({ userId: null, originalId: null, storyId: null, name: null, caption: null, added_from: null });
   const [isStoryOpen, setIsStoryOpen] = useState(false);
+  const [eventCursor, setEventCursor] = useState(null);
 
   const { openStoryId } = route.params || {};
 
@@ -167,6 +169,7 @@ const HomeScreen = ({ navigation, route }) => {
     setSkip(0); // Reset skip to 0 to fetch from the start
     setHasMore(true); // Reset hasMore to true
     setStories([]); // Clear existing stories
+    setEventCursor(null);
 
     console.log({ selectedCityData, paramsValues, currentCity: city })
 
@@ -211,6 +214,11 @@ const HomeScreen = ({ navigation, route }) => {
 
     let url = { skip: pagination.skip, limit: pagination.limit };
 
+    // 👇 cursor sirf tab bhejna jab available ho
+      if (eventCursor) {
+        url.eventCursor = eventCursor;
+      }
+
     if (selectedCityData?.locationType == 'current') {
       Object.assign(url, { city: city });
     } else if (paramsValues?.location_type == 'city') {
@@ -227,6 +235,11 @@ const HomeScreen = ({ navigation, route }) => {
       .then(res => {
         setPostArray(prevPosts => [...prevPosts, ...res?.result]);
 
+         // ✅ API se aane wala NEW cursor save karo
+        if (res?.totalrecord) {
+          setEventCursor(res.totalrecord.nextEventCursor);
+        }
+
         // Prefetch images
         res?.result?.forEach(item => {
           if (item?.postData?.post?.mimetype == 'image/jpeg') {
@@ -236,7 +249,7 @@ const HomeScreen = ({ navigation, route }) => {
 
         // pagination.totalRecords = res?.totalrecord;
         pagination.totalRecords = res?.totalrecord?.totalPostCount || 0;
-        setHasMore(pagination.skip + limit < pagination.totalRecords);
+        // setHasMore(pagination.skip + limit < pagination.totalRecords);
           console.log({ getpostResponse: res })
         setHasTriedFetchingPosts(true);
       })
@@ -253,27 +266,66 @@ const HomeScreen = ({ navigation, route }) => {
       });
   };
 
-  const transformApiToDummy = (apiData) => {
-    return apiData.map(user => ({
-      id: user.added_from === "2"
-        ? user.business_id : user.user_id,
-      name: user.user_name,
-      user_id: user.user_id, // 👈 asli user_id bhi rakho
-      added_from: user.added_from, // 👈 ye bhi rakho
-      avatarSource: user.user_image ? { uri: user.user_image } : ImageConstants.business_logo,
-      stories: user.stories.map(story => ({
-        id: story.id,
-        mediaType: story.media_type === 'video/mp4' ? 'video' : 'image',
-        duration: story.duration,
-        source: { uri: story.media },
-        is_seen: story.is_seen,
-        is_liked: story.is_liked,
-        caption: story.caption,
-        tagBusiness: story.tagBussiness || [],
-      }))
-    }));
-  };
+  // const transformApiToDummy = (apiData) => {
+  //   return apiData.map(user => ({
+  //     id: user.added_from === "2"
+  //       ? user.business_id : user.user_id,
+  //     name: user.user_name,
+  //     user_id: user.user_id, // 👈 asli user_id bhi rakho
+  //     added_from: user.added_from, // 👈 ye bhi rakho
+  //     avatarSource: user.user_image ? { uri: user.user_image } : ImageConstants.business_logo,
+  //     stories: user.stories.map(story => ({
+  //       id: story.id,
+  //       mediaType: story.media_type === 'video/mp4' ? 'video' : 'image',
+  //       duration: story.duration,
+  //       source: { uri: story.media },
+  //       is_seen: story.is_seen,
+  //       is_liked: story.is_liked,
+  //       caption: story.caption,
+  //       tagBusiness: story.tagBussiness || [],
+  //     }))
+  //   }));
+  // };
 
+  
+  const transformApiToDummy = (apiData) => {
+    return apiData.map(item => {
+      let id;
+      if (item.added_from === "1") {
+        // User
+        id = item.user_id;
+      } else if (item.added_from === "2") {
+        // Business
+        id = item.business_id;
+      } else if (item.added_from === "3") {
+        // Event
+        id = item.event_id; // 👈 backend se aana chahiye
+      }
+  
+      return {
+        id,
+        name: item.user_name,
+        user_id: item.user_id || null,
+        event_id: item.event_id || null,
+        added_from: item.added_from,
+        avatarSource: item.user_image ? { uri: item.user_image } : ImageConstants.business_logo,
+  
+        stories: item.stories.map(story => ({
+          id: story.id,
+          mediaType: story.media_type === 'video/mp4' ? 'video' : 'image',
+          duration: story.duration,
+          source: { uri: story.media },
+          is_seen: story.is_seen,
+          is_liked: story.is_liked,
+          caption: story.caption,
+          tagBusiness: story.tagBussiness || [],
+          event_id: item.event_id || null, // 👈 future use
+          event_name: item.user_name,
+        }))
+      };
+    });
+  };  
+  
   const getStoryHandle = () => {
     if (loading) return;
     setLoading(true);
@@ -284,8 +336,11 @@ const HomeScreen = ({ navigation, route }) => {
         console.log('Fetched stories:', dummyFormat.length);
 
         // ✅ Check if my story exists in API response
-        const myStoryFromApi = dummyFormat.find(s => s.id === userInfo.id);
-
+        // const myStoryFromApi = dummyFormat.find(s => s.id === userInfo.id);
+        const myStoryFromApi = dummyFormat.find(
+          s => s.added_from === "1" && s.id === userInfo.id
+        );
+        
         const yourStoryObj = {
           id: userInfo.id,
           user_id: userInfo.id,
@@ -299,7 +354,10 @@ const HomeScreen = ({ navigation, route }) => {
         };
 
         // ✅ Remove duplicate "my story" from API list
-        const others = dummyFormat.filter(s => s.id !== userInfo.id);
+        // const others = dummyFormat.filter(s => s.id !== userInfo.id);
+        const others = dummyFormat.filter(
+          s => !(s.added_from === "1" && s.id === userInfo.id)
+        );
 
         // ✅ Final list: always "You" story at first position
         const finalStories = [yourStoryObj, ...others];
@@ -777,8 +835,6 @@ const HomeScreen = ({ navigation, route }) => {
                   // console.log({currentStory})
                   return (
                     <View style={{ padding: 20 }}>
-
-
                       {currentStory?.caption &&
                         <View style={styles.captionContainer}>
 
@@ -797,9 +853,43 @@ const HomeScreen = ({ navigation, route }) => {
                         </View>
                       }
 
+                      {/* 🔥 EVENT FOOTER TAG */}
+                      {currentStory?.added_from === "3" &&
+                        currentStoryData?.event_id &&
+                        currentStoryData?.event_name && (
+                          <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => {
+                              storyref?.current?.hide();
+                              navigation.navigate('EventDetailScreen', {
+                                eventDetail: {_id: currentStoryData.event_id},
+                              });
+                            }}
+                            style={{
+                              alignSelf: 'center',
+                              marginBottom: 10,
+                              backgroundColor: 'rgba(0,0,0,0.5)',
+                              paddingHorizontal: 14,
+                              paddingVertical: 8,
+                              borderRadius: 16,
+                            }}
+                          >
+                            <Text
+                              numberOfLines={1}
+                              style={{
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                textDecorationLine: 'underline',
+                              }}
+                            >
+                              @{currentStoryData.event_name}
+                            </Text>
+                          </TouchableOpacity>
+                      )}
+
                       <View style={{ flexDirection: 'row', }}>
                         {currentStory && (
-                          (currentStory.added_from === "1" || currentStory.added_from === "2") &&
+                          (currentStory.added_from === "1" || currentStory.added_from === "2" || currentStory.added_from === "3") &&
                           currentStory?.originalId == userInfo.id && (
                             <TouchableOpacity
                               onPress={() => {
@@ -858,7 +948,7 @@ const HomeScreen = ({ navigation, route }) => {
                   // console.log("📢 Story opened -> Pausing reels");
                   console.log("👉 story started");
                   setIsStoryOpen(true);
-                  dispatch(ChangeMuteAction(true));
+                  dispatch(ChangeMuteAction(shouldMute));
 
                   const parentUser = stories.find(user => user.id === userId);
                   const storyObj = parentUser?.stories.find(s => s.id === storyId);
@@ -898,7 +988,7 @@ const HomeScreen = ({ navigation, route }) => {
                     // last wali story thi
                     storyref.current?.hide();
                     setIsStoryOpen(false);
-                    dispatch(ChangeMuteAction(false));
+                    dispatch(ChangeMuteAction(shouldMute));
                   }
                 }}
 
@@ -906,7 +996,7 @@ const HomeScreen = ({ navigation, route }) => {
                   // console.log("📢 Story hidden -> Resuming reels");
                   console.log("👉 story closed");
                   setIsStoryOpen(false);
-                  dispatch(ChangeMuteAction(false));
+                  dispatch(ChangeMuteAction(shouldMute));
                 }}
                 avatarBorderColors={['#0896E6', '#FFE35E', '#FEDF00', '#55A861', '#2291CF']}
                 avatarSeenBorderColors={[colors.gray]}

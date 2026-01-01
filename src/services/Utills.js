@@ -673,6 +673,23 @@ export const GetBusinessDetailById = async id => {
   });
 };
 
+export const GetEventDetailById = async id => {
+  return await new Promise((resolve, reject) => {
+    try {
+      HttpRequests.getAPI(api.getEventById + id)
+        .then(res => {
+          if (res?.data) resolve(res?.data);
+          else reject(res?.data);
+        })
+        .catch(err => {
+          reject(err?.response?.data);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 export const DeleteEventRequest = async (id, data) => {
   return await new Promise((resolve, reject) => {
     try {
@@ -830,6 +847,23 @@ export const AddQueryRequest = async data => {
   return await new Promise((resolve, reject) => {
     try {
       HttpRequests.postAPI(api.submitQuery, data)
+        .then(res => {
+          if (res?.data) resolve(res?.data);
+          else reject(res?.data);
+        })
+        .catch(err => {
+          reject(err?.response?.data);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const CreateStoryToEvent = async (Event_id, data) => {
+  return await new Promise((resolve, reject) => {
+    try {
+      HttpRequests.postAPI(api.addEventStory + Event_id, data)
         .then(res => {
           if (res?.data) resolve(res?.data);
           else reject(res?.data);

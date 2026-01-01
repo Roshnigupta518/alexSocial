@@ -26,13 +26,13 @@ const HttpRequests = {
   },
 
   postAPI: async (url, data, token = '', header) => {
-    console.log({url})
+    console.log({url, data})
     const temp_token = await Storage.get('userdata');
     const headers = {
       headers: {
         Accept: 'application/json',
         Authorization: 'Bearer ' + temp_token?.token,
-        'Content-Type': 'application/json',
+        // 'Content-Type': 'application/json',
         ...header,
       },
     };

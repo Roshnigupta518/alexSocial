@@ -51,27 +51,34 @@ const EventReelCard = ({
 
   const splitDateAndMonth = (dateStr = '') => {
     if (!dateStr) return { day: '', month: '' };
-  
+
     const date = new Date(dateStr);
-  
+
     const day = date.getDate(); // 22
-  
+
     const monthNames = [
       'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
       'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
     ];
-  
+
     const month = monthNames[date.getMonth()]; // DEC
-  
+
     return { day, month };
   };
-  
 
   const { day, month } = splitDateAndMonth(event?.startAt);
 
-
   const onPressHandle = (data) => {
     navigation.navigate('EventDetailScreen', { data: data.eventData })
+  }
+
+  const gotoBusiness = (event) => {
+    navigation.navigate('ClaimBusinessScreen', {
+      _id: event.business_id,          
+      name: event.business?.name,
+      source: 'local',
+      fromEvent: true
+    });
   }
 
   return (
@@ -79,46 +86,40 @@ const EventReelCard = ({
       <ImageBackground
         source={{ uri: event?.image?.[0] }}
         style={[styles.uploadedImageStyle(true), { height: '100%', width: '100%' }]}
-      resizeMode="cover"
-      blurRadius={20} 
-        >
+        resizeMode="cover"
+        blurRadius={20}
+      >
 
-<Image
-    source={{ uri: event?.image?.[0] }}
-    style={{
-      width: '100%',
-      height: '100%',
-      resizeMode: 'contain', // 👈 NO STRETCH
-    }}
-  />
+        <Image
+          source={{ uri: event?.image?.[0] }}
+          style={{
+            width: '100%',
+            height: '100%',
+            resizeMode: 'contain', // 👈 NO STRETCH
+          }}
+        />
 
         <View style={[styles.firstRowContainer(true)]}>
 
-          <TouchableOpacity style={{marginBottom:15}}
-           onPress={() => {
-            navigation.navigate('ClaimBusinessScreen', {
-              _id: event.business_id,          // 👈 IMPORTANT
-              name: event.business?.name,
-              source: 'local',
-              fromEvent: true
-            });
-            
-          }}>
+          <TouchableOpacity style={{ marginBottom: 15 }}
+            onPress={() => {
+              onPressHandle(data)
+            }}>
             <Text style={{
-               fontFamily: fonts.bold,
-               fontWeight: 600,
-               fontSize: wp(18),
-               color: colors.white,
-               textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
-    // transform: [{ rotate: '-12deg' }],
-            }}>{event?.business?.name}</Text>
+              fontFamily: fonts.bold,
+              fontWeight: 600,
+              fontSize: wp(18),
+              color: colors.white,
+              textShadowColor: 'rgba(0,0,0,0.6)',
+              textShadowOffset: { width: 1, height: 1 },
+              textShadowRadius: 3,
+              // transform: [{ rotate: '-12deg' }],
+            }}>{event?.title}</Text>
           </TouchableOpacity>
-       
+
           <View style={{ flexDirection: 'row' }}>
             <View style={{ width: '50%' }}>
-              <View style={{ flexDirection: 'row',alignItems:'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Icon name={'map-pin'} size={16} color={colors.red} />
 
                 <Text style={{
@@ -128,7 +129,7 @@ const EventReelCard = ({
                   color: colors.white,
                   textTransform: 'uppercase'
                 }}>
-                  {` `+event?.location}
+                  {` ` + event?.location}
                 </Text>
               </View>
 
@@ -170,17 +171,17 @@ const EventReelCard = ({
             </View>
           </View>
 
-          <View style={[styles.subFirstRowContiner,{marginTop:40}]}>
+          <View style={[styles.subFirstRowContiner, { marginTop: 40 }]}>
             <View style={styles.userImageContainer}>
               <View style={styles.imageView}>
                 <TouchableOpacity
                   onPress={() => {
-                    onPressHandle(data)
+                    gotoBusiness(event)
                   }}>
                   <Image
                     source={
-                      event?.logo?.trim()
-                        ? { uri: event.logo }
+                      data.business?.certificate?.trim()
+                        ? { uri: data.business.certificate }
                         : ImageConstants.business_logo
                     }
                     style={styles.imageStyle}
@@ -190,22 +191,22 @@ const EventReelCard = ({
 
               <TouchableOpacity
                 onPress={() => {
-                  onPressHandle(data)
+                  gotoBusiness(event)
                 }} style={styles.usernameStyle}>
                 <Text numberOfLines={2} style={styles.nameTxtStyle}>
-                  {event?.title}
+                  {event?.business?.name}
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-        <ReadMore
-          numberOfLines={2}
-          style={styles.descriptionTxtStyle}
-          seeMoreStyle={{ color: colors.primaryColor }}
-          seeLessStyle={{ color: colors.primaryColor }}>
-          {event?.description}
-        </ReadMore>
+          <ReadMore
+            numberOfLines={2}
+            style={styles.descriptionTxtStyle}
+            seeMoreStyle={{ color: colors.primaryColor }}
+            seeLessStyle={{ color: colors.primaryColor }}>
+            {event?.description}
+          </ReadMore>
 
         </View>
       </ImageBackground>

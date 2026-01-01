@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,11 @@ import {
   Platform,
   FlatList,
 } from 'react-native';
-import MapView, {PROVIDER_GOOGLE} from 'react-native-maps';
-import {colors, fonts, HEIGHT, WIDTH, wp} from '../../../constants';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import { colors, fonts, HEIGHT, WIDTH, wp } from '../../../constants';
 import BackHeader from '../../../components/BackHeader';
 import ImageConstants from '../../../constants/ImageConstants';
-import {AddToFavExploreRequest} from '../../../services/Utills';
+import { AddToFavExploreRequest, CreateStoryToEvent, GetEventDetailById } from '../../../services/Utills';
 import Toast from '../../../constants/Toast';
 import ReadMore from '@fawazahmed/react-native-read-more';
 import moment from 'moment';
@@ -23,11 +23,24 @@ import NetInfo from '@react-native-community/netinfo';
 import NoInternetModal from '../../../components/NoInternetModal';
 import CustomContainer from '../../../components/container';
 import st from '../../../global/styles';
+import CustomButton from '../../../components/CustomButton';
+import NotFoundAnime from '../../../components/NotFoundAnime';
 
-const EventDetailScreen = ({navigation, route}) => {
-  const {data} = route?.params;
-  console.log({EventDetailScreen: data})
+const EventDetailScreen = ({ navigation, route }) => {
+  const { eventDetail } = route?.params;
+  console.log({ EventDetailScreen: eventDetail })
+  const [data, setData] = useState()
   const [isInternetConnected, setIsInternetConnected] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showAddStoryBtn, setShowAddStoryBtn] = useState(false);
+
+  useEffect(() => {
+    if (data?.startAt) {
+      const eventStart = moment.utc(data.startAt);
+      setShowAddStoryBtn(eventStart.isSameOrAfter(moment()));
+    }
+  }, [data]);
+
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected !== null && state.isConnected === false) {
@@ -53,11 +66,27 @@ const EventDetailScreen = ({navigation, route}) => {
     return () => unsubscribe();
   }, []);
 
+  const getAllData = () => {
+    setIsLoading(true);
+    GetEventDetailById(eventDetail._id || '')
+      .then(res => {
+        setData(res?.result || []);
+         console.log('GetEventDetailById', res?.result)
+      })
+      .catch(err => {
+        Toast.error('Event Details', err?.message);
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  useEffect(()=>{
+    getAllData();
+  },[eventDetail])
+
   const redirectOnMap = () => {
     console.log('data?.coordinates[0]=-=-=-', JSON.stringify(data));
-    let fullAddress = `${data?.latitude || data?.loc?.coordinates[0]},${
-      data?.longitude || data?.loc?.coordinates[1]
-    }`;
+    let fullAddress = `${data?.latitude || data?.loc?.coordinates[0]},${data?.longitude || data?.loc?.coordinates[1]
+      }`;
 
     console.log('`maps:0,0?q=${fullAddress}`', `maps:0,0?q=${fullAddress}`);
 
@@ -69,11 +98,35 @@ const EventDetailScreen = ({navigation, route}) => {
     Linking.openURL(url);
   };
 
+  const addEventToStory = async () => {
+    setIsLoading(true);
+    const formdata = new FormData();
+    formdata.append(
+      'tagBussiness',
+      JSON.stringify({
+        place_id: data?.business_id._id,
+        name: data?.business_id.name,
+      }),
+    );
+
+    CreateStoryToEvent(data?._id, formdata)
+    .then(res => {
+      console.log('CreateStoryToEvent=>',res)
+      Toast.success('Event', res?.message);
+    })
+    .catch(err => {
+      Toast.error('Event', err?.message);
+    })
+    .finally(() => setIsLoading(false));
+  };
+
   return (
     <>
       <CustomContainer>
+        {data?(
+        <View style={{flex:1}}>
         <ImageBackground
-          source={data.banner?{uri:data.banner}:ImageConstants.event_banner}
+          source={data.banner ? { uri: data.banner } : ImageConstants.event_banner}
           style={{
             height: HEIGHT / 3,
             width: WIDTH,
@@ -100,7 +153,7 @@ const EventDetailScreen = ({navigation, route}) => {
               marginTop: -50,
             }}>
             <Image
-              source={{uri: data?.logo}}
+              source={{ uri: data?.logo }}
               style={{
                 height: wp(80),
                 width: wp(80),
@@ -118,7 +171,7 @@ const EventDetailScreen = ({navigation, route}) => {
                 style={{
                   alignItems: 'center',
                 }}>
-                <View style={{alignItems: 'center'}}>
+                <View style={{ alignItems: 'center' }}>
                   <Text
                     style={{
                       fontFamily: fonts.bold,
@@ -164,7 +217,7 @@ const EventDetailScreen = ({navigation, route}) => {
                       fontSize: wp(14),
                       marginLeft: wp(5),
                     }}>
-                    {moment(data?.date, 'YYYY-MM-DD').format('dddd, DD MMMM')}
+                    {moment(data?.startAt, 'YYYY-MM-DD').format('dddd, DD MMMM')}
                   </Text>
                 </View>
 
@@ -205,26 +258,26 @@ const EventDetailScreen = ({navigation, route}) => {
                       flexDirection: 'row',
                       marginBottom: 4,
                     }}>
-                      <View style={{width:'8%'}}>
-                    <Image
-                      source={ImageConstants.blue_location}
-                      style={{
-                        height: wp(23),
-                        width: wp(23),
-                        tintColor: colors.primaryColor,
-                      }}
-                    />
+                    <View style={{ width: '8%' }}>
+                      <Image
+                        source={ImageConstants.blue_location}
+                        style={{
+                          height: wp(23),
+                          width: wp(23),
+                          tintColor: colors.primaryColor,
+                        }}
+                      />
                     </View>
-                    <View style={{width:'92%'}}>
-                    <Text
-                      style={{
-                        fontFamily: fonts.regular,
-                        fontSize: wp(12),
-                        color: colors.black,
-                        paddingHorizontal: 5,
-                      }}>
-                      {data?.location}
-                    </Text>
+                    <View style={{ width: '92%' }}>
+                      <Text
+                        style={{
+                          fontFamily: fonts.regular,
+                          fontSize: wp(12),
+                          color: colors.black,
+                          paddingHorizontal: 5,
+                        }}>
+                        {data?.location}
+                      </Text>
                     </View>
                   </View>
                 )}
@@ -236,33 +289,33 @@ const EventDetailScreen = ({navigation, route}) => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                     }}>
-                      <View style={st.wdh60}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                      }}>
-                        <View style={st.wdh10}>
-                      <Image
-                        source={ImageConstants.phone}
+                    <View style={st.wdh60}>
+                      <View
                         style={{
-                          height: wp(23),
-                          width: wp(23),
-                          tintColor: colors.primaryColor,
-                        }}
-                      />
-                      </View>
-                      <View style={st.wdh50}>
-                      <Text
-                        style={{
-                          fontFamily: fonts.regular,
-                          fontSize: wp(12),
-                          color: colors.black,
-                          paddingHorizontal: 5,
+                          flexDirection: 'row',
+                          alignItems: 'center',
                         }}>
-                        {data?.phone}
-                      </Text>
-                      </View>
+                        <View style={st.wdh10}>
+                          <Image
+                            source={ImageConstants.phone}
+                            style={{
+                              height: wp(23),
+                              width: wp(23),
+                              tintColor: colors.primaryColor,
+                            }}
+                          />
+                        </View>
+                        <View style={st.wdh50}>
+                          <Text
+                            style={{
+                              fontFamily: fonts.regular,
+                              fontSize: wp(12),
+                              color: colors.black,
+                              paddingHorizontal: 5,
+                            }}>
+                            {data?.phone}
+                          </Text>
+                        </View>
                       </View>
                     </View>
 
@@ -270,7 +323,7 @@ const EventDetailScreen = ({navigation, route}) => {
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        width:'40%'
+                        width: '40%'
                       }}>
                       <Image
                         source={ImageConstants.wallet}
@@ -289,7 +342,7 @@ const EventDetailScreen = ({navigation, route}) => {
                         }}>
                         $ {data?.entry_fee}{' '}
                         <Text
-                          style={{fontFamily: fonts.regular, fontSize: wp(10)}}>
+                          style={{ fontFamily: fonts.regular, fontSize: wp(10) }}>
                           (entry fee)
                         </Text>
                       </Text>
@@ -315,15 +368,15 @@ const EventDetailScreen = ({navigation, route}) => {
                       fontSize: wp(13),
                       color: colors.black,
                     }}
-                    seeMoreStyle={{color: colors.primaryColor}}
-                    seeLessStyle={{color: colors.primaryColor}}>
+                    seeMoreStyle={{ color: colors.primaryColor }}
+                    seeLessStyle={{ color: colors.primaryColor }}>
                     {data?.description}
                   </ReadMore>
                 </View>
               )}
 
               {data?.image?.length > 0 && (
-                <View style={{marginTop: 30}}>
+                <View style={{ marginTop: 30 }}>
                   <Text
                     style={{
                       fontFamily: fonts.semiBold,
@@ -334,16 +387,16 @@ const EventDetailScreen = ({navigation, route}) => {
                   </Text>
 
                   <View
-                    style={{alignItems: 'center', justifyContent: 'center'}}>
+                    style={{ alignItems: 'center', justifyContent: 'center' }}>
                     <FlatList
                       data={[...data?.image] || []}
                       horizontal={true}
                       scrollEnabled={true}
                       showsHorizontalScrollIndicator={false}
-                      renderItem={({item, index}) => {
+                      renderItem={({ item, index }) => {
                         return (
                           <Image
-                            source={{uri: item}}
+                            source={{ uri: item }}
                             style={{
                               height: wp(230),
                               width: wp(230),
@@ -412,9 +465,25 @@ const EventDetailScreen = ({navigation, route}) => {
                     </View>
                   </View>
                 )}
+
+                {showAddStoryBtn && (
+                <View style={{ marginHorizontal: 15 }}>
+                  <CustomButton
+                    isLoading={isLoading}
+                    disabled={isLoading}
+                    label="Add Event story"
+                    onPress={addEventToStory}
+                  />
+                </View>
+              )}
             </View>
           </ScrollView>
         </View>
+        </View>
+      ):
+      <NotFoundAnime isLoading={isLoading} />
+      }
+        
       </CustomContainer>
       {/* <NoInternetModal shouldShow={!isInternetConnected} /> */}
     </>

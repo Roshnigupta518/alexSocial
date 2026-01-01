@@ -72,10 +72,12 @@ export const api = {
   getAllBusinessSearch : '/api/v1/user/business-search?searchQ=',
   getPostById : '/api/v1/user/post/',
   getGlobalSearch : '/api/v1/user/global-search?searchQ=',
-  getStory : '/api/v1/user/get-stories?',
+  getStory : '/api/v1/user/get-stories-new?', //get-stories
   addStory : '/api/v1/user/create-story',
   viewStory : '/api/v1/user/view-story/',
   likeStory : '/api/v1/user/like-story/',
   deleteStory : '/api/v1/user/delete-story/',
-  getPlacesByMap : '/api/v1/user/get_places_by_map?'
+  getPlacesByMap : '/api/v1/user/get_places_by_map?',
+  addEventStory : '/api/v1/user/add-event-story/',
+  getEventById : '/api/v1/user/events/'
 };

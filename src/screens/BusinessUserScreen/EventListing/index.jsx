@@ -155,7 +155,7 @@ const EventUserListingScreen = ({navigation, route}) => {
     return (
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => navigation.navigate('EventDetailScreen', {data: item})}
+        onPress={() => navigation.navigate('EventDetailScreen', {eventDetail: item})}
         style={{
           margin: wp(5),
           shadowColor: colors.black,

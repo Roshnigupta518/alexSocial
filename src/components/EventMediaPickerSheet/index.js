@@ -105,39 +105,6 @@ const MediaPickerSheet = forwardRef(
         .catch(err => console.log('Picker err: ', err));
     };
 
-    // const getFromGellary = async () => {
-    //   launchImageLibrary({mediaType: mediaType, selectionLimit:  multiple ? 0 : 1,})
-    //     .then(res => {
-    //       if (res?.assets?.length > 0) {
-    //         console.log('video=-=-', res.assets);
-    //         let data = {
-    //           uri: res.assets[0].uri,
-    //           type: res.assets[0]?.type,
-    //           name: res.assets[0].fileName,
-    //         };
-
-    //         if (mediaType == 'photo') {
-    //           setTimeout(() => {
-    //             CropImage(res.assets[0].uri, res.assets);
-    //           }, 1000);
-    //         } else {
-    //           if (res?.assets[0].fileSize < MAX_FILE_SIZE) {
-    //             onMediaClick(data);
-    //           } else {
-    //             Toast.error('Post', 'File size exceeded more than 700 MB.');
-    //           }
-    //         }
-
-    //         // if (res.assets[0]?.fileSize < 24000000) {
-    //         //   onMediaClick(data);
-    //         // } else {
-    //         //   Toast.error('File Size', 'File size should be less than 24MB.');
-    //         // }
-    //       }
-    //     })
-    //     .catch(err => console.log('Picker err: ', err));
-    // };
-
     const getFromGellary = async () => {
       launchImageLibrary({
         mediaType,

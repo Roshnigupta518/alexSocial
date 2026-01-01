@@ -66,8 +66,12 @@ const BusinessImagePicker = ({
   multiple = false,
   getImageFile = () => {},
   onRemoveImage = () => {},
+  mediaType = 'photo',
+  disabled
 }) => {
   const mediaRef = useRef();
+
+  console.log({image})
 
   return (
     <View>
@@ -89,7 +93,8 @@ const BusinessImagePicker = ({
             image.map((img, index) => (
               <View key={index} style={{ marginRight: wp(8), marginBottom: wp(8) }}>
                 <Image
-                  source={{ uri: img.uri }}
+                  source={{ uri: typeof img === 'string'
+                    ? img: img.uri }}
                   style={{
                     height: wp(60),
                     width: wp(60),
@@ -98,6 +103,7 @@ const BusinessImagePicker = ({
                 />
 
                 {/* CLOSE ICON */}
+                {!disabled&&
                 <TouchableOpacity
                   onPress={() => onRemoveImage(index)}
                   style={{
@@ -109,11 +115,12 @@ const BusinessImagePicker = ({
                     padding: 3,
                   }}>
                   <Text style={{ color: colors.white, fontSize: wp(10) }}>✕</Text>
-                </TouchableOpacity>
+                </TouchableOpacity>}
               </View>
             ))}
 
           {/* PLUS BUTTON */}
+          {!disabled&&
           <TouchableOpacity
             onPress={() => mediaRef.current?.open()}
             activeOpacity={0.8}
@@ -143,12 +150,14 @@ const BusinessImagePicker = ({
               />
             </View>
           </TouchableOpacity>
+           }
         </View>
       </View>
 
       <MediaPickerSheet
         ref={mediaRef}
         multiple={multiple}
+        mediaType={mediaType}
         onMediaClick={res => getImageFile(res)}
         onCameraClick={res => getImageFile(res)}
       />
