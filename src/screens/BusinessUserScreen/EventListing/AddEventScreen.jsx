@@ -259,7 +259,7 @@ const AddEventScreen = ({ navigation }) => {
   return (
     <>
       <CustomContainer>
-        <BackHeader label="Events" />
+        <BackHeader label="Event" />
 
         <View
           style={{
@@ -280,7 +280,7 @@ const AddEventScreen = ({ navigation }) => {
               fontFamily={fonts.medium}
             />
 
-            {businessList.length === 0 && (
+            {businessList.length === 0 && !isLoading && (
               <View
                 style={{
                   backgroundColor: '#FFF3CD',
@@ -312,7 +312,7 @@ const AddEventScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
             )}
-
+           {businessList.length != 0 && 
             <View pointerEvents={business ? 'auto' : 'none'}>
               <BusinessImagePicker
                 label="Add a symbol of your organization."
@@ -551,6 +551,7 @@ const AddEventScreen = ({ navigation }) => {
                 }}
               />
             </View>
+            }
           </KeyboardAvoidingScrollView>
 
           <TimeSheet
