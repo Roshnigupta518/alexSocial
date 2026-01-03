@@ -8,6 +8,8 @@ import { useNavigation } from '@react-navigation/native';
 import styles from './ReelStyle/ReelCard.Style';
 import Icon from 'react-native-vector-icons/Feather';
 import ReadMore from '@fawazahmed/react-native-read-more';
+import VideoPlayer from './VideoPlayer';
+import Video from 'react-native-video';
 
 const EventReelCard = ({
   data,
@@ -28,14 +30,20 @@ const EventReelCard = ({
   const [shouldPlay, setShouldPlay] = useState(isItemOnFocus);
   const [muteIconVisible, setMuteIconVisible] = useState(false);
 
+  // useEffect(() => {
+  //   setShouldPlay(false); // No videos in event, always false
+  // }, [isItemOnFocus]);
+
   useEffect(() => {
-    setShouldPlay(false); // No videos in event, always false
+    setShouldPlay(isItemOnFocus && isVideoBanner());
   }, [isItemOnFocus]);
 
   const changeMuteState = () => {
     setMuteIconVisible(true);
     dispatch(ChangeMuteAction(!shouldMute));
-    setTimeout(() => setMuteIconVisible(false), 2000);
+    setTimeout(() => {
+      setMuteIconVisible(false);
+    }, 2000);
   };
 
   const splitTimeAndMeridiem = (timeStr = '') => {
@@ -69,7 +77,7 @@ const EventReelCard = ({
   const { day, month } = splitDateAndMonth(event?.startAt);
 
   const onPressHandle = (data) => {
-    navigation.navigate('EventDetailScreen', { data: data.eventData })
+    navigation.navigate('EventDetailScreen', { eventDetail: data.eventData })
   }
 
   const gotoBusiness = (event) => {
@@ -81,23 +89,79 @@ const EventReelCard = ({
     });
   }
 
+  const isVideoBanner = () => {
+    return (
+      event?.bannerMime?.includes('video') ||
+      event?.bannerType === '2' ||
+      event?.banner?.endsWith('.mp4')
+    );
+  };
+  
+
   return (
     <View style={[styles.container]}>
-      <ImageBackground
+      
+      {/* <ImageBackground
         source={{ uri: event?.image?.[0] }}
         style={[styles.uploadedImageStyle(true), { height: '100%', width: '100%' }]}
         resizeMode="cover"
         blurRadius={20}
-      >
+      > */}
+         
 
-        <Image
+          {/* 🔹 Background blur */}
+  {!isVideoBanner() && (
+    <ImageBackground
+      source={{ uri: event?.image?.[0] }}
+      style={[styles.uploadedImageStyle(true), { height: '100%', width: '100%' }]}
+      resizeMode="cover"
+      blurRadius={20}
+    />
+  )}
+
+        {/* <Image
           source={{ uri: event?.image?.[0] }}
           style={{
             width: '100%',
             height: '100%',
             resizeMode: 'contain', // 👈 NO STRETCH
           }}
-        />
+        /> */}
+
+         {/* 🔹 Main Media */}
+  {isVideoBanner() ? (
+    // <Video
+    //   source={{ uri: event?.banner }}
+    //   style={{
+    //     position: 'absolute',
+    //     height: '100%',
+    //     width: '100%',
+    //   }}
+    //   resizeMode="contain"
+    //   repeat
+    //   muted={shouldMute}
+    //   paused={!isItemOnFocus}
+    // />
+
+    <VideoPlayer
+    url={event?.banner}
+    shouldPlay={shouldPlay}
+    onMuteClick={changeMuteState}
+    screen={screen}
+    screenHeight={screenHeight}
+    thumbnail={event?.banner}
+  />
+
+  ) : (
+    <Image
+      source={{ uri: event?.banner }}
+      style={{
+        width: '100%',
+        height: '100%',
+        resizeMode: 'contain',
+      }}
+    />
+  )}
 
         <View style={[styles.firstRowContainer(true)]}>
 
@@ -209,7 +273,22 @@ const EventReelCard = ({
           </ReadMore>
 
         </View>
-      </ImageBackground>
+      {/* </ImageBackground> */}
+
+      {muteIconVisible && (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={changeMuteState}
+          style={styles.muteContainer}>
+          <Image
+            source={
+              shouldMute ? ImageConstants.audio_off : ImageConstants.audio_on
+            }
+            style={styles.muteIconStyle}
+          />
+        </TouchableOpacity>
+      )}
+
     </View>
   );
 };

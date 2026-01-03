@@ -9,7 +9,7 @@ import {
   ScrollView,
   Linking,
   Platform,
-  FlatList,
+  FlatList, DeviceEventEmitter
 } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { colors, fonts, HEIGHT, WIDTH, wp } from '../../../constants';
@@ -25,6 +25,9 @@ import CustomContainer from '../../../components/container';
 import st from '../../../global/styles';
 import CustomButton from '../../../components/CustomButton';
 import NotFoundAnime from '../../../components/NotFoundAnime';
+import Video from 'react-native-video';
+import { api, BASE_URL } from '../../../services/WebConstants';
+import Storage from '../../../constants/Storage';
 
 const EventDetailScreen = ({ navigation, route }) => {
   const { eventDetail } = route?.params;
@@ -108,24 +111,64 @@ const EventDetailScreen = ({ navigation, route }) => {
         name: data?.business_id.name,
       }),
     );
+    try{
+      let temp_token = await Storage.get('userdata');
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        Authorization: 'Bearer ' + temp_token?.token,
+         'Content-Type': 'multipart/form-data'
+      },
+      body: formdata,
+    };
 
-    CreateStoryToEvent(data?._id, formdata)
-    .then(res => {
-      console.log('CreateStoryToEvent=>',res)
-      Toast.success('Event', res?.message);
-    })
-    .catch(err => {
-      Toast.error('Event', err?.message);
-    })
-    .finally(() => setIsLoading(false));
+    const url = BASE_URL + api.addEventStory + data._id;
+    console.log({ url, formdata: JSON.stringify(formdata) });
+
+   
+    const response = await fetch(url, requestOptions);
+    const result = await response.json();
+
+    if (result?.status) {
+      console.log('CreateStoryToEvent=>',result)
+      Toast.success('Event', result?.message);
+      DeviceEventEmitter.emit('REFRESH_STORIES');
+    }else{
+      Toast.error('Event', result?.message);
+      setIsLoading(false)
+    }
+  }catch(err){
+    Toast.error('Event', err?.message);
+    setIsLoading(false)
+  }finally{
+    setIsLoading(false)
+  }
+
+    // CreateStoryToEvent(data?._id, formdata)
+    // .then(res => {
+    //   console.log('CreateStoryToEvent=>',res)
+    //   Toast.success('Event', res?.message);
+    // })
+    // .catch(err => {
+    //   Toast.error('Event', err?.message);
+    // })
+    // .finally(() => setIsLoading(false));
   };
+
+  const isVideoBanner = () => {
+    return (
+      data?.bannerMime?.includes('video') ||
+      data?.bannerType === '2' ||
+      data?.banner?.endsWith('.mp4')
+    );
+  };  
 
   return (
     <>
       <CustomContainer>
         {data?(
         <View style={{flex:1}}>
-        <ImageBackground
+        {/* <ImageBackground
           source={data.banner ? { uri: data.banner } : ImageConstants.event_banner}
           style={{
             height: HEIGHT / 3,
@@ -134,7 +177,35 @@ const EventDetailScreen = ({ navigation, route }) => {
           <SafeAreaView>
             <BackHeader />
           </SafeAreaView>
-        </ImageBackground>
+        </ImageBackground> */}
+
+<View style={{ height: HEIGHT / 3, width: WIDTH }}>
+  {isVideoBanner() ? (
+    <Video
+      source={{ uri: data?.banner }}
+      style={{ height: '100%', width: '100%' }}
+      resizeMode="cover"
+      muted={true}
+      repeat={true}
+      paused={false}
+    />
+  ) : (
+    <ImageBackground
+      source={
+        data?.banner
+          ? { uri: data.banner }
+          : ImageConstants.event_banner
+      }
+      style={{ height: '100%', width: '100%' }}
+    />
+  )}
+
+  {/* Header always on top */}
+  <SafeAreaView style={{ position: 'absolute', top: 0, width: '100%' }}>
+    <BackHeader />
+  </SafeAreaView>
+</View>
+
 
         <View
           style={{
@@ -467,7 +538,7 @@ const EventDetailScreen = ({ navigation, route }) => {
                 )}
 
                 {showAddStoryBtn && (
-                <View style={{ marginHorizontal: 15 }}>
+                <View style={{ margin: 15 }}>
                   <CustomButton
                     isLoading={isLoading}
                     disabled={isLoading}

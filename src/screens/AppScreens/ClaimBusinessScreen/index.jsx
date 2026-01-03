@@ -462,15 +462,7 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
           <View>
             <View style={{ padding: 15 }}>
               {!!data?.details && (
-                // <ReadMore
-                //   numberOfLines={2}
-                //   style={styles.descriptionTxtStyle}
-                //   seeMoreStyle={{ color: colors.primaryColor }}
-                //   seeLessStyle={{ color: colors.primaryColor }}
-                // >
-                //   {data?.details}
-                // </ReadMore>
-
+            
                 <CustomReadMore
               text={data?.details}
               numberOfLines={2}
@@ -550,7 +542,8 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
               ) : (
                 <View style={styles.socialContent}>
                   <TouchableOpacity
-                    style={styles.button}
+                  disabled={!data.isActive}
+                    style={[styles.button,{opacity:!data.isActive?0.5:1}]}
                     onPress={() => navigation.navigate('PostMediaScreen', { item: data })}
                   >
                     <Text style={styles.btntxt}>Add post</Text>
@@ -559,8 +552,8 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
               )}
 
               {(data?.user_id === userInfo?.id && follow?.fromListing === true) && (
-                <TouchableOpacity
-                  style={styles.button}
+                <TouchableOpacity disabled={!data.isActive}
+                style={[styles.button,{opacity:!data.isActive?0.5:1}]}
                   onPress={() => navigation.navigate('AddStory', { added_from: 2, 
                     businessItem: {_id: data?._id, name: data.name, place_id: data?.place_id }
                    })}
@@ -568,7 +561,14 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
                   <Text style={styles.btntxt}>Add Story</Text>
                 </TouchableOpacity>
               )}
+
             </View>
+             {!data.isActive&&
+            <View style={{padding:15, paddingBottom:0}}>
+            <Text style={[st.errorText,st.txAlign,{color:'red'}]}>You can’t post right now. This business is inactive—contact the admin.</Text>
+            </View>
+             }
+
           </View>
           {/* =================== END OF THE BLOCK YOU ASKED FOR =================== */}
 

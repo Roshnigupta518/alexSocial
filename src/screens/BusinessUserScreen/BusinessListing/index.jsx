@@ -137,8 +137,16 @@ const BusinessUserListingScreen = ({ navigation, route }) => {
           borderRadius: 10,
           flexDirection: 'row',
           marginVertical: 10,
-          height: 112,
+          // height: 112,
+          
         }}>
+
+          <View style={{position:'absolute', top:0, right:0,}}>
+            <View style={{backgroundColor:item.isActive?'green':'red', borderTopRightRadius:10, borderBottomLeftRadius:10, paddingHorizontal:8}}>
+          <Text style={st.errorText}>{item.isActive ? 'Active': 'In-active'}</Text>
+          </View>
+          </View>
+
         {item?.certificate != '' ? (
           <Image
             source={{
@@ -149,6 +157,8 @@ const BusinessUserListingScreen = ({ navigation, route }) => {
               width: 90,
               borderRadius: 10,
               resizeMode: 'stretch',
+              margin: 10,
+            // marginTop:20
             }}
           />
         ) : (
@@ -156,10 +166,11 @@ const BusinessUserListingScreen = ({ navigation, route }) => {
             source={ImageConstants.business_logo}
             style={{
               width: 90,
+              height:90,
               borderRadius: 10,
-              resizeMode: 'contain',
+              // resizeMode: 'contain',
               alignSelf: 'center',
-              marginTop: 30,
+              marginTop: 10,
             }}
           />
         )}
@@ -168,6 +179,7 @@ const BusinessUserListingScreen = ({ navigation, route }) => {
           style={{
             flex: 1,
             margin: 10,
+            marginTop:20
           }}>
           <Text numberOfLines={2} 
             style={{

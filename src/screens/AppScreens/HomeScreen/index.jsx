@@ -42,6 +42,7 @@ import { userDataAction } from '../../../redux/Slices/UserInfoSlice';
 import Storage from '../../../constants/Storage';
 import EventCard from '../../../components/ReelComponent/EventCard';
 import { FlashList } from '@shopify/flash-list';
+import moment from 'moment';
 
 const staticValues = {
   skip: 0,
@@ -290,7 +291,7 @@ const HomeScreen = ({ navigation, route }) => {
   
   const transformApiToDummy = (apiData) => {
     return apiData.map(item => {
-      let id;
+      let id, eventTime, eventloc;
       if (item.added_from === "1") {
         // User
         id = item.user_id;
@@ -300,6 +301,8 @@ const HomeScreen = ({ navigation, route }) => {
       } else if (item.added_from === "3") {
         // Event
         id = item.event_id; // 👈 backend se aana chahiye
+        eventloc = item.eventloc
+        eventTime = item.eventTime
       }
   
       return {
@@ -321,6 +324,8 @@ const HomeScreen = ({ navigation, route }) => {
           tagBusiness: story.tagBussiness || [],
           event_id: item.event_id || null, // 👈 future use
           event_name: item.user_name,
+          eventloc : item.eventloc || null,
+          eventTime : item.eventTime || null,
         }))
       };
     });
@@ -766,6 +771,18 @@ const HomeScreen = ({ navigation, route }) => {
     syncUserProfile()
   }, [location])
 
+  useEffect(() => {
+    const listener = DeviceEventEmitter.addListener(
+      'REFRESH_STORIES',
+      () => {
+        getStoryHandle(); // 👈 story wali API
+      }
+    );
+  
+    return () => {
+      listener.remove();
+    };
+  }, []);
 
   return (
     <>
@@ -832,7 +849,7 @@ const HomeScreen = ({ navigation, route }) => {
                   const currentStoryData = stories
                     .find(u => u.id === currentStory?.userId)
                     ?.stories.find(s => s.id === currentStory?.storyId);
-                  // console.log({currentStory})
+                  console.log({currentStoryData})
                   return (
                     <View style={{ padding: 20 }}>
                       {currentStory?.caption &&
@@ -866,7 +883,7 @@ const HomeScreen = ({ navigation, route }) => {
                               });
                             }}
                             style={{
-                              alignSelf: 'center',
+                              // alignSelf: 'center',
                               marginBottom: 10,
                               backgroundColor: 'rgba(0,0,0,0.5)',
                               paddingHorizontal: 14,
@@ -882,8 +899,15 @@ const HomeScreen = ({ navigation, route }) => {
                                 textDecorationLine: 'underline',
                               }}
                             >
-                              @{currentStoryData.event_name}
+                              @{currentStoryData.event_name} 
                             </Text>
+                            <Text numberOfLines={2} style={{
+                              fontFamily: fonts.regular,
+                              fontSize: wp(12),
+                              color: colors.white,
+                            }}>
+                              {moment(currentStoryData.eventTime, 'YYYY-MM-DD').format('dddd, DD MMMM')} | {currentStoryData.eventloc} 
+                              </Text>
                           </TouchableOpacity>
                       )}
 

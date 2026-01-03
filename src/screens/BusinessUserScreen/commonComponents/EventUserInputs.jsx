@@ -67,7 +67,8 @@ const BusinessImagePicker = ({
   getImageFile = () => {},
   onRemoveImage = () => {},
   mediaType = 'photo',
-  disabled
+  disabled,
+  hidePlus = false
 }) => {
   const mediaRef = useRef();
 
@@ -120,7 +121,7 @@ const BusinessImagePicker = ({
             ))}
 
           {/* PLUS BUTTON */}
-          {!disabled&&
+          {!(disabled || hidePlus)&&
           <TouchableOpacity
             onPress={() => mediaRef.current?.open()}
             activeOpacity={0.8}

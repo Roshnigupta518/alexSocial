@@ -116,6 +116,7 @@ import {
   TextInput,
 } from 'react-native';
 import { colors, fonts, wp } from '../../constants';
+import Icon  from 'react-native-vector-icons/Feather';
 
 const CustomPicker = ({
   label,
@@ -154,7 +155,15 @@ const CustomPicker = ({
           backgroundColor: colors.lightPrimaryColor,
           borderRadius: 6,
         }}>
-        <Text>{selectedLabel}</Text>
+          <View style={{flexDirection:'row'}}>
+            <View style={{width:'95%'}}>
+          <Text>{selectedLabel}</Text>
+          </View>
+          <View style={{width:'5%'}}>
+          <Icon name={'chevron-down'} size={18} color={colors.black} />
+          </View>
+        </View>
+
       </TouchableOpacity>
 
       {open && (
@@ -168,25 +177,25 @@ const CustomPicker = ({
 
           {/* Search */}
          {/* Search Input */}
-<TextInput
-  placeholder="Search business..."
-  placeholderTextColor={colors.gray}
-  value={search}
-  onChangeText={setSearch}
-  style={{
-    paddingVertical: wp(10),
-    paddingHorizontal: wp(12),
-    fontSize: wp(14),
-    fontFamily: fonts.medium,
-    color: colors.black,
-    backgroundColor: colors.lightPrimaryColor,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    borderBottomWidth: 1,
-    borderColor: colors.gray + '40',
-  }}
-/>
-
+          <TextInput
+            placeholder="Search business..."
+            placeholderTextColor={colors.gray}
+            value={search}
+            onChangeText={setSearch}
+            style={{
+              paddingVertical: wp(10),
+              paddingHorizontal: wp(12),
+              fontSize: wp(14),
+              fontFamily: fonts.medium,
+              color: colors.black,
+              // backgroundColor: colors.lightPrimaryColor,
+              // borderTopLeftRadius: 6,
+              // borderTopRightRadius: 6,
+              borderWidth: 0.6,
+              borderBottomWidth:0,
+              borderColor: colors.gray ,
+            }}
+          />
 
           {/* List */}
           <FlatList

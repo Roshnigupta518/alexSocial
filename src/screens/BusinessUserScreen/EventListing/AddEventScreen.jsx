@@ -5,7 +5,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Image,
-  Platform,
+  Platform, KeyboardAvoidingView, ScrollView, DeviceEventEmitter
 } from 'react-native';
 import { colors, fonts, wp } from '../../../constants';
 import BackHeader from '../../../components/BackHeader';
@@ -28,11 +28,15 @@ import NoInternetModal from '../../../components/NoInternetModal';
 import NetInfo from '@react-native-community/netinfo';
 import CustomContainer from '../../../components/container';
 import CustomPicker from '../../../components/customPicker';
+import NotFoundAnime from '../../../components/NotFoundAnime';
+import { api, BASE_URL } from '../../../services/WebConstants';
+import Storage from '../../../constants/Storage';
 
 const AddEventScreen = ({ navigation }) => {
   const dateRef = useRef();
   const timeRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
+  const [isBusinessLoading, setIsBusinessLoading] = useState(false);
   const [eventDate, setEventDate] = useState(null);
   const [eventTime, setEventTime] = useState(null);
   const [logoImage, setLogoImage] = useState(null);
@@ -243,17 +247,52 @@ const AddEventScreen = ({ navigation }) => {
         name: selectedBusiness?.label,
       }),
     );
-    CreateStoryToEvent(createdEvent?._id, formdata)
-      .then(res => {
-        console.log('CreateStoryToEvent=>', res)
-        Toast.success('Event', res?.message);
+
+    try{
+
+    let temp_token = await Storage.get('userdata');
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        'Authorization': 'Bearer ' + temp_token?.token,
+        'Content-Type': 'multipart/form-data'
+
+      },
+      body: formdata,
+    };
+
+    const url = BASE_URL + api.addEventStory + createdEvent?._id;
+    console.log({ url, formdata: JSON.stringify(formdata) });
+   
+      const response = await fetch(url, requestOptions);
+      const result = await response.json();
+  
+      if (result?.status) {
+        console.log('CreateStoryToEvent=>',result)
+        Toast.success('Event', result?.message);
+        setShowStoryPopup(false);
         navigation.navigate('EventUserListingScreen', { refresh: true });
-      })
-      .catch(err => {
-        console.log('event err',err)
-        Toast.error('Event', err?.message);
-      })
-      .finally(() => setIsLoading(false));
+        DeviceEventEmitter.emit('REFRESH_STORIES');
+      }else{
+        Toast.error('Event', result?.message);
+      }
+    }catch(err){
+      Toast.error('Event', err?.message);
+    }finally{
+      setIsLoading(false)
+    }
+
+    // CreateStoryToEvent(createdEvent?._id, formdata)
+    //   .then(res => {
+    //     console.log('CreateStoryToEvent=>', res)
+    //     Toast.success('Event', res?.message);
+    //     navigation.navigate('EventUserListingScreen', { refresh: true });
+    //   })
+    //   .catch(err => {
+    //     console.log('event err',err)
+    //     Toast.error('Event', err?.message);
+    //   })
+    //   .finally(() => setIsLoading(false));
   };
 
   return (
@@ -261,24 +300,31 @@ const AddEventScreen = ({ navigation }) => {
       <CustomContainer>
         <BackHeader label="Event" />
 
+<KeyboardAvoidingView
+  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  keyboardVerticalOffset={80}
+  style={{flex: 1}}>
+
+    <ScrollView  style={{flex: 1}}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}>
+
         <View
           style={{
             padding: wp(20),
             flex: 1,
           }}>
-          <KeyboardAvoidingScrollView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            showsVerticalScrollIndicator={false}>
-
+         
+           {businessList.length != 0 && 
             <CustomPicker
               items={businessList}
               label={'Select Business'}
-              placeholder=''
+              placeholder='Select Business'
               value={business}
-              // onValueChange={(val) => setBusiness(val)}
               onValueChange={onSelectBusiness}
               fontFamily={fonts.medium}
             />
+            }
 
             {businessList.length === 0 && !isLoading && (
               <View
@@ -287,6 +333,7 @@ const AddEventScreen = ({ navigation }) => {
                   padding: wp(12),
                   borderRadius: 6,
                   marginBottom: wp(10),
+                  marginTop:"50%"
                 }}>
                 <Text
                   style={{
@@ -312,16 +359,20 @@ const AddEventScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
             )}
+
            {businessList.length != 0 && 
             <View pointerEvents={business ? 'auto' : 'none'}>
+              { business &&
               <BusinessImagePicker
-                label="Add a symbol of your organization."
+                label="Logo of your organization."
                 image={logoImage}
                 theme="light"
                 getImageFile={res => setLogoImage(res)}
                 onRemoveImage={removeImageLogo}
                 disabled={!!business}
+                hidePlus={true}
               />
+              }
               <BusinessImagePicker
                 label="Add Image/Video for Event Post"
                 image={bannerImage}
@@ -552,7 +603,7 @@ const AddEventScreen = ({ navigation }) => {
               />
             </View>
             }
-          </KeyboardAvoidingScrollView>
+          
 
           <TimeSheet
             ref={timeRef}
@@ -587,6 +638,7 @@ const AddEventScreen = ({ navigation }) => {
           <DateSheet ref={dateRef} onSuccess={res => setEventDate(res)} />
         </View>
 
+         {businessList.length != 0 && 
         <View
           style={{
             marginBottom: 15,
@@ -598,8 +650,9 @@ const AddEventScreen = ({ navigation }) => {
             onPress={SubmitEvent}
           />
         </View>
-
-
+         }
+</ScrollView>
+</KeyboardAvoidingView>
         {showStoryPopup && (
           <View
             style={{

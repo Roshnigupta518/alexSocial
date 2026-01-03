@@ -181,7 +181,6 @@ const StoryPreview = ({ route, navigation }) => {
           originalId: userInfo.id,             // ye important hai eye icon ke liye
           user_id: userInfo.id,
         };
-        
 
        DeviceEventEmitter.emit('STORY_UPLOADED', newStory);
 
