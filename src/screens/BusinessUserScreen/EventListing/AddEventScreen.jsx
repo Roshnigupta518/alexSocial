@@ -281,18 +281,6 @@ const AddEventScreen = ({ navigation }) => {
     }finally{
       setIsLoading(false)
     }
-
-    // CreateStoryToEvent(createdEvent?._id, formdata)
-    //   .then(res => {
-    //     console.log('CreateStoryToEvent=>', res)
-    //     Toast.success('Event', res?.message);
-    //     navigation.navigate('EventUserListingScreen', { refresh: true });
-    //   })
-    //   .catch(err => {
-    //     console.log('event err',err)
-    //     Toast.error('Event', err?.message);
-    //   })
-    //   .finally(() => setIsLoading(false));
   };
 
   return (
@@ -364,7 +352,7 @@ const AddEventScreen = ({ navigation }) => {
             <View pointerEvents={business ? 'auto' : 'none'}>
               { business &&
               <BusinessImagePicker
-                label="Logo of your organization."
+                label="Logo Of Your Organization"
                 image={logoImage}
                 theme="light"
                 getImageFile={res => setLogoImage(res)}
@@ -553,7 +541,7 @@ const AddEventScreen = ({ navigation }) => {
               </View>
 
               <BusinessImagePicker
-                label="Add gallery for your event"
+                label="Add Gallery For Your Event"
                 image={eventImage}
                 theme="light"
                 multiple={true}

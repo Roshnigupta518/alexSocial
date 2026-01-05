@@ -24,6 +24,7 @@ import { useIsFocused } from '@react-navigation/native';
 import DeleteBusinessSheet from '../../../components/ActionSheetComponent/DeleteBusinessSheet';
 import st from '../../../global/styles';
 import CustomContainer from '../../../components/container';
+
 const BusinessUserListingScreen = ({ navigation, route }) => {
   const isFocused = useIsFocused();
   const swipeRef = useRef();
@@ -34,6 +35,7 @@ const BusinessUserListingScreen = ({ navigation, route }) => {
   const [deleteId, setDeleteId] = useState(null);
   const [eventSearchList, setEventSearchList] = useState([]);
   const [searchTxt, setSearchTxt] = useState('');
+  const [listKey, setListKey] = useState(0);
 
   const getBusinessList = () => {
     try {
@@ -44,7 +46,7 @@ const BusinessUserListingScreen = ({ navigation, route }) => {
         .then(res => {
           setEventList(res?.result || []);
           setEventSearchList(res?.result || []);
-          swipeRef?.current?.manuallyOpenAllRows(0);
+          // swipeRef?.current?.manuallyOpenAllRows(0);
         })
         .catch(err => {
           Toast.error('Business', err?.message);
@@ -127,7 +129,6 @@ const BusinessUserListingScreen = ({ navigation, route }) => {
     return (
       <TouchableOpacity
         onPress={() =>
-          // navigation.navigate('BusinessDetailScreen', { data: item })
           navigation.navigate('ClaimBusinessScreen', {...item, fromListing : true})
         }
         activeOpacity={1}
@@ -203,6 +204,12 @@ const BusinessUserListingScreen = ({ navigation, route }) => {
     );
   };
 
+  useEffect(() => {
+    if (isFocused) {
+      setListKey(prev => prev + 1); // 🔥 FORCE REMOUNT
+    }
+  }, [isFocused]);  
+
   return (
     <CustomContainer>
       <BusinessHeader
@@ -235,9 +242,13 @@ const BusinessUserListingScreen = ({ navigation, route }) => {
           }}>
           <SwipeListView
             ref={swipeRef}
+            key={listKey}
             data={eventSearchList}
             showsVerticalScrollIndicator={false}
             renderItem={_renderEventList}
+            onRowPress={({ item }) => {
+              navigation.navigate('ClaimBusinessScreen', { ...item, fromListing: true });
+            }}
             disableRightSwipe={true}
             ListEmptyComponent={<EmptyView />}
             renderHiddenItem={({ item }, rowMap) => {

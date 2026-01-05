@@ -132,7 +132,11 @@ const EventDetailScreen = ({ navigation, route }) => {
     if (result?.status) {
       console.log('CreateStoryToEvent=>',result)
       Toast.success('Event', result?.message);
-      DeviceEventEmitter.emit('REFRESH_STORIES');
+      // DeviceEventEmitter.emit('REFRESH_STORIES');
+      setTimeout(() => {
+        DeviceEventEmitter.emit('REFRESH_STORIES');
+      }, 1500);
+      
     }else{
       Toast.error('Event', result?.message);
       setIsLoading(false)
@@ -144,15 +148,6 @@ const EventDetailScreen = ({ navigation, route }) => {
     setIsLoading(false)
   }
 
-    // CreateStoryToEvent(data?._id, formdata)
-    // .then(res => {
-    //   console.log('CreateStoryToEvent=>',res)
-    //   Toast.success('Event', res?.message);
-    // })
-    // .catch(err => {
-    //   Toast.error('Event', err?.message);
-    // })
-    // .finally(() => setIsLoading(false));
   };
 
   const isVideoBanner = () => {
@@ -542,7 +537,7 @@ const EventDetailScreen = ({ navigation, route }) => {
                   <CustomButton
                     isLoading={isLoading}
                     disabled={isLoading}
-                    label="Add Event story"
+                    label="Add Event Story"
                     onPress={addEventToStory}
                   />
                 </View>

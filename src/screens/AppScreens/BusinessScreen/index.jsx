@@ -18,6 +18,7 @@ import {useIsFocused} from '@react-navigation/native';
 import NoInternetModal from '../../../components/NoInternetModal';
 import NetInfo from '@react-native-community/netinfo';
 import CustomContainer from '../../../components/container';
+
 const BusinessListingScreen = ({navigation, route}) => {
   const isFocused = useIsFocused();
   const [isLoading, setIsLoading] = useState(false);

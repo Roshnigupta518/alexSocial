@@ -48,7 +48,7 @@ const ReelHeader = ({
   }, [isFocused]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container]}>
       <View style={{flexDirection:'row'}}>
         <TouchableOpacity onPress={onTempaClick} style={[styles.nearMeView, {
           backgroundColor: selectedCity == 'current' ? colors.white : colors.borderGrayColor

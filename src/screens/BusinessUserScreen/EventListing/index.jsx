@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,21 +11,22 @@ import {
 } from 'react-native';
 import BusinessHeader from '../commonComponents/BusinessHeader';
 import SearchInput from '../../../components/SearchInput';
-import {colors, fonts, HEIGHT, WIDTH, wp} from '../../../constants';
+import { colors, fonts, HEIGHT, WIDTH, wp } from '../../../constants';
 import ImageConstants from '../../../constants/ImageConstants';
 import {
   DeleteEventRequest,
   GetMyEventListRequest,
 } from '../../../services/Utills';
 import Toast from '../../../constants/Toast';
-import {SwipeListView} from 'react-native-swipe-list-view';
-import {useSelector} from 'react-redux';
-import {useIsFocused} from '@react-navigation/native';
+import { SwipeListView } from 'react-native-swipe-list-view';
+import { useSelector } from 'react-redux';
+import { useIsFocused } from '@react-navigation/native';
 import NoInternetModal from '../../../components/NoInternetModal';
 import NetInfo from '@react-native-community/netinfo';
 import CustomContainer from '../../../components/container';
+import Video from 'react-native-video';
 
-const EventUserListingScreen = ({navigation, route}) => {
+const EventUserListingScreen = ({ navigation, route }) => {
   const swipeRef = useRef();
   const isFocused = useIsFocused();
   const userInfo = useSelector(state => state.UserInfoSlice.data);
@@ -83,21 +84,20 @@ const EventUserListingScreen = ({navigation, route}) => {
     setEventSearchList(txt?.length < 1 ? [...eventList] : [...search_res]);
   };
 
-  // useEffect(() => {
-  //   if (isFocused) {
-  //     setIsLoading(true);
-  //     setTimeout(() => {
-  //       getEventList();
-  //     }, 800);
-  //   }
-  // }, [isFocused]);
-
   useEffect(() => {
     if (isFocused && (route?.params?.refresh === true || eventList.length === 0)) {
       getEventList();
       navigation.setParams({ refresh: false });
     }
   }, [isFocused, route?.params?.refresh]);
+
+  const isVideoBanner = (item) => {
+    return (
+      item?.bannerMime?.includes('video') ||
+      item?.bannerType === '2' ||
+      item?.banner?.endsWith('.mp4')
+    );
+  };
 
   const EmptyView = () => {
     return (
@@ -107,59 +107,59 @@ const EventUserListingScreen = ({navigation, route}) => {
           height: HEIGHT / 2,
           justifyContent: 'center',
         }}>
-         {isLoading ? (
-        <ActivityIndicator size={'large'} color={colors.primaryColor} />
-         ):
-          <View style={{ alignItems: 'center',}}>
-        <Text
-          style={{
-            fontFamily: fonts.bold,
-            fontSize: wp(16),
-            color: colors.black,
-          }}>
-          No Events has been listed!
-        </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('AddEventScreen')}>
-          <Text
-            style={{
-              fontFamily: fonts.bold,
-              fontSize: wp(16),
-              color: colors.primaryColor,
-              marginTop: 10,
-            }}>
-            Add Your Event
-          </Text>
-        </TouchableOpacity>
+        {isLoading ? (
+          <ActivityIndicator size={'large'} color={colors.primaryColor} />
+        ) :
+          <View style={{ alignItems: 'center', }}>
+            <Text
+              style={{
+                fontFamily: fonts.bold,
+                fontSize: wp(16),
+                color: colors.black,
+              }}>
+              No Events has been listed!
+            </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('AddEventScreen')}>
+              <Text
+                style={{
+                  fontFamily: fonts.bold,
+                  fontSize: wp(16),
+                  color: colors.primaryColor,
+                  marginTop: 10,
+                }}>
+                Add Your Event
+              </Text>
+            </TouchableOpacity>
 
-        <View
-          style={{
-            marginTop: wp(40),
-          }}>
-          <Image
-            source={ImageConstants.not_found}
-            style={{
-              height: wp(140),
-              width: wp(140),
-              tintColor: colors.primaryColor,
-              resizeMode: 'contain',
-            }}
-          />
-        </View>
-           </View>
-          }
+            <View
+              style={{
+                marginTop: wp(40),
+              }}>
+              <Image
+                source={ImageConstants.not_found}
+                style={{
+                  height: wp(140),
+                  width: wp(140),
+                  tintColor: colors.primaryColor,
+                  resizeMode: 'contain',
+                }}
+              />
+            </View>
+          </View>
+        }
       </View>
     );
-  
+
   };
-  const _renderEventList = ({item, index}) => {
+  const _renderEventList = ({ item, index }) => {
     return (
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => navigation.navigate('EventDetailScreen', {eventDetail: item})}
+        onPress={() => navigation.navigate('EventDetailScreen', { eventDetail: item })}
         style={{
           margin: wp(5),
           shadowColor: colors.black,
-          shadowOffset: {width: 1, height: 1},
+          shadowOffset: { width: 1, height: 1 },
           shadowOpacity: 0.1,
           shadowRadius: 30,
           borderRadius: 10,
@@ -179,7 +179,7 @@ const EventUserListingScreen = ({navigation, route}) => {
             alignItems: 'center',
           }}>
           <Image
-            source={{uri: item?.logo}}
+            source={{ uri: item?.logo }}
             style={{
               height: wp(30),
               width: wp(30),
@@ -232,26 +232,40 @@ const EventUserListingScreen = ({navigation, route}) => {
             )}
           </View>
         </View>
-        <ImageBackground
-          source={{
-            uri: item?.image?.length > 0 ? item?.image[0] : '',
-          }}
+       
+        <View
           style={{
             height: wp(160),
-            justifyContent: 'flex-end',
-            backgroundColor: colors.white,
+            borderBottomLeftRadius: wp(10),
+            borderBottomRightRadius: wp(10),
+            overflow: 'hidden',
+            backgroundColor: colors.black,
           }}
-          imageStyle={{
-            borderRadius: wp(10),
-            borderBottomLeftRadius: 10,
-            borderBottomRightRadius: 10,
-          }}>
+        >
+          {isVideoBanner(item) ? (
+            <Video
+              source={{ uri: item.banner }}
+              style={{ height: '100%', width: '100%' }}
+              resizeMode="cover"
+              muted
+              repeat
+              paused={false}
+            />
+          ) : (
+            <ImageBackground
+              source={{ uri: item.banner }}
+              style={{ height: '100%', width: '100%' }}
+            />
+          )}
           <View
             style={{
               backgroundColor: 'rgba(0,0,0,0.3)',
               borderBottomLeftRadius: wp(10),
               borderBottomRightRadius: wp(10),
               padding: wp(10),
+              position: 'absolute',
+              bottom: 0,
+              width: '100%',
             }}>
             <Text
               numberOfLines={3}
@@ -263,13 +277,12 @@ const EventUserListingScreen = ({navigation, route}) => {
               {item?.description}
             </Text>
           </View>
-        </ImageBackground>
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <>
       <CustomContainer>
         <BusinessHeader
           label="Event Listing"
@@ -289,25 +302,20 @@ const EventUserListingScreen = ({navigation, route}) => {
           />
         </View>
 
-        <View style={{ flex: 1, padding: wp(15) }}>
-  {isLoading ? (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" color={colors.primaryColor} />
-    </View>
-  ) : (
-    <FlatList
-      showsVerticalScrollIndicator={false}
-      data={eventSearchList}
-      renderItem={_renderEventList}
-      ListEmptyComponent={<EmptyView />}
-      ListFooterComponent={<View style={{ height: 100 }} />}
-    />
-  )}
-</View>
-
+        {isLoading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={colors.primaryColor} />
+          </View>
+        ) : (
+          <FlatList
+            showsVerticalScrollIndicator={false}
+            data={eventSearchList}
+            renderItem={_renderEventList}
+            ListEmptyComponent={<EmptyView />}
+            contentContainerStyle={{padding: wp(15), }}
+          />
+        )}
       </CustomContainer>
-      {/* <NoInternetModal shouldShow={!isInternetConnected} /> */}
-    </>
   );
 };
 

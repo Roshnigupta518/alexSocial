@@ -82,7 +82,7 @@ const EventReelCard = ({
 
   const gotoBusiness = (event) => {
     navigation.navigate('ClaimBusinessScreen', {
-      _id: event.business_id,          
+      _id: event.business_id,
       name: event.business?.name,
       source: 'local',
       fromEvent: true
@@ -96,184 +96,153 @@ const EventReelCard = ({
       event?.banner?.endsWith('.mp4')
     );
   };
-  
+
 
   return (
     <View style={[styles.container]}>
-      
-      {/* <ImageBackground
-        source={{ uri: event?.image?.[0] }}
-        style={[styles.uploadedImageStyle(true), { height: '100%', width: '100%' }]}
-        resizeMode="cover"
-        blurRadius={20}
-      > */}
-         
 
-          {/* 🔹 Background blur */}
-  {!isVideoBanner() && (
-    <ImageBackground
-      source={{ uri: event?.image?.[0] }}
-      style={[styles.uploadedImageStyle(true), { height: '100%', width: '100%' }]}
-      resizeMode="cover"
-      blurRadius={20}
-    />
-  )}
-
-        {/* <Image
-          source={{ uri: event?.image?.[0] }}
+      {isVideoBanner() ? (
+        <VideoPlayer
+          url={event?.banner}
+          shouldPlay={shouldPlay}
+          onMuteClick={changeMuteState}
+          screen={screen}
+          screenHeight={screenHeight}
+          // thumbnail={event?.logo}
+        />
+      ) : (
+        <Image
+          source={{ uri: event?.banner }}
           style={{
             width: '100%',
             height: '100%',
-            resizeMode: 'contain', // 👈 NO STRETCH
+            resizeMode: 'contain',
           }}
-        /> */}
+        />
+      )}
 
-         {/* 🔹 Main Media */}
-  {isVideoBanner() ? (
-    // <Video
-    //   source={{ uri: event?.banner }}
-    //   style={{
-    //     position: 'absolute',
-    //     height: '100%',
-    //     width: '100%',
-    //   }}
-    //   resizeMode="contain"
-    //   repeat
-    //   muted={shouldMute}
-    //   paused={!isItemOnFocus}
-    // />
+      <View style={[styles.firstRowContainer(true)]}>
+        <TouchableOpacity style={{ marginBottom: 15 }}
+          onPress={() => {
+            onPressHandle(data)
+          }}>
+          <Text style={{
+            fontFamily: fonts.bold,
+            fontWeight: 600,
+            fontSize: wp(18),
+            color: colors.white,
+            textShadowColor: 'rgba(0,0,0,0.6)',
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 3,
+          }}>{event?.title}</Text>
+        </TouchableOpacity>
 
-    <VideoPlayer
-    url={event?.banner}
-    shouldPlay={shouldPlay}
-    onMuteClick={changeMuteState}
-    screen={screen}
-    screenHeight={screenHeight}
-    thumbnail={event?.banner}
-  />
+        <View style={{ flexDirection: 'row' }}>
+          <View style={{ width: '50%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Icon name={'map-pin'} size={16} color={colors.red} />
 
-  ) : (
-    <Image
-      source={{ uri: event?.banner }}
-      style={{
-        width: '100%',
-        height: '100%',
-        resizeMode: 'contain',
-      }}
-    />
-  )}
+              <Text style={{
+                fontFamily: fonts.bold,
+                fontWeight: 600,
+                fontSize: wp(12),
+                color: colors.white,
+                textTransform: 'uppercase',
+                textShadowColor: 'rgba(0,0,0,0.6)',
+                textShadowOffset: { width: 1, height: 1 },
+                textShadowRadius: 3,
+              }}>
+                {` ` + event?.location}
+              </Text>
+            </View>
 
-        <View style={[styles.firstRowContainer(true)]}>
+            <Text
+              style={{
+                fontFamily: fonts.bold,
+                fontSize: wp(29),
+                color: colors.white,
+                fontWeight: 600,
+                textShadowColor: 'rgba(0,0,0,0.6)',
+                textShadowOffset: { width: 1, height: 1 },
+                textShadowRadius: 3,
+              }}>
+              ${event?.entry_fee}
+            </Text>
+          </View>
+          <View style={{ width: '50%', alignSelf: 'flex-end' }}>
 
-          <TouchableOpacity style={{ marginBottom: 15 }}
-            onPress={() => {
-              onPressHandle(data)
-            }}>
-            <Text style={{
-              fontFamily: fonts.bold,
-              fontWeight: 600,
-              fontSize: wp(18),
-              color: colors.white,
-              textShadowColor: 'rgba(0,0,0,0.6)',
-              textShadowOffset: { width: 1, height: 1 },
-              textShadowRadius: 3,
-              // transform: [{ rotate: '-12deg' }],
-            }}>{event?.title}</Text>
-          </TouchableOpacity>
+            <View style={styles.dateContainer}>
 
-          <View style={{ flexDirection: 'row' }}>
-            <View style={{ width: '50%' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Icon name={'map-pin'} size={16} color={colors.red} />
-
-                <Text style={{
-                  fontFamily: fonts.bold,
-                  fontWeight: 600,
-                  fontSize: wp(12),
-                  color: colors.white,
-                  textTransform: 'uppercase'
-                }}>
-                  {` ` + event?.location}
+              <View style={styles.dateBox}>
+                <Text style={[styles.dateText,{
+                   textShadowColor: 'rgba(0,0,0,0.6)',
+                   textShadowOffset: { width: 1, height: 1 },
+                   textShadowRadius: 3,
+                }]}>
+                  {day}
+                </Text>
+                <Text style={[styles.monthText]}>
+                  {month}
                 </Text>
               </View>
 
-              <Text
-                style={{
-                  fontFamily: fonts.bold,
-                  fontSize: wp(29),
-                  color: colors.white,
-                  fontWeight: 600,
-                }}>
-                ${event?.entry_fee}
-              </Text>
-            </View>
-            <View style={{ width: '50%', alignSelf: 'flex-end' }}>
+              <View style={styles.borderLeftSty} />
 
-              <View style={styles.dateContainer}>
-
-                <View style={styles.dateBox}>
-                  <Text style={styles.dateText}>
-                    {day}
-                  </Text>
-                  <Text style={styles.monthText}>
-                    {month}
-                  </Text>
-                </View>
-
-                <View style={styles.borderLeftSty} />
-
-                <View style={styles.dateBox}>
-                  <Text style={styles.dateText}>
-                    {time}
-                  </Text>
-                  <Text style={styles.monthText}>
-                    {meridiem}
-                  </Text>
-                </View>
+              <View style={styles.dateBox}>
+                <Text style={[styles.dateText,{
+                   textShadowColor: 'rgba(0,0,0,0.6)',
+                   textShadowOffset: { width: 1, height: 1 },
+                   textShadowRadius: 3,
+                }]}>
+                  {time}
+                </Text>
+                <Text style={styles.monthText}>
+                  {meridiem}
+                </Text>
               </View>
-
             </View>
+
           </View>
+        </View>
 
-          <View style={[styles.subFirstRowContiner, { marginTop: 40 }]}>
-            <View style={styles.userImageContainer}>
-              <View style={styles.imageView}>
-                <TouchableOpacity
-                  onPress={() => {
-                    gotoBusiness(event)
-                  }}>
-                  <Image
-                    source={
-                      data.business?.certificate?.trim()
-                        ? { uri: data.business.certificate }
-                        : ImageConstants.business_logo
-                    }
-                    style={styles.imageStyle}
-                  />
-                </TouchableOpacity>
-              </View>
-
+        <View style={[styles.subFirstRowContiner, { marginTop: 40 }]}>
+          <View style={styles.userImageContainer}>
+            <View style={styles.imageView}>
               <TouchableOpacity
                 onPress={() => {
                   gotoBusiness(event)
-                }} style={styles.usernameStyle}>
-                <Text numberOfLines={2} style={styles.nameTxtStyle}>
-                  {event?.business?.name}
-                </Text>
+                }}>
+                <Image
+                  source={
+                    event.business?.certificate
+                      ? { uri: event.business.certificate }
+                      : ImageConstants.business_logo
+                  }
+                  style={styles.imageStyle}
+                />
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity
+              onPress={() => {
+                gotoBusiness(event)
+              }} style={styles.usernameStyle}>
+              <Text numberOfLines={2} style={styles.nameTxtStyle}>
+                {event?.business?.name}
+              </Text>
+            </TouchableOpacity>
           </View>
-
-          <ReadMore
-            numberOfLines={2}
-            style={styles.descriptionTxtStyle}
-            seeMoreStyle={{ color: colors.primaryColor }}
-            seeLessStyle={{ color: colors.primaryColor }}>
-            {event?.description}
-          </ReadMore>
-
         </View>
-      {/* </ImageBackground> */}
+
+        <ReadMore
+          numberOfLines={2}
+          style={styles.descriptionTxtStyle}
+          seeMoreStyle={{ color: colors.primaryColor }}
+          seeLessStyle={{ color: colors.primaryColor }}>
+          {event?.description}
+        </ReadMore>
+
+      </View>
 
       {muteIconVisible && (
         <TouchableOpacity

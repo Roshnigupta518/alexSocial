@@ -8,7 +8,7 @@ import {
   Alert,
   BackHandler,
   Image, TouchableOpacity, DeviceEventEmitter,
-  Text, Platform, PermissionsAndroid, AppState, ScrollView, Linking, Dimensions
+  Text, Platform, PermissionsAndroid, AppState, StatusBar, Linking, Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, HEIGHT, wp } from '../../../constants';
@@ -67,6 +67,8 @@ const HomeScreen = ({ navigation, route }) => {
   const screenHeight = Platform.OS === 'ios'
     ? DEVICE_HEIGHT - tabBarHeight - statusBarHeight
     : DEVICE_HEIGHT - tabBarHeight - statusBarHeight;
+
+  const STORY_TOP = insets.top + 40;
 
   const storyref = useRef(null)
   const prevNearBy = useRef(nearByType);
@@ -216,7 +218,11 @@ const HomeScreen = ({ navigation, route }) => {
     let url = { skip: pagination.skip, limit: pagination.limit };
 
     // 👇 cursor sirf tab bhejna jab available ho
-      if (eventCursor) {
+      // if (eventCursor) {
+      //   url.eventCursor = eventCursor;
+      // }
+      // ✅ cursor sirf pagination ke time bhejo
+      if (eventCursor && pagination.skip > 0) {
         url.eventCursor = eventCursor;
       }
 
@@ -267,28 +273,6 @@ const HomeScreen = ({ navigation, route }) => {
       });
   };
 
-  // const transformApiToDummy = (apiData) => {
-  //   return apiData.map(user => ({
-  //     id: user.added_from === "2"
-  //       ? user.business_id : user.user_id,
-  //     name: user.user_name,
-  //     user_id: user.user_id, // 👈 asli user_id bhi rakho
-  //     added_from: user.added_from, // 👈 ye bhi rakho
-  //     avatarSource: user.user_image ? { uri: user.user_image } : ImageConstants.business_logo,
-  //     stories: user.stories.map(story => ({
-  //       id: story.id,
-  //       mediaType: story.media_type === 'video/mp4' ? 'video' : 'image',
-  //       duration: story.duration,
-  //       source: { uri: story.media },
-  //       is_seen: story.is_seen,
-  //       is_liked: story.is_liked,
-  //       caption: story.caption,
-  //       tagBusiness: story.tagBussiness || [],
-  //     }))
-  //   }));
-  // };
-
-  
   const transformApiToDummy = (apiData) => {
     return apiData.map(item => {
       let id, eventTime, eventloc;
@@ -338,7 +322,7 @@ const HomeScreen = ({ navigation, route }) => {
     GetAllStoryRequest()
       .then(res => {
         const dummyFormat = transformApiToDummy(res.result || []);
-        console.log('Fetched stories:', dummyFormat.length);
+        console.log('Fetched stories:', dummyFormat);
 
         // ✅ Check if my story exists in API response
         // const myStoryFromApi = dummyFormat.find(s => s.id === userInfo.id);
@@ -581,6 +565,8 @@ const HomeScreen = ({ navigation, route }) => {
 
     if (route?.params?.shouldScrollTopReel || nearByChanged || locationTypeChanged) {
       setPostArray([]);
+      setEventCursor(null);   // ✅ ADD THIS
+      setSkip(0);    
       onRefresh();
       getStoryHandle()
       prevNearByTypeRef.current = nearByType;
@@ -662,7 +648,7 @@ const HomeScreen = ({ navigation, route }) => {
               data={item}
               onCommentClick={idx => {
                 actionsheetRef.current?.show(
-                  postArray[idx]?.postData?.user_id?._id,
+                  postArray[idx]?.postData?.user?._id,
                 );
               }}
               onFollowingUserClick={() => followingUserRef.current?.show()}
@@ -678,7 +664,7 @@ const HomeScreen = ({ navigation, route }) => {
               data={item}
               onCommentClick={idx => {
                 actionsheetRef.current?.show(
-                  postArray[idx]?.postData?.user_id?._id,
+                  postArray[idx]?.postData?.user?._id,
                 );
               }}
               onFollowingUserClick={() => followingUserRef.current?.show()}
@@ -775,7 +761,11 @@ const HomeScreen = ({ navigation, route }) => {
     const listener = DeviceEventEmitter.addListener(
       'REFRESH_STORIES',
       () => {
-        getStoryHandle(); // 👈 story wali API
+        console.log('REFRESH_STORIESREFRESH_STORIESREFRESH_STORIES')
+        setTimeout(() => {
+          getStoryHandle();
+        }, 1000);
+       
       }
     );
   
@@ -799,12 +789,12 @@ const HomeScreen = ({ navigation, route }) => {
           currentCity={city}
         />
 
-        <View style={styles.storyContainer}>
+        <View style={[styles.storyContainer]}>
           {stories.length > 0 &&
             <SafeAreaView >
               <InstagramStories
                 ref={storyref}
-                // key={stories.length} 
+                key={stories.length} 
                 stories={stories}
                 onStoryPress={(story) => {
                   storyref.current?.open(story.id);
@@ -822,7 +812,10 @@ const HomeScreen = ({ navigation, route }) => {
                 avatarSize={60}
                 storyContainerStyle={{ margin: 0, padding: 0 }}
                 progressContainerStyle={{ margin: 0, padding: 0 }}
-                containerStyle={{ marginTop: Platform.OS === 'android' && '-8%', zIndex: 3, }}
+                containerStyle={{ 
+                  marginTop: Platform.OS === 'android' && '-8%',
+                  zIndex: 3,
+                 }}
                 closeIconColor='#fff'
                 progressColor={colors.gray}
                 progressActiveColor={colors.primaryColor}
@@ -849,12 +842,11 @@ const HomeScreen = ({ navigation, route }) => {
                   const currentStoryData = stories
                     .find(u => u.id === currentStory?.userId)
                     ?.stories.find(s => s.id === currentStory?.storyId);
-                  console.log({currentStoryData})
+                  // console.log({currentStoryData})
                   return (
                     <View style={{ padding: 20 }}>
                       {currentStory?.caption &&
                         <View style={styles.captionContainer}>
-
                           <ReadMore
                             numberOfLines={2}
                             style={{
@@ -1025,6 +1017,16 @@ const HomeScreen = ({ navigation, route }) => {
                 avatarBorderColors={['#0896E6', '#FFE35E', '#FEDF00', '#55A861', '#2291CF']}
                 avatarSeenBorderColors={[colors.gray]}
                 saveProgress={true}
+                scrollViewProps={{
+                  showsHorizontalScrollIndicator: false,
+                }}
+                flatListProps={{
+                  showsHorizontalScrollIndicator: false,
+                  contentContainerStyle: {
+                    paddingBottom: 0,
+                    marginBottom: 0,
+                  },
+                }}
               />
             </SafeAreaView>
           }
@@ -1163,7 +1165,7 @@ const HomeScreen = ({ navigation, route }) => {
         <ReportActionSheet
           ref={menuSheetRef}
           postId={postArray[currentItemIndex]?.postData?._id}
-          userId={postArray[currentItemIndex]?.postData?.user_id?._id}
+          userId={postArray[currentItemIndex]?.postData?.user?._id}
           loggedInUserId={userInfo?.id}
           onActionClick={(userId, postId, type) =>
             reportOptionSheet?.current?.show(userId, postId, type)
@@ -1180,15 +1182,15 @@ const HomeScreen = ({ navigation, route }) => {
           // User props
           userDetail={
             postArray[currentItemIndex]?.postData?.added_from === '1'
-              ? postArray[currentItemIndex]?.postData?.user_id
+              ? postArray[currentItemIndex]?.postData?.user
               : null
           }
           isFollowing={postArray[currentItemIndex]?.isFollowed}
           onFollowed={() => {
             let temp = [...postArray];
-            let userId = postArray[currentItemIndex]?.postData?.user_id?._id;
+            let userId = postArray[currentItemIndex]?.postData?.user?._id;
             temp?.forEach(item => {
-              if (item?.postData?.user_id?._id === userId) {
+              if (item?.postData?.user?._id === userId) {
                 item.isFollowed = true;
               }
             });
@@ -1196,9 +1198,9 @@ const HomeScreen = ({ navigation, route }) => {
           }}
           onUnfollowed={() => {
             let temp = [...postArray];
-            let userId = postArray[currentItemIndex]?.postData?.user_id?._id;
+            let userId = postArray[currentItemIndex]?.postData?.user?._id;
             temp?.forEach(item => {
-              if (item?.postData?.user_id?._id === userId) {
+              if (item?.postData?.user?._id === userId) {
                 item.isFollowed = false;
               }
             });
@@ -1254,7 +1256,8 @@ const styles = StyleSheet.create({
   storyContainer: {
     zIndex: 3,
     position: 'absolute',
-    top: Platform.OS === 'android' ? "11%" : 40,
+    top: Platform.OS === 'android' ? "15%" : 40,
+    // top: 20 + (Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0),
   },
   profilesty: {
     width: 69,
