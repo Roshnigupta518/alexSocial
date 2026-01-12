@@ -28,6 +28,7 @@ import NotFoundAnime from '../../../components/NotFoundAnime';
 import Video from 'react-native-video';
 import { api, BASE_URL } from '../../../services/WebConstants';
 import Storage from '../../../constants/Storage';
+import { useSelector } from 'react-redux';
 
 const EventDetailScreen = ({ navigation, route }) => {
   const { eventDetail } = route?.params;
@@ -36,7 +37,8 @@ const EventDetailScreen = ({ navigation, route }) => {
   const [isInternetConnected, setIsInternetConnected] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showAddStoryBtn, setShowAddStoryBtn] = useState(false);
-
+  const userInfo = useSelector(state => state.UserInfoSlice.data);
+   console.log({userInfo})
   useEffect(() => {
     if (data?.startAt) {
       const eventStart = moment.utc(data.startAt);
@@ -132,11 +134,9 @@ const EventDetailScreen = ({ navigation, route }) => {
     if (result?.status) {
       console.log('CreateStoryToEvent=>',result)
       Toast.success('Event', result?.message);
-      // DeviceEventEmitter.emit('REFRESH_STORIES');
       setTimeout(() => {
         DeviceEventEmitter.emit('REFRESH_STORIES');
       }, 1500);
-      
     }else{
       Toast.error('Event', result?.message);
       setIsLoading(false)
@@ -163,16 +163,7 @@ const EventDetailScreen = ({ navigation, route }) => {
       <CustomContainer>
         {data?(
         <View style={{flex:1}}>
-        {/* <ImageBackground
-          source={data.banner ? { uri: data.banner } : ImageConstants.event_banner}
-          style={{
-            height: HEIGHT / 3,
-            width: WIDTH,
-          }}>
-          <SafeAreaView>
-            <BackHeader />
-          </SafeAreaView>
-        </ImageBackground> */}
+      
 
 <View style={{ height: HEIGHT / 3, width: WIDTH }}>
   {isVideoBanner() ? (
@@ -532,7 +523,7 @@ const EventDetailScreen = ({ navigation, route }) => {
                   </View>
                 )}
 
-                {showAddStoryBtn && (
+                {(showAddStoryBtn && userInfo._id == data.user_id) && (
                 <View style={{ margin: 15 }}>
                   <CustomButton
                     isLoading={isLoading}

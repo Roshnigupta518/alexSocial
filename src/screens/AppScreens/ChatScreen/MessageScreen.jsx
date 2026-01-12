@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {colors, fonts, wp} from '../../../constants';
 import ImageConstants from '../../../constants/ImageConstants';
-import {GiftedChat} from 'react-native-gifted-chat';
+import {GiftedChat, Bubble} from 'react-native-gifted-chat';
 import {useSelector, useDispatch} from 'react-redux';
 import database from '@react-native-firebase/database';
 import Toast from '../../../constants/Toast';
@@ -139,7 +139,7 @@ const MessageScreen = ({navigation, route}) => {
             .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
             ?.reverse();
           setMessages([...sortedArray]);
-          console.log({sortedArray})
+          // console.log({sortedArray})
         }
       });
     } catch (err) {
@@ -170,6 +170,23 @@ const MessageScreen = ({navigation, route}) => {
 
     sendMessageToUser(msg);
   }, []);
+
+  const renderBubble = (props) => {
+    return (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          left: {
+            marginLeft: 0,  // Removes any left margin on receiver bubbles
+            paddingLeft: 10,
+          },
+          right: {
+            marginRight: 0,
+          },
+        }}
+      />
+    );
+  };
 
   return (
     <>
@@ -232,6 +249,8 @@ const MessageScreen = ({navigation, route}) => {
             user={{
               _id: userInfo?.id,
             }}
+            renderAvatar={null}  // <-- Add this line
+            renderBubble={renderBubble}
           />
         </View>
       </CustomContainer>

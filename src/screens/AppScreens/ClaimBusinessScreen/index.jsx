@@ -563,7 +563,7 @@ const ClaimBusinessScreen = ({ navigation, route }) => {
               )}
 
             </View>
-             {!data.isActive&&
+             {(!data.isActive && follow?.fromListing === true)&&
             <View style={{padding:15, paddingBottom:0}}>
             <Text style={[st.errorText,st.txAlign,{color:'red'}]}>You can’t post right now. This business is inactive—contact the admin.</Text>
             </View>
