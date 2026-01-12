@@ -1,4 +1,4 @@
-import React, {forwardRef, useEffect, useRef, useState} from 'react';
+import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import {
   Image,
   Text,
@@ -9,18 +9,20 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import {SwipeListView} from 'react-native-swipe-list-view';
-import {colors, fonts, HEIGHT, WIDTH, wp} from '../../../constants';
+import { SwipeListView } from 'react-native-swipe-list-view';
+import { colors, fonts, HEIGHT, WIDTH, wp } from '../../../constants';
 import ImageConstants from '../../../constants/ImageConstants';
 import SearchInput from '../../../components/SearchInput';
-import {useSelector, useDispatch} from 'react-redux';
-import {useIsFocused} from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
+import { useIsFocused } from '@react-navigation/native';
 import DeleteChatSheet from '../../../components/ActionSheetComponent/DeleteChatSheet';
 import NotFoundAnime from '../../../components/NotFoundAnime';
 import NoInternetModal from '../../../components/NoInternetModal';
 import NetInfo from '@react-native-community/netinfo';
 import CustomContainer from '../../../components/container';
-const ChatScreen = ({navigation}) => {
+import database from '@react-native-firebase/database';
+
+const ChatScreen = ({ navigation }) => {
   const isFocused = useIsFocused();
   const userInfo = useSelector(state => state.UserInfoSlice.data);
   const chatInfo = useSelector(state => state.ChatListSlice.data);
@@ -36,6 +38,8 @@ const ChatScreen = ({navigation}) => {
   const [searchedUserList, setSearchedUserList] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [isInternetConnected, setIsInternetConnected] = useState(true);
+  const [blockedUsers, setBlockedUsers] = useState([]);
+
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected !== null && state.isConnected === false) {
@@ -97,7 +101,7 @@ const ChatScreen = ({navigation}) => {
 
   const getAllUsers = (id = '') => {
     setIsLoading(true);
-    let data = {...JSON.parse(chatInfo)};
+    let data = { ...JSON.parse(chatInfo) };
     //
     let self_data = [];
     if (data != null) {
@@ -109,14 +113,14 @@ const ChatScreen = ({navigation}) => {
           chat_detail?.sender?._id != userInfo?.id &&
           chat_detail?.reciever?._id == userInfo?.id
         ) {
-          reciever_user = {...chat_detail?.sender};
-          sender_user = {...chat_detail?.reciever};
+          reciever_user = { ...chat_detail?.sender };
+          sender_user = { ...chat_detail?.reciever };
         } else if (
           chat_detail?.reciever?._id != userInfo?.id &&
           chat_detail?.sender?._id == userInfo?.id
         ) {
-          reciever_user = {...chat_detail?.reciever};
-          sender_user = {...chat_detail?.sender};
+          reciever_user = { ...chat_detail?.reciever };
+          sender_user = { ...chat_detail?.sender };
         }
 
         if (Object.keys(reciever_user)?.length > 0) {
@@ -133,9 +137,9 @@ const ChatScreen = ({navigation}) => {
               isSelfReadable: chat_detail[userInfo?.id],
               isOppReadable:
                 chat_detail[
-                  sender_user?._id == userInfo?.id
-                    ? reciever_user?._id
-                    : sender_user?._id
+                sender_user?._id == userInfo?.id
+                  ? reciever_user?._id
+                  : sender_user?._id
                 ],
               chatId: keyItem,
               chatObjKey: Object.keys(data[keyItem])[0],
@@ -173,6 +177,21 @@ const ChatScreen = ({navigation}) => {
       getAllUsers();
     }
   }, [isFocused]);
+
+  useEffect(() => {
+    const ref = database()
+      .ref(`/blocked_users/${userInfo?.id}`);
+
+    const listener = ref.on('value', snapshot => {
+      if (snapshot.exists()) {
+        setBlockedUsers(Object.keys(snapshot.val()));
+      } else {
+        setBlockedUsers([]);
+      }
+    });
+
+    return () => ref.off('value', listener);
+  }, []);
 
   const searchUser = txt => {
     let searchUsers = userList?.filter(item =>
@@ -219,19 +238,22 @@ const ChatScreen = ({navigation}) => {
               padding: 10,
             }}
             // ListEmptyComponent={<EmptyListRender />}
-            renderItem={({item}, rowMap) => {
+            renderItem={({ item }, rowMap) => {
               const isUnreadAndReceivedByMe =
-  // item?.chat_info?.reciever?._id === userInfo?.id &&
-  item?.msg_detail?.isRead === false;
-           // Message is unread
-            
+                // item?.chat_info?.reciever?._id === userInfo?.id &&
+                item?.msg_detail?.isRead === false;
+              // Message is unread
+
               // console.log(
               //   'Receiver:', item?.chat_info?.reciever?._id,
               //   'User:', userInfo?.id,
               //   'Is Read:', item?.msg_detail?.isRead
               // );
-              
 
+              const isBlocked = blockedUsers?.includes(
+                item?.chat_info?.reciever?._id,
+              );
+              
               return (
                 <>
                   {item?.chat_info?.isSelfReadable ? (
@@ -242,22 +264,22 @@ const ChatScreen = ({navigation}) => {
                       }
                       style={[
                         styles.userImageStyle,
-                         { backgroundColor:isUnreadAndReceivedByMe? '#E6F7FF':'#fff' },
+                        { backgroundColor: isUnreadAndReceivedByMe ? '#E6F7FF' : '#fff' },
                       ]}
-                      
-                      >
+                    >
                       <View
                         style={{
                           flexDirection: 'row',
+                          opacity: isBlocked ? 0.4 : 1,
                         }}>
                         <View>
                           <Image
                             source={
                               item?.chat_info?.reciever?.profile_picture
                                 ? {
-                                    uri: item?.chat_info?.reciever
-                                      ?.profile_picture,
-                                  }
+                                  uri: item?.chat_info?.reciever
+                                    ?.profile_picture,
+                                }
                                 : ImageConstants.user
                             }
                             style={styles.userImageView}
@@ -266,18 +288,18 @@ const ChatScreen = ({navigation}) => {
                           {onlineUsers?.includes(
                             item?.chat_info?.reciever?._id,
                           ) && (
-                            <View
-                              style={{
-                                height: 14,
-                                width: 14,
-                                backgroundColor: colors.primaryColor,
-                                borderRadius: 40,
-                                position: 'absolute',
-                                bottom: 5,
-                                right: 5,
-                              }}
-                            />
-                          )}
+                              <View
+                                style={{
+                                  height: 14,
+                                  width: 14,
+                                  backgroundColor: colors.primaryColor,
+                                  borderRadius: 40,
+                                  position: 'absolute',
+                                  bottom: 5,
+                                  right: 5,
+                                }}
+                              />
+                            )}
                         </View>
 
                         <View style={styles.userCotentContainer}>
@@ -287,7 +309,7 @@ const ChatScreen = ({navigation}) => {
                           <Text
                             style={styles.userCommentStyle(
                               item?.chat_info?.sender?._id != userInfo?.id &&
-                                !item?.msg_detail?.isRead,
+                              !item?.msg_detail?.isRead,
                             )}>
                             {item?.msg_detail?.message}
                           </Text>
@@ -305,7 +327,7 @@ const ChatScreen = ({navigation}) => {
               );
             }}
             disableRightSwipe={true}
-            renderHiddenItem={({item}, rowMap) => {
+            renderHiddenItem={({ item }, rowMap) => {
               return (
                 <View style={styles.drawerStyle}>
                   <TouchableOpacity
@@ -324,7 +346,7 @@ const ChatScreen = ({navigation}) => {
                     />
                     <Text style={styles.itemNameStyle}>Delete</Text>
                   </TouchableOpacity>
-                  <View style={{width: 40}} />
+                  <View style={{ width: 40 }} />
                 </View>
               );
             }}
@@ -341,7 +363,7 @@ const ChatScreen = ({navigation}) => {
               getAllUsers(id);
             }, 700);
           }}
-          // onCloseSheet={() => swipeRef?.current?.manuallyOpenAllRows(0)}
+        // onCloseSheet={() => swipeRef?.current?.manuallyOpenAllRows(0)}
         />
       </CustomContainer>
       {/* <NoInternetModal shouldShow={!isInternetConnected} /> */}

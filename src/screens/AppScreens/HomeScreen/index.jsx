@@ -68,8 +68,6 @@ const HomeScreen = ({ navigation, route }) => {
     ? DEVICE_HEIGHT - tabBarHeight - statusBarHeight
     : DEVICE_HEIGHT - tabBarHeight - statusBarHeight;
 
-  const STORY_TOP = insets.top + 40;
-
   const storyref = useRef(null)
   const prevNearBy = useRef(nearByType);
   const prevLocationTypeRef = useRef(selectedCityData?.locationType);
