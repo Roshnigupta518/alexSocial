@@ -94,6 +94,7 @@ const ImageConstants = {
 
   call: require('./../assets/images/call.png'),
   web: require('./../assets/images/web.png'),
+  report: require('./../assets/images/report.png'),
 };
 
 export default ImageConstants;

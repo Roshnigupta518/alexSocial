@@ -758,6 +758,40 @@ export const reportPostRequest = async data => {
   });
 };
 
+export const reportUserStoryRequest = async data => {
+  return await new Promise((resolve, reject) => {
+    try {
+      HttpRequests.postAPI(api.reportUser, data)
+        .then(res => {
+          if (res?.data) resolve(res?.data);
+          else reject(res?.data);
+        })
+        .catch(err => {
+          reject(err?.response?.data);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const reportBusinessStoryRequest = async data => {
+  return await new Promise((resolve, reject) => {
+    try {
+      HttpRequests.postAPI(api.reportBusiness, data)
+        .then(res => {
+          if (res?.data) resolve(res?.data);
+          else reject(res?.data);
+        })
+        .catch(err => {
+          reject(err?.response?.data);
+        });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 export const deletePostRequest = async id => {
   return await new Promise((resolve, reject) => {
     try {

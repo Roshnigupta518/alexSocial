@@ -22,6 +22,7 @@ export const api = {
   savePost: '/api/v1/user/save-post/',
   reportPost: '/api/v1/user/report-post',
   reportUser: '/api/v1/user/report-user',
+  reportBusiness: '/api/v1/user/report-business',
   blockUser: '/api/v1/user/block-unblock',
   deletePost:'/api/v1/user/delete-post/',
   getTrendingCities: '/api/v1/user/get-top-cities-list',

@@ -16,7 +16,7 @@ import ReelHeader from '../../../components/ReelComponent/ReelHeader';
 import ReelCard from '../../../components/ReelComponent/ReelCard';
 import { useIsFocused } from '@react-navigation/native';
 import CommentListSheet from '../../../components/ActionSheetComponent/CommentListSheet';
-import { GetAllPostsRequest, GetAllStoryRequest, GetMyProfileRequest, likeStoryRequest, makeStorySeenRequest, updateProfileRequest } from '../../../services/Utills';
+import { GetAllPostsRequest, GetAllStoryRequest, GetMyProfileRequest, likeStoryRequest, makeStorySeenRequest, reportBusinessStoryRequest, reportUserStoryRequest, updateProfileRequest } from '../../../services/Utills';
 import Toast from '../../../constants/Toast';
 import { useDispatch, useSelector } from 'react-redux';
 import ShareSheet from '../../../components/ActionSheetComponent/ShareSheet';
@@ -35,7 +35,6 @@ import InstagramStories from '@birdwingo/react-native-instagram-stories';
 import ImageConstants from '../../../constants/ImageConstants';
 import { handleShareStoryFunction } from '../../../validation/helper';
 import { ChangeMuteAction } from '../../../redux/Slices/VideoMuteSlice';
-import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ReadMore from '@fawazahmed/react-native-read-more';
 import { userDataAction } from '../../../redux/Slices/UserInfoSlice';
@@ -216,13 +215,13 @@ const HomeScreen = ({ navigation, route }) => {
     let url = { skip: pagination.skip, limit: pagination.limit };
 
     // 👇 cursor sirf tab bhejna jab available ho
-      // if (eventCursor) {
-      //   url.eventCursor = eventCursor;
-      // }
-      // ✅ cursor sirf pagination ke time bhejo
-      if (eventCursor && pagination.skip > 0) {
-        url.eventCursor = eventCursor;
-      }
+    // if (eventCursor) {
+    //   url.eventCursor = eventCursor;
+    // }
+    // ✅ cursor sirf pagination ke time bhejo
+    if (eventCursor && pagination.skip > 0) {
+      url.eventCursor = eventCursor;
+    }
 
     if (selectedCityData?.locationType == 'current') {
       Object.assign(url, { city: city });
@@ -240,7 +239,7 @@ const HomeScreen = ({ navigation, route }) => {
       .then(res => {
         setPostArray(prevPosts => [...prevPosts, ...res?.result]);
 
-         // ✅ API se aane wala NEW cursor save karo
+        // ✅ API se aane wala NEW cursor save karo
         if (res?.totalrecord) {
           setEventCursor(res.totalrecord.nextEventCursor);
         }
@@ -255,7 +254,7 @@ const HomeScreen = ({ navigation, route }) => {
         // pagination.totalRecords = res?.totalrecord;
         pagination.totalRecords = res?.totalrecord?.totalPostCount || 0;
         // setHasMore(pagination.skip + limit < pagination.totalRecords);
-          console.log({ getpostResponse: res })
+        console.log({ getpostResponse: res })
         setHasTriedFetchingPosts(true);
       })
       .catch(err => {
@@ -286,7 +285,7 @@ const HomeScreen = ({ navigation, route }) => {
         eventloc = item.eventloc
         eventTime = item.eventTime
       }
-  
+
       return {
         id,
         name: item.user_name,
@@ -294,7 +293,7 @@ const HomeScreen = ({ navigation, route }) => {
         event_id: item.event_id || null,
         added_from: item.added_from,
         avatarSource: item.user_image ? { uri: item.user_image } : ImageConstants.business_logo,
-  
+
         stories: item.stories.map(story => ({
           id: story.id,
           mediaType: story.media_type === 'video/mp4' ? 'video' : 'image',
@@ -306,13 +305,14 @@ const HomeScreen = ({ navigation, route }) => {
           tagBusiness: story.tagBussiness || [],
           event_id: item.event_id || null, // 👈 future use
           event_name: item.user_name,
-          eventloc : item.eventloc || null,
-          eventTime : item.eventTime || null,
+          eventloc: item.eventloc || null,
+          eventTime: item.eventTime || null,
+          business_id : item.business_id || null 
         }))
       };
     });
-  };  
-  
+  };
+
   const getStoryHandle = () => {
     if (loading) return;
     setLoading(true);
@@ -327,7 +327,7 @@ const HomeScreen = ({ navigation, route }) => {
         const myStoryFromApi = dummyFormat.find(
           s => s.added_from === "1" && s.id === userInfo.id
         );
-        
+
         const yourStoryObj = {
           id: userInfo.id,
           user_id: userInfo.id,
@@ -360,7 +360,6 @@ const HomeScreen = ({ navigation, route }) => {
         setLoading(false);
       });
   };
-
 
   useFocusEffect(
     useCallback(() => {
@@ -490,32 +489,32 @@ const HomeScreen = ({ navigation, route }) => {
         'VIEWABLE 👉',
         viewableItems.map(v => v.index)
       );
-  
+
       const lastVisibleItem = viewableItems[viewableItems.length - 1];
       const index = lastVisibleItem?.index ?? 0;
-  
+
       setCurrentItemIndex(index);
       dispatch(ReelIndexAction(index));
-  
+
       // Only load more when last item visible AND hasMore
       if (index === postArray.length - 1 && hasMore && !pagination.isLoading) {
         console.log('🔥 LOAD MORE');
         setPagination(prev => ({
           ...prev,
-          skip: prev.skip + limit, 
+          skip: prev.skip + limit,
           isLoading: true,
         }));
       }
     },
     [postArray.length, pagination.isLoading, hasMore],
   );
-  
+
   useEffect(() => {
     if (pagination.isLoading) {
       getAllPosts();
     }
   }, [pagination.skip]);
-  
+
 
   // const _onViewableItemsChanged = useCallback(({ viewableItems }) => {
   //   if (viewableItems[0]) {
@@ -563,8 +562,8 @@ const HomeScreen = ({ navigation, route }) => {
 
     if (route?.params?.shouldScrollTopReel || nearByChanged || locationTypeChanged) {
       setPostArray([]);
-      setEventCursor(null);   // ✅ ADD THIS
-      setSkip(0);    
+      setEventCursor(null);   
+      setSkip(0);
       onRefresh();
       getStoryHandle()
       prevNearByTypeRef.current = nearByType;
@@ -637,10 +636,10 @@ const HomeScreen = ({ navigation, route }) => {
   const _renderReels = useCallback(
     ({ item, index }) => {
       const isEvent = item.type === 'event'
-        return (
-          <View style={[styles.cardContainer, { height: screenHeight  }]}>
-            {isEvent?(
-              <EventCard
+      return (
+        <View style={[styles.cardContainer, { height: screenHeight }]}>
+          {isEvent ? (
+            <EventCard
               idx={index}
               screen={'Home'}
               data={item}
@@ -655,7 +654,7 @@ const HomeScreen = ({ navigation, route }) => {
               isItemOnFocus={currentItemIndex == index && isOnFocusItem}
               screenHeight={screenHeight}
               isStoryOpen={isStoryOpen} />
-            ):
+          ) :
             <ReelCard
               idx={index}
               screen={'Home'}
@@ -673,8 +672,8 @@ const HomeScreen = ({ navigation, route }) => {
               isStoryOpen={isStoryOpen}
             />
           }
-          </View>
-        );
+        </View>
+      );
     },
     [postArray, currentItemIndex, isOnFocusItem],
   );
@@ -763,10 +762,10 @@ const HomeScreen = ({ navigation, route }) => {
         setTimeout(() => {
           getStoryHandle();
         }, 1000);
-       
+
       }
     );
-  
+
     return () => {
       listener.remove();
     };
@@ -789,10 +788,10 @@ const HomeScreen = ({ navigation, route }) => {
 
         <View style={[styles.storyContainer]}>
           {stories.length > 0 &&
-            <SafeAreaView >
+            <SafeAreaView>
               <InstagramStories
                 ref={storyref}
-                key={stories.length} 
+                key={stories.length}
                 stories={stories}
                 onStoryPress={(story) => {
                   storyref.current?.open(story.id);
@@ -810,10 +809,10 @@ const HomeScreen = ({ navigation, route }) => {
                 avatarSize={60}
                 storyContainerStyle={{ margin: 0, padding: 0 }}
                 progressContainerStyle={{ margin: 0, padding: 0 }}
-                containerStyle={{ 
+                containerStyle={{
                   marginTop: Platform.OS === 'android' && '-8%',
                   zIndex: 3,
-                 }}
+                }}
                 closeIconColor='#fff'
                 progressColor={colors.gray}
                 progressActiveColor={colors.primaryColor}
@@ -829,14 +828,7 @@ const HomeScreen = ({ navigation, route }) => {
                   );
 
                   const myStories = myStoriesData ? myStoriesData.stories : [];
-                  // console.log("My Stories", myStories);
 
-
-                  //  for(let i=0; stories.length>i; i++){
-                  //   console.log('hi',stories[i])
-                  //  }
-
-                  // console.log({myStories})
                   const currentStoryData = stories
                     .find(u => u.id === currentStory?.userId)
                     ?.stories.find(s => s.id === currentStory?.storyId);
@@ -860,7 +852,7 @@ const HomeScreen = ({ navigation, route }) => {
                         </View>
                       }
 
-                      {/* 🔥 EVENT FOOTER TAG */}
+                      {/* EVENT FOOTER TAG */}
                       {currentStory?.added_from === "3" &&
                         currentStoryData?.event_id &&
                         currentStoryData?.event_name && (
@@ -869,7 +861,7 @@ const HomeScreen = ({ navigation, route }) => {
                             onPress={() => {
                               storyref?.current?.hide();
                               navigation.navigate('EventDetailScreen', {
-                                eventDetail: {_id: currentStoryData.event_id},
+                                eventDetail: { _id: currentStoryData.event_id },
                               });
                             }}
                             style={{
@@ -889,17 +881,17 @@ const HomeScreen = ({ navigation, route }) => {
                                 textDecorationLine: 'underline',
                               }}
                             >
-                              @{currentStoryData.event_name} 
+                              @{currentStoryData.event_name}
                             </Text>
                             <Text numberOfLines={2} style={{
                               fontFamily: fonts.regular,
                               fontSize: wp(12),
                               color: colors.white,
                             }}>
-                              {moment(currentStoryData.eventTime, 'YYYY-MM-DD').format('dddd, DD MMMM')} | {currentStoryData.eventloc} 
-                              </Text>
+                              {moment(currentStoryData.eventTime, 'YYYY-MM-DD').format('dddd, DD MMMM')} | {currentStoryData.eventloc}
+                            </Text>
                           </TouchableOpacity>
-                      )}
+                        )}
 
                       <View style={{ flexDirection: 'row', }}>
                         {currentStory && (
@@ -918,7 +910,6 @@ const HomeScreen = ({ navigation, route }) => {
                             </TouchableOpacity>
                           )
                         )}
-
 
                         <View style={{
                           width: '90%',
@@ -952,6 +943,37 @@ const HomeScreen = ({ navigation, route }) => {
                           <TouchableOpacity onPress={() => handleShareStoryFunction(currentStory?.storyId, storyref)}>
                             <Image source={ImageConstants.share} />
                           </TouchableOpacity>
+                          
+                          {currentStory?.originalId != userInfo.id &&
+                          <TouchableOpacity
+                            style={{ marginLeft: 20 }}
+                            onPress={() => {
+                              storyref?.current?.hide();
+                              // console.log({currentStory})
+                              // 2️⃣ Thoda delay do (VERY IMPORTANT)
+                              setTimeout(() => {
+                                if (currentStory?.added_from === "1") {
+                                  reportOptionSheet.current?.show(
+                                    currentStory.userId,
+                                    currentStory.storyId,
+                                    'report_user_story'
+                                  );
+                                } 
+                                else if (currentStory?.added_from === "2" || currentStory?.added_from === "3") {
+                                console.log('reporting the business story')
+                                  reportOptionSheet.current?.show(
+                                    currentStory.business_id,
+                                    currentStory.storyId,
+                                    'report_business_story'
+                                  );
+                                }
+                              }, 300); 
+                            }}>
+                            <Image source={ImageConstants.report} 
+                            tintColor={colors.white}
+                            style={{width:wp(20), height:wp(20)}} />
+                          </TouchableOpacity>
+                         }
                         </View>
                       </View>
                     </View>
@@ -966,7 +988,7 @@ const HomeScreen = ({ navigation, route }) => {
 
                   const parentUser = stories.find(user => user.id === userId);
                   const storyObj = parentUser?.stories.find(s => s.id === storyId);
-                  // console.log({ parentUser })
+                  console.log({ parentUser })
                   // Check if the current user has stories
                   if (userInfo.id === userId && (!parentUser || parentUser.stories.length === 0)) {
                     storyref.current?.hide(userId);
@@ -981,7 +1003,8 @@ const HomeScreen = ({ navigation, route }) => {
                     name: parentUser?.name,
                     added_from: parentUser?.added_from, // 👈 added
                     avatarSource: parentUser?.avatarSource?.uri,
-                    caption: storyObj?.caption
+                    caption: storyObj?.caption,
+                    business_id: storyObj.business_id
                   });
                   markStoryAsSeen(userId, storyId);
                 }}
@@ -1046,15 +1069,13 @@ const HomeScreen = ({ navigation, route }) => {
             // initialScrollIndex={currentItemIndex}
             // disableIntervalMomentum
             onViewableItemsChanged={_onViewableItemsChanged}
-            
+
             viewabilityConfig={{
               itemVisiblePercentThreshold: 50,
             }}
-            
-            
             pagingEnabled
             decelerationRate="fast"
-           
+
             // initialNumToRender={10}
             removeClippedSubviews={false}
             // windowSize={15}
@@ -1241,6 +1262,7 @@ const HomeScreen = ({ navigation, route }) => {
             setPostArray(temp);
           }}
         />
+
       </View>
       <NoInternetModal shouldShow={!isInternetConnected} />
     </>

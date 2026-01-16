@@ -8,7 +8,9 @@ import {
   blockUserRequest,
   reportPostRequest,
   reportUserRequest,
-  deletePostRequest
+  deletePostRequest,
+  reportBusinessStoryRequest,
+  reportUserStoryRequest
 } from '../../services/Utills';
 import Toast from '../../constants/Toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -113,6 +115,47 @@ const ReportTypeOptionSheet = forwardRef(({onActionDone = () => {}}, ref) => {
       })
       .finally(() => setIsLoading(false));
   };
+
+  const ReportUserStory = async () => {
+    setIsLoading(true);
+    let data = {
+      comment: reportItems[selectedOption]?.label,
+      // story_id: selectedPost,
+      report_user_id: selectedUser,
+    };
+  
+    await reportUserStoryRequest(data)
+      .then(res => {
+        Toast.success('Report Story', res?.message);
+        onActionDone();
+        actionSheetRef.current?.hide();
+      })
+      .catch(err => {
+        Toast.error('Report Story', err?.message);
+      })
+      .finally(() => setIsLoading(false));
+  };
+  
+  const ReportBusinessStory = async () => {
+    setIsLoading(true);
+    let data = {
+      comment: reportItems[selectedOption]?.label,
+      // story_id: selectedPost,
+      business_id: selectedUser,
+    };
+  
+    await reportBusinessStoryRequest(data)
+      .then(res => {
+        Toast.success('Report Story', res?.message);
+        onActionDone();
+        actionSheetRef.current?.hide();
+      })
+      .catch(err => {
+        Toast.error('Report Story', err?.message);
+      })
+      .finally(() => setIsLoading(false));
+  };
+  
 
   return (
     <ActionSheet
@@ -220,17 +263,41 @@ const ReportTypeOptionSheet = forwardRef(({onActionDone = () => {}}, ref) => {
               selectedReportType !== 'delete_post' && selectedOption == null
             }
             label={selectedReportType != 'delete_post'? "Report" : "Delete" }
+            // onPress={() => {
+            //   if (selectedReportType == 'report_post') {
+            //     ReportPost();
+            //   } else if (selectedReportType == 'report_user') {
+            //     ReportUser();
+            //   } else if (selectedReportType == 'block_user') {
+            //     BlockUser();
+            //   } else if (selectedReportType == 'delete_post') {
+            //     DeletePost()
+            //   }
+            // }}
+
             onPress={() => {
-              if (selectedReportType == 'report_post') {
+              if (selectedReportType === 'report_post') {
                 ReportPost();
-              } else if (selectedReportType == 'report_user') {
+              } 
+              else if (selectedReportType === 'report_user') {
                 ReportUser();
-              } else if (selectedReportType == 'block_user') {
+              } 
+              else if (selectedReportType === 'block_user') {
                 BlockUser();
-              } else if (selectedReportType == 'delete_post') {
-                DeletePost()
+              } 
+              else if (selectedReportType === 'delete_post') {
+                DeletePost();
+              }
+              else if (selectedReportType === 'report_user_story') {
+                ReportUserStory();
+                // alert('ReportUserStory')
+              }
+              else if (selectedReportType === 'report_business_story') {
+                ReportBusinessStory();
+                // alert('report_business_story')
               }
             }}
+            
           />
         </View>
       </View>
