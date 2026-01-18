@@ -88,7 +88,7 @@ export const handleSharePostFunction = async (data) => {
       },
       social: {
         title: data?.postData?.caption || 'Check out this post',
-        descriptionText: data?.postData?.location || `${data?.postData?.city || ''}${data?.postData?.country ? ', ' + data?.postData?.country : ''}` || "Shared from Alex App",
+        descriptionText: data?.postData?.location || `${data?.postData?.city || ''}${data?.postData?.country ? ', ' + data?.postData?.country : ''}` || "Shared from Local Shouty",
         imageUrl: data?.postData?.post?.data || data?.postData?.post_thumbnail || "https://alexsocial.com/default_post_image.jpg"
       },
     });
@@ -96,7 +96,7 @@ export const handleSharePostFunction = async (data) => {
     console.log('Generated post dynamic link:', dynamicLink);
 
     Share.open({
-      message: `Check out this post on Alex App!`,
+      message: `Check out this post on Local Shouty!`,
       url: dynamicLink,
     })
     .then(res => {
@@ -130,7 +130,7 @@ export const handleShareStoryFunction = async (data, storyref) => {
       },
       social: {
         title: data?.postData?.caption || 'Check out this story',
-        descriptionText: data?.postData?.location || `${data?.postData?.city || ''}${data?.postData?.country ? ', ' + data?.postData?.country : ''}` || "Shared from Alex App",
+        descriptionText: data?.postData?.location || `${data?.postData?.city || ''}${data?.postData?.country ? ', ' + data?.postData?.country : ''}` || "Shared from Local Shouty",
         imageUrl: data?.postData?.post?.data || data?.postData?.post_thumbnail || "https://alexsocial.com/default_post_image.jpg"
       },
     });
@@ -138,7 +138,7 @@ export const handleShareStoryFunction = async (data, storyref) => {
     console.log('Generated post dynamic link:', dynamicLink);
 
     Share.open({
-      message: `Check out this post on Alex App!`,
+      message: `Check out this post on Local Shouty!`,
       url: dynamicLink,
     })
     .then(res => {
