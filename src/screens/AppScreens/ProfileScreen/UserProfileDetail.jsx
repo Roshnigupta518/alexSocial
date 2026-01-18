@@ -96,7 +96,7 @@ const UserProfileDetail = ({ navigation, route }) => {
       const res = await GetUserPostsRequest(userId, skip, limit, fileTypeParam);
       const newData = res?.result ?? [];
 
-      console.log({newDatalength: newData.length})
+      console.log({newDatalength: newData})
 
       if (type === 'video') {
         setVideoPosts(prev => (isLoadMore ? [...prev, ...newData] : newData));
