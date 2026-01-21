@@ -467,7 +467,7 @@ useEffect(() => {
 
     const backAction = () => {
       Alert.alert(
-        'Exit From Alex',
+        'Exit From Local Shouty',
         'Are you sure you want to close this application?',
         [
           {

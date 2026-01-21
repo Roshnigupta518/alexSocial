@@ -590,7 +590,7 @@ const HomeScreen = ({ navigation, route }) => {
     useCallback(() => {
       const backAction = () => {
         Alert.alert(
-          'Exit From Alex',
+          'Exit From Local Shouty',
           'Are you sure you want to close this application?',
           [
             {
